@@ -1,0 +1,31 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "4GI/G+nYyCQ3ltASSBIunUr2LYk=",
+			"path": "github.com/sirupsen/logrus",
+			"revision": "de736cf91b921d56253b4010270681d33fdf7cb5",
+			"revisionTime": "2019-08-07T10:34:36Z"
+		},
+		{
+			"checksumSHA1": "v2EbwA0ByY9y6fas6BYAiovIRVs=",
+			"path": "github.com/snowzach/rotatefilehook",
+			"revision": "2f64f265f58cb742f59d68b12f956c9296746e2d",
+			"revisionTime": "2018-03-27T17:25:21Z"
+		},
+		{
+			"checksumSHA1": "dknbA7aiMYr2Ie4QE7UX84algZs=",
+			"path": "golang.org/x/sys/unix",
+			"revision": "bd9dbc187b6e1dacfdd2722a87e83093c2d7bd6e",
+			"revisionTime": "2018-07-27T21:32:08Z"
+		},
+		{
+			"checksumSHA1": "TM3Neoy1xRAKyZYMGzKc41sDFW4=",
+			"path": "gopkg.in/natefinch/lumberjack.v2",
+			"revision": "a96e63847dc3c67d17befa69c303767e2f84e54f",
+			"revisionTime": "2017-05-31T16:03:50Z"
+		}
+	],
+	"rootPath": "github.com/WeBankPartners/wecube-plugins-huaweicloud"
+}
