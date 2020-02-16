@@ -43,7 +43,7 @@ func getPluginByName(name string) (Plugin, error) {
 }
 
 func init() {
-	// RegisterPlugin("vpc", new(VpcPlugin))
+	RegisterPlugin("vpc", new(VpcPlugin))
 }
 
 type PluginRequest struct {
