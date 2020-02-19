@@ -11,8 +11,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var VpcActions = make(map[string]Action)
-
 const (
 	VPC_STATUS_OK         = "OK"
 	VPC_STATUS_CREATING   = "CREATING"
@@ -20,13 +18,15 @@ const (
 	VPC_SERVICE_CLIENT_V2 = "v2"
 )
 
+var VpcActions = make(map[string]Action)
+
 func init() {
 	VpcActions["create"] = new(VpcCreateAction)
 	VpcActions["delete"] = new(VpcDeleteAction)
 }
 
-func CreateVpcServiceClient(projectId, region, domainId, secretId, secretKey, version string) (*gophercloud.ServiceClient, error) {
-	provider, err := GetGopherCloudProviderClient(projectId, region, domainId, secretId, secretKey)
+func CreateVpcServiceClient(projectId, domainId, cloudpram, identiyParam, version string) (*gophercloud.ServiceClient, error) {
+	provider, err := GetGopherCloudProviderClient(projectId, domainId, cloudpram, identiyParam)
 	if err != nil {
 		logrus.Errorf("Get gophercloud provider client failed, error=%v", err)
 	}
@@ -69,13 +69,14 @@ type VpcCreateInputs struct {
 
 type VpcCreateInput struct {
 	CallBackParameter
-	Guid           string `json:"guid,omitempty"`
-	ProviderParams string `json:"provider_params,omitempty"`
-	ProjectId      string `json:"project_id,omitempty"`
-	DomainId       string `json:"domainId,omitempty"`
-	Id             string `json:"id,omitempty"`
-	Name           string `json:"name,omitempty"`
-	Cidr           string `json:"cidr,omitempty"`
+	Guid         string `json:"guid,omitempty"`
+	IdentiyParam string `json:"identiy_param,omitempty"`
+	Cloudpram    string `json:"cloudpram,omitempty"`
+	ProjectId    string `json:"project_id,omitempty"`
+	DomainId     string `json:"domainId,omitempty"`
+	Id           string `json:"id,omitempty"`
+	Name         string `json:"name,omitempty"`
+	Cidr         string `json:"cidr,omitempty"`
 
 	EnterpriseProjectId string `json:"enterprise_project_id,omitempty"`
 	// Description    string `json:"description,omitempty"`
@@ -112,8 +113,11 @@ func (action *VpcCreateAction) checkCreateVpcParam(input VpcCreateInput) error {
 	if input.DomainId == "" {
 		return fmt.Errorf("DomainId is empty")
 	}
-	if input.ProviderParams == "" {
-		return fmt.Errorf("ProviderParams is empty")
+	if input.IdentiyParam == "" {
+		return fmt.Errorf("IdentiyParam is empty")
+	}
+	if input.Cloudpram == "" {
+		return fmt.Errorf("Cloudpram is empty")
 	}
 	if input.ProjectId == "" {
 		return fmt.Errorf("ProjectId is empty")
@@ -140,20 +144,14 @@ func (action *VpcCreateAction) createVpc(input *VpcCreateInput) (output VpcCreat
 		return
 	}
 
-	paramsMap, err := GetMapFromProviderParams(input.ProviderParams)
-	if err != nil {
-		logrus.Errorf("GetMapFromProviderParams[ProviderParams=%v] meet error=%v", input.ProviderParams, err)
-		return
-	}
-
 	// Create vpc service client
-	sc1, err := CreateVpcServiceClient(input.ProjectId, paramsMap["Region"], input.DomainId, paramsMap["SecretID"], paramsMap["SecretKey"], VPC_SERVICE_CLIENT_V1)
+	sc1, err := CreateVpcServiceClient(input.ProjectId, input.DomainId, input.Cloudpram, input.IdentiyParam, VPC_SERVICE_CLIENT_V1)
 	if err != nil {
 		logrus.Errorf("CreateVpcServiceClient[%v] meet error=%v", VPC_SERVICE_CLIENT_V1, err)
 		return
 	}
 
-	sc2, err := CreateVpcServiceClient(input.ProjectId, paramsMap["Region"], input.DomainId, paramsMap["SecretID"], paramsMap["SecretKey"], VPC_SERVICE_CLIENT_V2)
+	sc2, err := CreateVpcServiceClient(input.ProjectId, input.DomainId, input.Cloudpram, input.IdentiyParam, VPC_SERVICE_CLIENT_V2)
 	if err != nil {
 		logrus.Errorf("CreateVpcServiceClient[%v] meet error=%v", VPC_SERVICE_CLIENT_V2, err)
 		return
@@ -280,11 +278,12 @@ type VpcDeleteInputs struct {
 
 type VpcDeleteInput struct {
 	CallBackParameter
-	Guid           string `json:"guid,omitempty"`
-	ProviderParams string `json:"provider_params,omitempty"`
-	ProjectId      string `json:"project_id,omitempty"`
-	DomainId       string `json:"domainId,omitempty"`
-	Id             string `json:"id,omitempty"`
+	Guid         string `json:"guid,omitempty"`
+	Cloudpram    string `json:"cloudpram,omitempty"`
+	IdentiyParam string `json:"identiy_param,omitempty"`
+	ProjectId    string `json:"project_id,omitempty"`
+	DomainId     string `json:"domainId,omitempty"`
+	Id           string `json:"id,omitempty"`
 }
 
 type VpcDeleteOutputs struct {
@@ -316,8 +315,11 @@ func (action *VpcDeleteAction) checkDeleteVpcParam(input VpcDeleteInput) error {
 	if input.ProjectId == "" {
 		return fmt.Errorf("ProjectId is empty")
 	}
-	if input.ProviderParams == "" {
-		return fmt.Errorf("ProviderParams is empty")
+	if input.IdentiyParam == "" {
+		return fmt.Errorf("IdentiyParam is empty")
+	}
+	if input.Cloudpram == "" {
+		return fmt.Errorf("Cloudpram is empty")
 	}
 	if input.DomainId == "" {
 		return fmt.Errorf("DomainId is empty")
@@ -347,14 +349,8 @@ func (action *VpcDeleteAction) deleteVpc(input *VpcDeleteInput) (output VpcDelet
 		return
 	}
 
-	paramsMap, err := GetMapFromProviderParams(input.ProviderParams)
-	if err != nil {
-		logrus.Errorf("GetMapFromProviderParams[ProviderParams=%v] meet error=%v", input.ProviderParams, err)
-		return
-	}
-
 	// Create vpc service client
-	sc1, err := CreateVpcServiceClient(input.ProjectId, paramsMap["Region"], input.DomainId, paramsMap["SecretID"], paramsMap["SecretKey"], VPC_SERVICE_CLIENT_V1)
+	sc1, err := CreateVpcServiceClient(input.ProjectId, input.DomainId, input.Cloudpram, input.IdentiyParam, VPC_SERVICE_CLIENT_V1)
 	if err != nil {
 		logrus.Errorf("CreateVpcServiceClient[%v] meet error=%v", VPC_SERVICE_CLIENT_V1, err)
 		return

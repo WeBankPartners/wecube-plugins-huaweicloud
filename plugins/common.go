@@ -45,10 +45,22 @@ func UnmarshalJson(source interface{}, target interface{}) error {
 	return nil
 }
 
-func GetGopherCloudProviderClient(projectId, region, domainId, secretId, secretKey string) (*gophercloud.ProviderClient, error) {
+func GetGopherCloudProviderClient(projectId, domainId, cloudparam, identiyParam string) (*gophercloud.ProviderClient, error) {
+	cloudparamMap, err := GetMapFromProviderParams(cloudparam)
+	if err != nil {
+		logrus.Errorf("GetMapFromProviderParams[cloudparam=%v] meet error=%v", cloudparam, err)
+		return nil, err
+	}
+
+	identiyParamMap, err := GetMapFromProviderParams(identiyParam)
+	if err != nil {
+		logrus.Errorf("GetMapFromProviderParams[identiyParam=%v] meet error=%v", identiyParam, err)
+		return nil, err
+	}
+
 	identityEndpointArray := []string{
 		"https://iam",
-		region,
+		cloudparamMap["Region"],
 		CLOUD_PROVIDER,
 		"/v3",
 	}
@@ -58,10 +70,10 @@ func GetGopherCloudProviderClient(projectId, region, domainId, secretId, secretK
 	opts := aksk.AKSKOptions{
 		IdentityEndpoint: identityEndpoint,
 		ProjectID:        projectId,
-		AccessKey:        secretId,
-		SecretKey:        secretKey,
+		AccessKey:        identiyParamMap["SecretId"],
+		SecretKey:        identiyParamMap["SecretKey"],
 		Cloud:            CLOUD_PROVIDER,
-		Region:           region,
+		Region:           cloudparamMap["Region"],
 		DomainID:         domainId,
 	}
 
