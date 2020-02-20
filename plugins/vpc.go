@@ -2,12 +2,12 @@ package plugins
 
 import (
 	"fmt"
-	"time"
-
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/vpc/v1/vpcs"
 	"github.com/sirupsen/logrus"
+	"strings"
+	"time"
 )
 
 const (
@@ -25,10 +25,10 @@ func init() {
 }
 
 func CreateVpcServiceClientV1(params CloudProviderParam) (*gophercloud.ServiceClient, error) {
-	provider,err:=createGopherCloudProviderClient(params)
+	provider, err := createGopherCloudProviderClient(params)
 	if err != nil {
 		logrus.Errorf("Get gophercloud provider client failed, error=%v", err)
-		return nil ,err
+		return nil, err
 	}
 
 	sc, err := openstack.NewVPCV1(provider, gophercloud.EndpointOpts{})
@@ -60,10 +60,10 @@ type VpcCreateInputs struct {
 type VpcCreateInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid         string `json:"guid,omitempty"`
-	Id           string `json:"id,omitempty"`
-	Name         string `json:"name,omitempty"`
-	Cidr         string `json:"cidr,omitempty"`
+	Guid                string `json:"guid,omitempty"`
+	Id                  string `json:"id,omitempty"`
+	Name                string `json:"name,omitempty"`
+	Cidr                string `json:"cidr,omitempty"`
 	EnterpriseProjectId string `json:"enterprise_project_id,omitempty"`
 	// Description    string `json:"description,omitempty"`
 }
@@ -75,8 +75,8 @@ type VpcCreateOutputs struct {
 type VpcCreateOutput struct {
 	CallBackParameter
 	Result
-	Guid         string `json:"guid,omitempty"`
-	Id           string `json:"id,omitempty"`
+	Guid string `json:"guid,omitempty"`
+	Id   string `json:"id,omitempty"`
 }
 
 type VpcCreateAction struct {
@@ -92,7 +92,7 @@ func (action *VpcCreateAction) ReadParam(param interface{}) (interface{}, error)
 }
 
 func (action *VpcCreateAction) checkCreateVpcParam(input VpcCreateInput) error {
-	if err:=isCloudProvicerParamValid(input.CloudProviderParam);err != nil {
+	if err := isCloudProvicerParamValid(input.CloudProviderParam); err != nil {
 		return err
 	}
 	return nil
@@ -131,6 +131,7 @@ func (action *VpcCreateAction) createVpc(input *VpcCreateInput) (output VpcCreat
 			logrus.Errorf("Get vpc by vpcId meet error=%v", err)
 			return
 		}
+		output.Id = input.Id
 		logrus.Infof("Get vpc by vpcId[vpcId=%v], vpcInfo=%++v", input.Id, *vpcInfo)
 		return
 	}
@@ -154,57 +155,56 @@ func (action *VpcCreateAction) createVpc(input *VpcCreateInput) (output VpcCreat
 	}
 	output.Id = resp.ID
 
-	if err = waitVpcCreated(sc,resp.ID);err != nil {
-		logrus.Errorf("waitVpcCreated failed, error=%v",  err)
+	if err = waitVpcCreated(sc, resp.ID); err != nil {
+		logrus.Errorf("waitVpcCreated failed, error=%v", err)
 	}
 
 	return
 }
 
-func isVpcExist(sc *gophercloud.ServiceClient,vpcId string)(bool,err){
+func isVpcExist(sc *gophercloud.ServiceClient, vpcId string) (bool, error) {
 	_, err := vpcs.Get(sc, vpcId).Extract()
 	if err != nil {
 		if ue, ok := err.(*gophercloud.UnifiedError); ok {
-			if strings.Contain(ue.Message(),"vpcId is invalid."){
-				return false,nil
+			if strings.Contains(ue.Message(), "vpcId is invalid.") {
+				return false, nil
 			}
 		}
-		return false,err
+		return false, err
 	}
-	return true,nil
+	return true, nil
 }
 
-func getVpcStatus(sc *gophercloud.ServiceClient,vpcId string) (string,error){
-	vpcInfo, err = vpcs.Get(sc, vpcId).Extract()
+func getVpcStatus(sc *gophercloud.ServiceClient, vpcId string) (string, error) {
+	vpcInfo, err := vpcs.Get(sc, vpcId).Extract()
 	if err != nil {
-		logrus.Errorf("getVpcStatus meet error =%v",err)
-		return "",err
+		logrus.Errorf("getVpcStatus meet error =%v", err)
+		return "", err
 	}
 
-	return vpcInfo.Status,nil
+	return vpcInfo.Status, nil
 }
 
-func waitVpcCreated(sc *gophercloud.ServiceClient, vpcId string) (error) {
+func waitVpcCreated(sc *gophercloud.ServiceClient, vpcId string) error {
 	count := 1
 
 	for {
-		status,err:=getVpcStatus(sc,vpcId)
+		status, err := getVpcStatus(sc, vpcId)
 		if err != nil {
 			return err
 		}
-		if status == VPC_STATUS_OK{
+		if status == VPC_STATUS_OK {
 			return nil
 		}
 
 		if count > 20 {
-			logrus.Errorf("waitVpcCreated is timeout,last status =%v",status)
-			return  fmt.Errorf("waitVpcCreated is timeout,last status =%v",status)
+			logrus.Errorf("waitVpcCreated is timeout,last status =%v", status)
+			return fmt.Errorf("waitVpcCreated is timeout,last status =%v", status)
 		}
 		time.Sleep(time.Second * 5)
 		count++
 	}
 }
-
 
 func (action *VpcCreateAction) Do(inputs interface{}) (interface{}, error) {
 	vpcs, _ := inputs.(VpcCreateInputs)
@@ -229,8 +229,8 @@ type VpcDeleteInputs struct {
 type VpcDeleteInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid         string `json:"guid,omitempty"`
-	Id           string `json:"id,omitempty"`
+	Guid string `json:"guid,omitempty"`
+	Id   string `json:"id,omitempty"`
 }
 
 type VpcDeleteOutputs struct {
@@ -256,7 +256,7 @@ func (action *VpcDeleteAction) ReadParam(param interface{}) (interface{}, error)
 }
 
 func (action *VpcDeleteAction) checkDeleteVpcParam(input VpcDeleteInput) error {
-	if err:=isCloudProvicerParamValid(input.CloudProviderParam);err != nil {
+	if err := isCloudProvicerParamValid(input.CloudProviderParam); err != nil {
 		return err
 	}
 	if input.Id == "" {
@@ -284,17 +284,17 @@ func (action *VpcDeleteAction) deleteVpc(input *VpcDeleteInput) (output VpcDelet
 	}
 
 	// Create vpc service client
-	sc, err := CreateVpcServiceClient(input.CloudProviderParam)
+	sc, err := CreateVpcServiceClientV1(input.CloudProviderParam)
 	if err != nil {
 		logrus.Errorf("CreateVpcServiceClient[%v] meet error=%v", VPC_SERVICE_CLIENT_V1, err)
 		return
 	}
 
 	//check vpc exist
-	 exit,err:=isVpcExist(sc, input.Id)
-	 if err != nil || !exist{
-		 return 
-	 }
+	exist, err := isVpcExist(sc, input.Id)
+	if err != nil || !exist {
+		return
+	}
 
 	// Delete vpc
 	resp := vpcs.Delete(sc, input.Id)
