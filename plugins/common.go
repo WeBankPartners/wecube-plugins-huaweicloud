@@ -17,7 +17,23 @@ const (
 	RESULT_CODE_SUCCESS = "0"
 	RESULT_CODE_ERROR   = "1"
 	CLOUD_PROVIDER      = "myhuaweicloud.com"
+	
+	//identity param info
+	IDENTITY_ENDPOINT   = "IdentityEndpoint"
+	IDENTITY_SECRET_ID  = "SecretId"
+	IDENTITY_SECRET_KEY = "SecretKey"
+	IDENTITY_DOMAIN_ID  = "DomainId"
+
+	//cloud param info
+	CLOUD_PARAM_CLOUD_DOAMIN_NAME = "CloudApiDomainName"
+	CLOUD_PARAM_PROJECT_ID            = "ProjectId"
+	CLOUD_PARAM_REGION                = "Region"
 )
+
+type CloudProviderParam struct {
+	IdentityParams string  `json:"identity_params"`
+	CloudParams string `json:"cloud_params"`
+}
 
 type CallBackParameter struct {
 	Parameter string `json:"callbackParameter,omitempty"`
@@ -43,6 +59,72 @@ func UnmarshalJson(source interface{}, target interface{}) error {
 		return fmt.Errorf("unmarshal http request (%v) meet error (%v)", reader, err)
 	}
 	return nil
+}
+
+func isMapHasKeys(inputMap map[string]string,keys []string,mapName string)error{
+	for _,key:=range keys{
+		val,ok:=inputMap[key]
+		if !ok{
+			return fmt.Errorf("%s do not have value of key[%v]",mapName,key )
+		}
+		if val == "" {
+			return fmt.Errorf("%s key[%v] have empty value",mapName,key )
+		}
+	}
+	return nil 
+}
+
+func isCloudProvicerParamValid(param CloudProviderParam)error {
+	identifyMap,err:=GetMapFromProviderParams(param.IdentityParams)
+	if err !=nil {
+		return err
+	}
+	identityKeys:=[]string{
+		IDENTITY_ENDPOINT,IDENTITY_SECRET_ID,
+		IDENTITY_SECRET_KEY,IDENTITY_DOMAIN_ID,
+	}
+	if err = isMapHasKeys(identifyMap,identityKeys,"IdentityParams");err != nil {
+		return err 
+	}
+
+	cloudMap,err:=GetMapFromProviderParams(param.CloudParams)
+	if err != nil {
+		return err 
+	}
+	cloudKeys:=[]string{
+		CLOUD_PARAM_PROJECT_ID,CLOUD_PARAM_CLOUD_DOAMIN_NAME,
+		LOUD_PARAM_REGION,
+	}
+	if err = isMapHasKeys(cloudMap,cloudKeys,"CloudParams");err != nil {
+		return err 
+	}
+	return nil 
+}
+
+func createGopherCloudProviderClient(param CloudProviderParam)(*gophercloud.ProviderClient, error) {
+	if err:=isCloudProvicerParamValid(param);err != nil {
+		return err 
+	}
+
+	identifyMap,_:=GetMapFromProviderParams(param.IdentityParams)
+	cloudMap,_:=GetMapFromProviderParams(param.CloudParams)
+
+	opts := aksk.AKSKOptions {
+		IdentityEndpoint: identifyMap[IDENTITY_ENDPOINT],
+		AccessKey:        identifyMap[IDENTITY_SECRET_ID],
+		SecretKey:        identifyMap[IDENTITY_SECRET_KEY],
+		DomainID:         identifyMap[IDENTITY_DOMAIN_ID],
+		ProjectID:        cloudMap[CLOUD_PARAM_PROJECT_ID],
+		Cloud:            cloudMap[CLOUD_PARAM_CLOUD_DOAMIN_NAME],
+		Region:           cloudMap[CLOUD_PARAM_REGION],
+	}
+
+	provider, err := openstack.AuthenticatedClient(opts)
+	if err != nil {
+		logrus.Errorf("Openstack authenticated client failed, error=%v", err)
+		return nil, err
+	}
+	return provider, nil
 }
 
 func GetGopherCloudProviderClient(projectId, domainId, cloudparam, identiyParam string) (*gophercloud.ProviderClient, error) {

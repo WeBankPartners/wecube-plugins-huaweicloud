@@ -2,15 +2,14 @@ package plugins
 
 import (
 	"fmt"
-
 	"github.com/sirupsen/logrus"
 )
 
 var SecurityGroupActions = make(map[string]Action)
 
 func init() {
-	VpcActions["create"] = new(VpcCreateAction)
-	VpcActions["delete"] = new(VpcDeleteAction)
+	SecurityGroupActions["create"] = new(VpcCreateAction)
+	SecurityGroupActions["delete"] = new(VpcDeleteAction)
 }
 
 type SecurityGroupPlugin struct {

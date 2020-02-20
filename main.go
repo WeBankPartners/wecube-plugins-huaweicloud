@@ -6,18 +6,16 @@ import (
 	"os"
 	"strings"
 
-	"github.com/WeBankPartners/wecube-plugins-huaweicloud/conf"
 	"github.com/WeBankPartners/wecube-plugins-huaweicloud/plugins"
 	"github.com/sirupsen/logrus"
 	"github.com/snowzach/rotatefilehook"
 )
 
 const (
-	CONF_FILE_PATH = "./conf/app.conf"
+	LISTEN_PORT = "8083"
 )
 
 func init() {
-	initConfig()
 	initLogger()
 	initRouter()
 }
@@ -25,13 +23,9 @@ func init() {
 func main() {
 	logrus.Infof("Start WeCube-Plungins-HaweiCloud Service ... ")
 
-	if err := http.ListenAndServe(":"+conf.GobalAppConfig.HttpPort, nil); err != nil {
+	if err := http.ListenAndServe(":"+LISTEN_PORT, nil); err != nil {
 		logrus.Fatalf("ListenAndServe meet err = %v", err)
 	}
-}
-
-func initConfig() {
-	conf.InitConfig(CONF_FILE_PATH)
 }
 
 func initLogger() {
