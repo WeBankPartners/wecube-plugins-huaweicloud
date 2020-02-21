@@ -177,7 +177,6 @@ func createSubnet(input SubnetCreateInput) (output SubnetCreateOutput, err error
 		GatewayIP: gatewayIp,
 		VpcID:     input.VpcId,
 	}).Extract()
-
 	if err != nil {
 		logrus.Errorf("create subnet meet error=%v", err)
 		return
