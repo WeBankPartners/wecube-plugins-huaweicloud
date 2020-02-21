@@ -3,26 +3,17 @@ package plugins
 import (
 	"fmt"
 	"github.com/gophercloud/gophercloud"
-	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/vpc/v1/subnets"
 	"github.com/sirupsen/logrus"
 	"strings"
 	"time"
-	"net"
-)
-
-const (
-	VPC_STATUS_OK         = "OK"
-	VPC_STATUS_CREATING   = "CREATING"
-	VPC_SERVICE_CLIENT_V1 = "v1"
-	VPC_SERVICE_CLIENT_V2 = "v2"
 )
 
 var subnetActions = make(map[string]Action)
 
 func init() {
 	subnetActions["create"] = new(SubnetCreateAction)
-	subnetActions["delete"] = new(SunbetDeleteAction)
+	subnetActions["delete"] = new(SubnetDeleteAction)
 }
 
 type SubnetPlugin struct {
@@ -44,12 +35,11 @@ type SubnetCreateInputs struct {
 type SubnetCreateInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid                string `json:"guid,omitempty"`
-	Id                  string `json:"id,omitempty"`	
-	VpcId               string `json:"vpc_id,omitempty"`
-	Name                string `json:"name,omitempty"`
-	Cidr                string `json:"cidr,omitempty"`
-
+	Guid  string `json:"guid,omitempty"`
+	Id    string `json:"id,omitempty"`
+	VpcId string `json:"vpc_id,omitempty"`
+	Name  string `json:"name,omitempty"`
+	Cidr  string `json:"cidr,omitempty"`
 }
 
 type SubnetCreateOutputs struct {
@@ -75,7 +65,7 @@ func (action *SubnetCreateAction) ReadParam(param interface{}) (interface{}, err
 	return inputs, nil
 }
 
-func checkCreateSubnetInput(input SubnetCreateInput) error{
+func checkCreateSubnetInput(input SubnetCreateInput) error {
 	if err := isCloudProvicerParamValid(input.CloudProviderParam); err != nil {
 		return err
 	}
@@ -89,26 +79,26 @@ func checkCreateSubnetInput(input SubnetCreateInput) error{
 		return fmt.Errorf("cidr is empty")
 	}
 
-	if err:=isValidCidr(input.Cidr);err !=nil {
-		return err 
+	if err := isValidCidr(input.Cidr); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func getSubnetStatus(sc *gophercloud.ServiceClient,subnetId string)(string,error){
+func getSubnetStatus(sc *gophercloud.ServiceClient, subnetId string) (string, error) {
 	resp, err := subnets.Get(sc, subnetId).Extract()
 	if err != nil {
-		return "",err
+		return "", err
 	}
-	return resp.resp.Status,nil 
+	return resp.Status, nil
 }
 
-func isSubnetExist(sc *gophercloud.ServiceClient,subnetId string)(bool,error){
+func isSubnetExist(sc *gophercloud.ServiceClient, subnetId string) (bool, error) {
 	_, err := subnets.Get(sc, subnetId).Extract()
 	if err != nil {
 		if ue, ok := err.(*gophercloud.UnifiedError); ok {
-			if strings.Contains(ue.Message(), "is invalid.") {
+			if strings.Contains(ue.Message(), "the subnet could not be found") {
 				return false, nil
 			}
 		}
@@ -117,11 +107,11 @@ func isSubnetExist(sc *gophercloud.ServiceClient,subnetId string)(bool,error){
 	return true, nil
 }
 
-func waitSubnetCreateOk(c *gophercloud.ServiceClient,subnetId string)error{
+func waitSubnetCreateOk(sc *gophercloud.ServiceClient, subnetId string) error {
 	count := 1
 
 	for {
-		status, err := getSubnetStatus(sc,subnetId)
+		status, err := getSubnetStatus(sc, subnetId)
 		if err != nil {
 			return err
 		}
@@ -141,7 +131,7 @@ func waitSubnetCreateOk(c *gophercloud.ServiceClient,subnetId string)error{
 	}
 }
 
-func createSubnet(input SubnetCreateInput)(output SubnetCreateOutput,err error){
+func createSubnet(input SubnetCreateInput) (output SubnetCreateOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
@@ -153,8 +143,8 @@ func createSubnet(input SubnetCreateInput)(output SubnetCreateOutput,err error){
 		}
 	}()
 
-	if err = checkCreateSubnetInput(input);err != nil {
-		return 
+	if err = checkCreateSubnetInput(input); err != nil {
+		return
 	}
 
 	sc, err := CreateVpcServiceClientV1(input.CloudProviderParam)
@@ -163,22 +153,22 @@ func createSubnet(input SubnetCreateInput)(output SubnetCreateOutput,err error){
 		return
 	}
 
-	// check if subnet id exist 
+	// check if subnet id exist
 	if input.Id != "" {
-		exist,subnetExistErr:=isSubnetExist(sc,input.Id)
+		exist, subnetExistErr := isSubnetExist(sc, input.Id)
 		if subnetExistErr != nil {
 			err = subnetExistErr
 			return
 		}
 		if exist {
-			ouput.Id=input.Id
-			return 
+			output.Id = input.Id
+			return
 		}
 	}
 
-	gatewayIp,err :=getCidrGatewayIp(input.Cidr)
+	gatewayIp, err := getCidrGatewayIp(input.Cidr)
 	if err != nil {
-		return 
+		return
 	}
 
 	resp, err := subnets.Create(sc, subnets.CreateOpts{
@@ -190,14 +180,14 @@ func createSubnet(input SubnetCreateInput)(output SubnetCreateOutput,err error){
 
 	if err != nil {
 		logrus.Errorf("create subnet meet error=%v", err)
-		return 
+		return
 	}
 
-	ouput.Id = resp.ID
-	if err = waitSubnetCreateOk(sc,output.Id);err != nil {
-		logrus.Errorf("waitSubnetCreateOk meet err=%v",err)
+	output.Id = resp.ID
+	if err = waitSubnetCreateOk(sc, output.Id); err != nil {
+		logrus.Errorf("waitSubnetCreateOk meet err=%v", err)
 	}
-	return 
+	return
 }
 
 func (action *SubnetCreateAction) Do(inputs interface{}) (interface{}, error) {
@@ -217,7 +207,6 @@ func (action *SubnetCreateAction) Do(inputs interface{}) (interface{}, error) {
 	return &outputs, finalErr
 }
 
-
 type SubnetDeleteInputs struct {
 	Inputs []SubnetDeleteInput `json:"inputs,omitempty"`
 }
@@ -225,9 +214,9 @@ type SubnetDeleteInputs struct {
 type SubnetDeleteInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid                string `json:"guid,omitempty"`
-	Id                  string `json:"id,omitempty"`	
-	VpcId               string `json:"vpc_id,omitempty"`
+	Guid  string `json:"guid,omitempty"`
+	Id    string `json:"id,omitempty"`
+	VpcId string `json:"vpc_id,omitempty"`
 }
 
 type SubnetDeleteOutputs struct {
@@ -241,7 +230,6 @@ type SubnetDeleteOutput struct {
 }
 
 type SubnetDeleteAction struct {
-
 }
 
 func (action *SubnetDeleteAction) ReadParam(param interface{}) (interface{}, error) {
@@ -253,7 +241,7 @@ func (action *SubnetDeleteAction) ReadParam(param interface{}) (interface{}, err
 	return inputs, nil
 }
 
-func checkDeleteSubnetInput(input SubnetDeleteInput) error{
+func checkDeleteSubnetInput(input SubnetDeleteInput) error {
 	if err := isCloudProvicerParamValid(input.CloudProviderParam); err != nil {
 		return err
 	}
@@ -266,7 +254,7 @@ func checkDeleteSubnetInput(input SubnetDeleteInput) error{
 	return nil
 }
 
-func deleteSubnet(input SubnetDeleteInput)(output SubnetDeleteOutput,err error ){
+func deleteSubnet(input SubnetDeleteInput) (output SubnetDeleteOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
@@ -278,8 +266,8 @@ func deleteSubnet(input SubnetDeleteInput)(output SubnetDeleteOutput,err error )
 		}
 	}()
 
-	if err = checkDeleteSubnetInput(input);err != nil{
-		return 
+	if err = checkDeleteSubnetInput(input); err != nil {
+		return
 	}
 
 	sc, err := CreateVpcServiceClientV1(input.CloudProviderParam)
@@ -294,12 +282,13 @@ func deleteSubnet(input SubnetDeleteInput)(output SubnetDeleteOutput,err error )
 		return
 	}
 
-	resp:= subnets.Delete(sc, input.VpcId, input.Id)
+	resp := subnets.Delete(sc, input.VpcId, input.Id)
 	if resp.Err != nil {
 		err = resp.Err
 		logrus.Errorf("Delete subnet[subnetId=%v] failed, error=%v", input.Id, err)
 		return
 	}
+	return
 }
 
 func (action *SubnetDeleteAction) Do(inputs interface{}) (interface{}, error) {
@@ -318,6 +307,3 @@ func (action *SubnetDeleteAction) Do(inputs interface{}) (interface{}, error) {
 	logrus.Infof("all subnets = %v are delete", subnets)
 	return &outputs, finalErr
 }
-
-
-
