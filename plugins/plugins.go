@@ -44,6 +44,7 @@ func getPluginByName(name string) (Plugin, error) {
 
 func init() {
 	RegisterPlugin("vpc", new(VpcPlugin))
+	RegisterPlugin("subnet", new(SubnetPlugin))
 }
 
 type PluginRequest struct {

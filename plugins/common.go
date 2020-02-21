@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"strings"
+	"net"
 
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/auth/aksk"
@@ -186,4 +187,21 @@ func GetMapFromProviderParams(providerParams string) (map[string]string, error) 
 		}
 	}
 	return rtnMap, nil
+}
+
+func isValidCidr(cidr string)error{
+	if _, _, err := net.ParseCIDR(cidr);err != nil {
+		return fmt.Errorf("cidr(%v) is invalid",input.Cidr)
+	}
+	return nil 
+}
+
+func getCidrGatewayIp(cidr string)(string,error){
+	ip,ipnet, err := net.ParseCIDR(cidr)
+	if err != nil {
+			return "", err
+	}
+	ip = ip.Mask(ipnet.Mask)
+	ip[len(ip)-1] = ip[len(ip)-1]+1
+	return ip.String(),nil
 }
