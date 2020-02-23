@@ -44,6 +44,7 @@ func getPluginByName(name string) (Plugin, error) {
 
 func init() {
 	RegisterPlugin("vpc", new(VpcPlugin))
+	RegisterPlugin("security-group", new(SecurityGroupPlugin))
 }
 
 type PluginRequest struct {

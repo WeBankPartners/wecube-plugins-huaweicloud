@@ -2,12 +2,13 @@ package plugins
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/vpc/v1/vpcs"
 	"github.com/sirupsen/logrus"
-	"strings"
-	"time"
 )
 
 const (
@@ -198,8 +199,8 @@ func waitVpcCreated(sc *gophercloud.ServiceClient, vpcId string) error {
 		}
 
 		if count > 20 {
-			logrus.Errorf("waitVpcCreated is timeout,last status =%v", status)
-			return fmt.Errorf("waitVpcCreated is timeout,last status =%v", status)
+			logrus.Errorf("after %vs, waitVpcCreated is timeout,last status=%v", count*5, status)
+			return fmt.Errorf("after %vs, waitVpcCreated is timeout,last status=%v", count*5, status)
 		}
 		time.Sleep(time.Second * 5)
 		count++

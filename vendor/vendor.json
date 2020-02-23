@@ -75,6 +75,12 @@
 			"revisionTime": "2019-12-19T08:15:49Z"
 		},
 		{
+			"checksumSHA1": "BjVjJteCQgCw9W8XMAXv6WzjbGg=",
+			"path": "github.com/gophercloud/gophercloud/openstack/vpc/v1/securitygroups",
+			"revision": "53617a3b9415b1787a77259960a0ca5437dd82a7",
+			"revisionTime": "2019-12-19T08:15:49Z"
+		},
+		{
 			"checksumSHA1": "ht5pRfEUYtPCh9MErAuBfZ8ou8M=",
 			"path": "github.com/gophercloud/gophercloud/openstack/vpc/v1/vpcs",
 			"revision": "53617a3b9415b1787a77259960a0ca5437dd82a7",
