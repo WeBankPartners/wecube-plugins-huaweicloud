@@ -9,18 +9,18 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var SecurityGroupActions = make(map[string]Action)
+var securityGroupActions = make(map[string]Action)
 
 func init() {
-	SecurityGroupActions["create"] = new(VpcCreateAction)
-	SecurityGroupActions["delete"] = new(VpcDeleteAction)
+	securityGroupActions["create"] = new(VpcCreateAction)
+	securityGroupActions["delete"] = new(VpcDeleteAction)
 }
 
 type SecurityGroupPlugin struct {
 }
 
 func (plugin *SecurityGroupPlugin) GetActionByName(actionName string) (Action, error) {
-	action, found := SecurityGroupActions[actionName]
+	action, found := securityGroupActions[actionName]
 	if !found {
 		logrus.Errorf("SecurityGroup plugin,action = %s not found", actionName)
 		return nil, fmt.Errorf("SecurityGroup plugin,action = %s not found", actionName)

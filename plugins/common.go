@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"strings"
 
 	"github.com/gophercloud/gophercloud"
@@ -127,47 +128,6 @@ func createGopherCloudProviderClient(param CloudProviderParam) (*gophercloud.Pro
 	return provider, nil
 }
 
-// func GetGopherCloudProviderClient(projectId, domainId, cloudparam, identiyParam string) (*gophercloud.ProviderClient, error) {
-// 	cloudparamMap, err := GetMapFromProviderParams(cloudparam)
-// 	if err != nil {
-// 		logrus.Errorf("GetMapFromProviderParams[cloudparam=%v] meet error=%v", cloudparam, err)
-// 		return nil, err
-// 	}
-
-// 	identiyParamMap, err := GetMapFromProviderParams(identiyParam)
-// 	if err != nil {
-// 		logrus.Errorf("GetMapFromProviderParams[identiyParam=%v] meet error=%v", identiyParam, err)
-// 		return nil, err
-// 	}
-
-// 	identityEndpointArray := []string{
-// 		"https://iam",
-// 		cloudparamMap["Region"],
-// 		CLOUD_PROVIDER,
-// 		"/v3",
-// 	}
-// 	identityEndpoint := strings.Join(identityEndpointArray, ".")
-
-// 	// AKSK authentication, initialization authentication parameters
-// 	opts := aksk.AKSKOptions{
-// 		IdentityEndpoint: identityEndpoint,
-// 		ProjectID:        projectId,
-// 		AccessKey:        identiyParamMap["SecretId"],
-// 		SecretKey:        identiyParamMap["SecretKey"],
-// 		Cloud:            CLOUD_PROVIDER,
-// 		Region:           cloudparamMap["Region"],
-// 		DomainID:         domainId,
-// 	}
-
-// 	// Initialization provider client
-// 	provider, err := openstack.AuthenticatedClient(opts)
-// 	if err != nil {
-// 		logrus.Errorf("Openstack authenticated client failed, error=%v", err)
-// 		return nil, err
-// 	}
-// 	return provider, nil
-// }
-
 func GetMapFromProviderParams(providerParams string) (map[string]string, error) {
 	rtnMap := make(map[string]string)
 	params := strings.Split(providerParams, ";")
@@ -186,4 +146,21 @@ func GetMapFromProviderParams(providerParams string) (map[string]string, error) 
 		}
 	}
 	return rtnMap, nil
+}
+
+func isValidCidr(cidr string) error {
+	if _, _, err := net.ParseCIDR(cidr); err != nil {
+		return fmt.Errorf("cidr(%v) is invalid", cidr)
+	}
+	return nil
+}
+
+func getCidrGatewayIp(cidr string) (string, error) {
+	ip, ipnet, err := net.ParseCIDR(cidr)
+	if err != nil {
+		return "", err
+	}
+	ip = ip.Mask(ipnet.Mask)
+	ip[len(ip)-1] = ip[len(ip)-1] + 1
+	return ip.String(), nil
 }

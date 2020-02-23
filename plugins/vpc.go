@@ -18,11 +18,11 @@ const (
 	VPC_SERVICE_CLIENT_V2 = "v2"
 )
 
-var VpcActions = make(map[string]Action)
+var vpcActions = make(map[string]Action)
 
 func init() {
-	VpcActions["create"] = new(VpcCreateAction)
-	VpcActions["delete"] = new(VpcDeleteAction)
+	vpcActions["create"] = new(VpcCreateAction)
+	vpcActions["delete"] = new(VpcDeleteAction)
 }
 
 func CreateVpcServiceClientV1(params CloudProviderParam) (*gophercloud.ServiceClient, error) {
@@ -45,7 +45,7 @@ type VpcPlugin struct {
 }
 
 func (plugin *VpcPlugin) GetActionByName(actionName string) (Action, error) {
-	action, found := VpcActions[actionName]
+	action, found := vpcActions[actionName]
 	if !found {
 		logrus.Errorf("VPC plugin,action = %s not found", actionName)
 		return nil, fmt.Errorf("VPC plugin,action = %s not found", actionName)
@@ -117,14 +117,14 @@ func (action *VpcCreateAction) createVpc(input *VpcCreateInput) (output VpcCreat
 		return
 	}
 
-	// Create vpc service client
+	// create vpc service client
 	sc, err := CreateVpcServiceClientV1(input.CloudProviderParam)
 	if err != nil {
 		logrus.Errorf("CreateVpcServiceClient[%v] meet error=%v", VPC_SERVICE_CLIENT_V1, err)
 		return
 	}
 
-	// Check whether the vpc exited
+	// check whether the vpc exited
 	var vpcInfo *vpcs.VPC
 	if input.Id != "" {
 		vpcInfo, err = vpcs.Get(sc, input.Id).Extract()
@@ -137,7 +137,7 @@ func (action *VpcCreateAction) createVpc(input *VpcCreateInput) (output VpcCreat
 		return
 	}
 
-	// Create vpc
+	// create vpc
 	request := vpcs.CreateOpts{}
 	if input.Name != "" {
 		request.Name = input.Name
@@ -312,6 +312,7 @@ func (action *VpcDeleteAction) Do(inputs interface{}) (interface{}, error) {
 	vpcs, _ := inputs.(VpcDeleteInputs)
 	outputs := VpcDeleteOutputs{}
 	var finalErr error
+
 	for _, vpc := range vpcs.Inputs {
 		vpcOutput, err := action.deleteVpc(&vpc)
 		if err != nil {

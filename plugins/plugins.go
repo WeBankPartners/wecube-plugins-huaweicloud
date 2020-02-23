@@ -7,6 +7,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	PROVIDER_NAME = "huaweicloud"
+	VERSION       = "v1"
+)
+
 var (
 	pluginsMutex sync.Mutex
 	plugins      = make(map[string]Plugin)
@@ -45,6 +50,7 @@ func getPluginByName(name string) (Plugin, error) {
 func init() {
 	RegisterPlugin("vpc", new(VpcPlugin))
 	RegisterPlugin("security-group", new(SecurityGroupPlugin))
+	RegisterPlugin("subnet", new(SubnetPlugin))
 }
 
 type PluginRequest struct {
@@ -77,6 +83,14 @@ func Process(pluginRequest *PluginRequest) (*PluginResponse, error) {
 	}()
 
 	logrus.Infof("plguin[%v]-action[%v] start...", pluginRequest.Name, pluginRequest.Action)
+
+	if pluginRequest.ProviderName != PROVIDER_NAME {
+		return nil, fmt.Errorf("ProviderName[%v] is wrong", pluginRequest.ProviderName)
+	}
+
+	if pluginRequest.Version != VERSION {
+		return nil, fmt.Errorf("Version[%v] is wrong", pluginRequest.Version)
+	}
 
 	plugin, err := getPluginByName(pluginRequest.Name)
 	if err != nil {
