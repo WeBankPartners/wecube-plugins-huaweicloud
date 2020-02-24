@@ -12,8 +12,8 @@ import (
 var securityGroupActions = make(map[string]Action)
 
 func init() {
-	securityGroupActions["create"] = new(VpcCreateAction)
-	securityGroupActions["delete"] = new(VpcDeleteAction)
+	securityGroupActions["create"] = new(SecurityGroupCreateAction)
+	securityGroupActions["delete"] = new(SecurityGroupDeleteAction)
 }
 
 type SecurityGroupPlugin struct {
@@ -240,7 +240,7 @@ func isSecurityGroupExist(sc *gophercloud.ServiceClient, securitygroupId string)
 	_, err := securitygroups.Get(sc, securitygroupId).Extract()
 	if err != nil {
 		if ue, ok := err.(*gophercloud.UnifiedError); ok {
-			if strings.Contains(ue.Message(), "Securitygroup id is invalid.") {
+			if strings.Contains(ue.Message(), "does not exist") {
 				return false, nil
 			}
 		}
@@ -251,8 +251,10 @@ func isSecurityGroupExist(sc *gophercloud.ServiceClient, securitygroupId string)
 
 func (action *SecurityGroupDeleteAction) Do(inputs interface{}) (interface{}, error) {
 	securitygroups, _ := inputs.(SecurityGroupDeleteInputs)
+
 	outputs := SecurityGroupDeleteOutputs{}
 	var finalErr error
+	logrus.Infof("securitygroups.Inputs=%v", securitygroups.Inputs)
 	for _, securitygroup := range securitygroups.Inputs {
 		vpcOutput, err := action.deleteSecurityGroup(&securitygroup)
 		if err != nil {

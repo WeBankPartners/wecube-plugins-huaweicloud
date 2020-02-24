@@ -85,11 +85,13 @@ func Process(pluginRequest *PluginRequest) (*PluginResponse, error) {
 	logrus.Infof("plguin[%v]-action[%v] start...", pluginRequest.Name, pluginRequest.Action)
 
 	if pluginRequest.ProviderName != PROVIDER_NAME {
-		return nil, fmt.Errorf("ProviderName[%v] is wrong", pluginRequest.ProviderName)
+		err = fmt.Errorf("ProviderName[%v] is wrong", pluginRequest.ProviderName)
+		return nil, err
 	}
 
 	if pluginRequest.Version != VERSION {
-		return nil, fmt.Errorf("Version[%v] is wrong", pluginRequest.Version)
+		err = fmt.Errorf("Version[%v] is wrong", pluginRequest.Version)
+		return nil, err
 	}
 
 	plugin, err := getPluginByName(pluginRequest.Name)
