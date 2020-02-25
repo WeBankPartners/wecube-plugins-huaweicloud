@@ -98,7 +98,7 @@ func isSubnetExist(sc *gophercloud.ServiceClient, subnetId string) (bool, error)
 	_, err := subnets.Get(sc, subnetId).Extract()
 	if err != nil {
 		if ue, ok := err.(*gophercloud.UnifiedError); ok {
-			if strings.Contains(ue.Message(), "the subnet could not be found") {
+			if strings.Contains(ue.Message(), "could not be found") {
 				return false, nil
 			}
 		}

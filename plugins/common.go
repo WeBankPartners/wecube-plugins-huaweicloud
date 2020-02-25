@@ -12,6 +12,7 @@ import (
 	"github.com/gophercloud/gophercloud/auth/aksk"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/sirupsen/logrus"
+	"strconv"
 )
 
 const (
@@ -75,7 +76,7 @@ func isMapHasKeys(inputMap map[string]string, keys []string, mapName string) err
 }
 
 func isCloudProvicerParamValid(param CloudProviderParam) error {
-	identifyMap, err := GetMapFromProviderParams(param.IdentityParams)
+	identifyMap, err := GetMapFromString(param.IdentityParams)
 	if err != nil {
 		return err
 	}
@@ -87,7 +88,7 @@ func isCloudProvicerParamValid(param CloudProviderParam) error {
 		return err
 	}
 
-	cloudMap, err := GetMapFromProviderParams(param.CloudParams)
+	cloudMap, err := GetMapFromString(param.CloudParams)
 	if err != nil {
 		return err
 	}
@@ -106,8 +107,8 @@ func createGopherCloudProviderClient(param CloudProviderParam) (*gophercloud.Pro
 		return nil, err
 	}
 
-	identifyMap, _ := GetMapFromProviderParams(param.IdentityParams)
-	cloudMap, _ := GetMapFromProviderParams(param.CloudParams)
+	identifyMap, _ := GetMapFromString(param.IdentityParams)
+	cloudMap, _ := GetMapFromString(param.CloudParams)
 	identityURL := "https://iam." + cloudMap[CLOUD_PARAM_REGION] + "." + cloudMap[CLOUD_PARAM_CLOUD_DOAMIN_NAME] + "." + "/v3"
 
 	opts := aksk.AKSKOptions{
@@ -128,7 +129,7 @@ func createGopherCloudProviderClient(param CloudProviderParam) (*gophercloud.Pro
 	return provider, nil
 }
 
-func GetMapFromProviderParams(providerParams string) (map[string]string, error) {
+func GetMapFromString(providerParams string) (map[string]string, error) {
 	rtnMap := make(map[string]string)
 	params := strings.Split(providerParams, ";")
 
@@ -142,7 +143,7 @@ func GetMapFromProviderParams(providerParams string) (map[string]string, error) 
 		if len(kv) == 2 {
 			rtnMap[kv[0]] = kv[1]
 		} else {
-			return rtnMap, fmt.Errorf("GetMapFromProviderParams meet illegal format param=%s", param)
+			return rtnMap, fmt.Errorf("GetMapFromString meet illegal format param=%s", param)
 		}
 	}
 	return rtnMap, nil
@@ -163,4 +164,26 @@ func getCidrGatewayIp(cidr string) (string, error) {
 	ip = ip.Mask(ipnet.Mask)
 	ip[len(ip)-1] = ip[len(ip)-1] + 1
 	return ip.String(), nil
+}
+
+func isValidInteger(value string,min int64,max int64)(int64,error){
+	valInt, err := strconv.ParseInt(value, 10, 64)
+	if err != nil  {
+		return 0,err
+	}
+
+	if valInt >max || valInt < min {
+		return 0,fmt.Errorf("value(%v) is not between[%v,%v]",value,min,max)
+	}
+
+	return valInt,nil 
+}
+
+func isValidStringValue(prefix string,value string,validValues []string)error{
+	for _,validValue:=range validValues {
+		if validValue == value {
+			return nil 
+		}
+	}
+	return fmt.Errorf("%v value(%v) is not valid",prefix,value)
 }
