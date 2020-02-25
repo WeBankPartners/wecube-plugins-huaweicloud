@@ -52,7 +52,7 @@ func init() {
 	RegisterPlugin("security-group", new(SecurityGroupPlugin))
 	RegisterPlugin("subnet", new(SubnetPlugin))
 	RegisterPlugin("vm", new(VmPlugin))
-	
+
 }
 
 type PluginRequest struct {

@@ -166,24 +166,24 @@ func getCidrGatewayIp(cidr string) (string, error) {
 	return ip.String(), nil
 }
 
-func isValidInteger(value string,min int64,max int64)(int64,error){
+func isValidInteger(value string, min int64, max int64) (int64, error) {
 	valInt, err := strconv.ParseInt(value, 10, 64)
-	if err != nil  {
-		return 0,err
+	if err != nil {
+		return 0, err
 	}
 
-	if valInt >max || valInt < min {
-		return 0,fmt.Errorf("value(%v) is not between[%v,%v]",value,min,max)
+	if valInt > max || valInt < min {
+		return 0, fmt.Errorf("value(%v) is not between[%v,%v]", value, min, max)
 	}
 
-	return valInt,nil 
+	return valInt, nil
 }
 
-func isValidStringValue(prefix string,value string,validValues []string)error{
-	for _,validValue:=range validValues {
+func isValidStringValue(prefix string, value string, validValues []string) error {
+	for _, validValue := range validValues {
 		if validValue == value {
-			return nil 
+			return nil
 		}
 	}
-	return fmt.Errorf("%v value(%v) is not valid",prefix,value)
+	return fmt.Errorf("%v value(%v) is not valid", prefix, value)
 }

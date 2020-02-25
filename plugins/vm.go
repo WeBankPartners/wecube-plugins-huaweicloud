@@ -2,29 +2,29 @@ package plugins
 
 import (
 	"fmt"
-	"strings"
-	"time"
-
+	"github.com/WeBankPartners/wecube-plugins-huaweicloud/plugins/utils"
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
-	"github.com/sirupsen/logrus"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
-	"github.com/WeBankPartners/wecube-plugins-huaweicloud/plugins/utils"
-	flavor "github.com/gophercloud/gophercloud/openstack/ecs/v1/flavor"
 	v1 "github.com/gophercloud/gophercloud/openstack/ecs/v1/cloudservers"
+	flavor "github.com/gophercloud/gophercloud/openstack/ecs/v1/flavor"
+	"github.com/gophercloud/gophercloud/openstack/ecs/v1/job"
 	v1_1 "github.com/gophercloud/gophercloud/openstack/ecs/v1_1/cloudservers"
-	v2 "github.com/gophercloud/gophercloud/openstack/ecs/v2/cloudservers"
+	"github.com/sirupsen/logrus"
+	"strconv"
+	"strings"
+	"time"
 )
 
 const (
-	PRE_PAID ="prePaid"   //包年包月
-	POST_PAID="postPaid"  //按量计费
-	PRE_PAID_MONTH="month"
-	PRE_PAID_YEAR="year"
+	PRE_PAID       = "prePaid"  //包年包月
+	POST_PAID      = "postPaid" //按量计费
+	PRE_PAID_MONTH = "month"
+	PRE_PAID_YEAR  = "year"
 
-	CLOUD_SERVER_V1  ="v1"
-	CLOUD_SERVER_V1_1="v1_1"
-	CLOUD_SERVER_V2  ="v2"
+	CLOUD_SERVER_V1   = "v1"
+	CLOUD_SERVER_V1_1 = "v1_1"
+	CLOUD_SERVER_V2   = "v2"
 )
 
 var vmActions = make(map[string]Action)
@@ -33,7 +33,10 @@ func init() {
 	vmActions["create"] = new(VmCreateAction)
 	vmActions["terminate"] = new(VmDeleteAction)
 	vmActions["start"] = new(VmStartAction)
-	vmActions["stop"] = new(VpcStopAction)
+	vmActions["stop"] = new(VmStopAction)
+}
+
+type VmPlugin struct {
 }
 
 func (plugin *VmPlugin) GetActionByName(actionName string) (Action, error) {
@@ -44,25 +47,24 @@ func (plugin *VmPlugin) GetActionByName(actionName string) (Action, error) {
 	return action, nil
 }
 
-func createVmServiceClient(params CloudProviderParam,version string) (*gophercloud.ServiceClient, error) {
+func createVmServiceClient(params CloudProviderParam, version string) (*gophercloud.ServiceClient, error) {
 	provider, err := createGopherCloudProviderClient(params)
 	if err != nil {
 		logrus.Errorf("Get gophercloud provider client failed, error=%v", err)
 		return nil, err
 	}
-	
-	switch version{
+
+	switch version {
 	case CLOUD_SERVER_V1:
-		return  openstack.NewECSV1(provider, gophercloud.EndpointOpts{})
+		return openstack.NewECSV1(provider, gophercloud.EndpointOpts{})
 	case CLOUD_SERVER_V1_1:
 		return openstack.NewECSV1_1(provider, gophercloud.EndpointOpts{})
 	case CLOUD_SERVER_V2:
 		return openstack.NewECSV2(provider, gophercloud.EndpointOpts{})
 	}
 
-	return nil, fmt.Errorf("version(%v) is not support",version)
+	return nil, fmt.Errorf("version(%v) is not support", version)
 }
-
 
 type VmCreateInputs struct {
 	Inputs []VmCreateInput `json:"inputs,omitempty"`
@@ -71,27 +73,27 @@ type VmCreateInputs struct {
 type VmCreateInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid  string `json:"guid,omitempty"`
-	Id    string `json:"id,omitempty"`
-	
-	Seed                 string `json:"seed,omitempty"`
-	ImageId string `json:"image_id,omitempty"`
-	HostType             string `json:"host_type,omitempty"`   //4c8g
-	SystemDiskSize   string `json:"system_disk_size,omitempty"`
-	VpcId                string `json:"vpc_id,omitempty"`
-	SubnetId             string `json:"subnet_id,omitempty"`
-	PrivateIp    string          `json:"private_ip,omitempty"`
-	Name  string           `json:"name,omitempty"`
-	Password             string `json:"password,omitempty"`
-	Lables           string `json:"labels,omitempty"`
-	AilabilityZone            string `json:"az,omitempty"`
-	SecurityGroups   string `json:"securityGroup,omitempty"`
+	Guid string `json:"guid,omitempty"`
+	Id   string `json:"id,omitempty"`
 
-	ChargeType  string `json:"charge_type,omitempty"`
+	Seed           string `json:"seed,omitempty"`
+	ImageId        string `json:"image_id,omitempty"`
+	HostType       string `json:"machine_spec,omitempty"` //4c8g
+	SystemDiskSize string `json:"system_disk_size,omitempty"`
+	VpcId          string `json:"vpc_id,omitempty"`
+	SubnetId       string `json:"subnet_id,omitempty"`
+	PrivateIp      string `json:"private_ip,omitempty"`
+	Name           string `json:"name,omitempty"`
+	Password       string `json:"password,omitempty"`
+	Labels         string `json:"labels,omitempty"`
+	AilabilityZone string `json:"az,omitempty"`
+	SecurityGroups string `json:"securityGroup,omitempty"`
+
+	ChargeType string `json:"charge_type,omitempty"`
 
 	//包年包月
-	PeriodType string `json:"period_type,omitempty"`  //年或月
-	PeriodNum  string `json:"period_num,omitempty"`   //年有效值[1-9],月有效值[1-3]
+	PeriodType  string `json:"period_type,omitempty"`   //年或月
+	PeriodNum   string `json:"period_num,omitempty"`    //年有效值[1-9],月有效值[1-3]
 	IsAutoRenew string `json:"is_auto_renew,omitempty"` //是否自动续费
 
 	EnterpriseProjectId string `json:"enterprise_project_id,omitempty"`
@@ -104,11 +106,11 @@ type VmCreateOutputs struct {
 type VmCreateOutput struct {
 	CallBackParameter
 	Result
-	Guid string `json:"guid,omitempty"`
-	Id   string `json:"id,omitempty"`
-	Cpu               string `json:"cpu,omitempty"`
-	Memory            string `json:"memory,omitempty"`
-	Password          string `json:"password,omitempty"`
+	Guid      string `json:"guid,omitempty"`
+	Id        string `json:"id,omitempty"`
+	Cpu       string `json:"cpu,omitempty"`
+	Memory    string `json:"memory,omitempty"`
+	Password  string `json:"password,omitempty"`
 	PrivateIp string `json:"private_ip,omitempty"`
 }
 
@@ -124,7 +126,7 @@ func (action *VmCreateAction) ReadParam(param interface{}) (interface{}, error) 
 	return inputs, nil
 }
 
-func checkVmCreateParams(input VmCreateInput)error{
+func checkVmCreateParams(input VmCreateInput) error {
 	if err := isCloudProvicerParamValid(input.CloudProviderParam); err != nil {
 		return err
 	}
@@ -137,39 +139,39 @@ func checkVmCreateParams(input VmCreateInput)error{
 	if input.HostType == "" {
 		return fmt.Errorf("hostType is empty")
 	}
-	if input.SystemDiskSize == ""{
+	if input.SystemDiskSize == "" {
 		return fmt.Errorf("systemDiskSize is empty")
 	}
-	if input.VpcId == ""{
+	if input.VpcId == "" {
 		return fmt.Errorf("vpcId is empty")
 	}
-	if input.SubnetId ==""{
+	if input.SubnetId == "" {
 		return fmt.Errorf("subnetId is empty")
 	}
-	if input.Name == ""{
+	if input.Name == "" {
 		return fmt.Errorf("name is empty")
 	}
 	if input.AilabilityZone == "" {
 		return fmt.Errorf("ailaabilityZone is empty")
 	}
-	if err:=isValidStringValue("chargeType",input,ChargeType,[]string{PRE_PAID,POST_PAID});err!= nil {
-		return err 
+	if err := isValidStringValue("chargeType", input.ChargeType, []string{PRE_PAID, POST_PAID}); err != nil {
+		return err
 	}
 
-	if input.ChargeType == PRE_PAID{
-		if err := isValidStringValue("periodType",input.PeriodType,[]string{PRE_PAID_MONTH,PRE_PAID_YEAR});err != nil {
-			return err 
+	if input.ChargeType == PRE_PAID {
+		if err := isValidStringValue("periodType", input.PeriodType, []string{PRE_PAID_MONTH, PRE_PAID_YEAR}); err != nil {
+			return err
 		}
 
-		if _,err:=isValidInteger(input.PeriodNum,1,12);err != nil{
-			return err 
+		if _, err := isValidInteger(input.PeriodNum, 1, 12); err != nil {
+			return err
 		}
 	}
-	return nil 
+	return nil
 }
 
-func isVmExist(cloudProviderParam string,id string)(bool,error){
-	_,err:=getVmInfoById(cloudProviderParam ,id )
+func isVmExist(cloudProviderParam CloudProviderParam, id string) (bool, error) {
+	_, err := getVmInfoById(cloudProviderParam, id)
 	if err != nil {
 		if ue, ok := err.(*gophercloud.UnifiedError); ok {
 			if strings.Contains(ue.Message(), "could not be found") {
@@ -181,78 +183,80 @@ func isVmExist(cloudProviderParam string,id string)(bool,error){
 	return true, nil
 }
 
-func getVmInfoById(cloudProviderParam string,id string)(*v1.CloudServer,error){
-	sc, err := createVmServiceClient(cloudProviderParam,CLOUD_SERVER_V1)
+func getVmInfoById(cloudProviderParam CloudProviderParam, id string) (*v1.CloudServer, error) {
+	sc, err := createVmServiceClient(cloudProviderParam, CLOUD_SERVER_V1)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 
-	vmInfo,err:=v1.Get(sc, id).Extract()
-	return vmInfo,err
+	vmInfo, err := v1.Get(sc, id).Extract()
+	return vmInfo, err
 }
 
-func buildVmNicStruct(input VmCreateInput)([]v1_1.Nic){
+func buildVmNicStruct(input VmCreateInput) []v1_1.Nic {
 	nic := v1_1.Nic{
-			SubnetId: input.SubnetId,
+		SubnetId: input.SubnetId,
 	}
-	if input.PrivateIp != nil {
+	if input.PrivateIp != "" {
 		nic.IpAddress = input.PrivateIp
 	}
 
 	return []v1_1.Nic{nic}
 }
 
-func buildServerExtendParam(input VmCreateInput)(v1_1.ServerExtendParam){
-	param:=v1_1.ServerExtendParam{
-		ChargingMode:input.ChargeType,
+func buildServerExtendParam(input VmCreateInput) v1_1.ServerExtendParam {
+	param := v1_1.ServerExtendParam{
+		ChargingMode: input.ChargeType,
 	}
-	if input.EnterpriseProjectID != "" {
-		param.EnterpriseProjectID = input.EnterpriseProjectID
+	if input.EnterpriseProjectId != "" {
+		param.EnterpriseProjectID = input.EnterpriseProjectId
 	}
 
-	if input.ChargeType == PRE_PAID{
+	if input.ChargeType == PRE_PAID {
 		param.PeriodType = input.PeriodType
 		if input.IsAutoRenew != "" {
 			param.IsAutoRenew = input.IsAutoRenew
 		}
-		param.PeriodNum = strconv.Atoi(input.eriodNum)
+		param.PeriodNum, _ = strconv.Atoi(input.PeriodNum)
 	}
 	return param
 }
 
-func buildSecurityGroups(securityGroups string)[]string{
-	scs:= []string{}
+func buildSecurityGroups(securityGroups string) []v1_1.SecurityGroup {
+	scs := []v1_1.SecurityGroup{}
 	if securityGroups != "" {
-		scs=append(scs,securityGroups)
+		sc := v1_1.SecurityGroup{
+			ID: securityGroups,
+		}
+		scs = append(scs, sc)
 	}
 	return scs
 }
 
-func buildServerTags(labels)([]v1_1.ServerTags){
-	tags:=[]v1_1.ServerTags{}
-	labels=GetMapFromString(input.Labels)
-	for k,v:=range labels{
-		tag:=v1_1.ServerTags{
-			Key:k,
-			Value:v,
+func buildServerTags(labels string) []v1_1.ServerTags {
+	tags := []v1_1.ServerTags{}
+	labelMap, _ := GetMapFromString(labels)
+	for k, v := range labelMap {
+		tag := v1_1.ServerTags{
+			Key:   k,
+			Value: v,
 		}
-		tags:=append(tags,tag)
+		tags = append(tags, tag)
 	}
 	return tags
 }
 
-func buildRootVolumeStruct (input VmCreateInput)(v1_1.RootVolume,err) {
-	volume:= v1_1.RootVolume {
-		VolumeType:"SATA",
-		Size:rootSize,
+func buildRootVolumeStruct(input VmCreateInput) (v1_1.RootVolume, error) {
+	volume := v1_1.RootVolume{
+		VolumeType: "SATA",
 	}
 
 	rootSize, err := strconv.Atoi(input.SystemDiskSize)
 	if err != nil {
-		return volume,err 
+		return volume, err
 	}
-	volume.Size= rootSize
-	return volume,nil 
+	volume.Size = rootSize
+	return volume, nil
 }
 
 func getCpuAndMemoryFromHostType(hostType string) (int64, int64, error) {
@@ -280,40 +284,40 @@ func getCpuAndMemoryFromHostType(hostType string) (int64, int64, error) {
 	return cpu, mem, nil
 }
 
-func getFlavorByHostType(input VmCreateInput) (string,error) {
-	cpu, memory, err := getCpuAndMemoryFromHostType(hostType)
+func getFlavorByHostType(input VmCreateInput) (string, error) {
+	cpu, memory, err := getCpuAndMemoryFromHostType(input.HostType)
 	if err != nil {
-		return ""
+		return "", err
 	}
-	listOpts:=flavor.ListOpts{
-		AvailabilityZone:input.AilabilityZone  
-	}
-
-	sc, err := createVmServiceClient(input.cloudProviderParam,CLOUD_SERVER_V1)
-	if err != nil {
-		return "",err
+	listOpts := flavor.ListOpts{
+		AvailabilityZone: input.AilabilityZone,
 	}
 
-	allPages,err:=v1.List(sc, listOpts).AllPages()
+	sc, err := createVmServiceClient(input.CloudProviderParam, CLOUD_SERVER_V1)
 	if err != nil {
-		return "",err
+		return "", err
 	}
 
-	flavors ,err := flavor.ExtractFlavors(allPages)
+	allPages, err := flavor.List(sc, listOpts).AllPages()
 	if err != nil {
-		return "",err
+		return "", err
+	}
+
+	flavors, err := flavor.ExtractFlavors(allPages)
+	if err != nil {
+		return "", err
 	}
 
 	var minScore int64 = 1000000
 	matchCpuItems := []flavor.Flavor{}
 	for _, item := range flavors {
-		vcpus,err:=strconv.ParseInt(item.Vcpus, 10, 64)
+		vcpus, err := strconv.ParseInt(item.Vcpus, 10, 64)
 		if err != nil {
-			logrus.Errorf("vpus(%v) is invald",item.Vcpus)
-			return "",err
+			logrus.Errorf("vpus(%v) is invald", item.Vcpus)
+			return "", err
 		}
 
-		score := vcpus- cpu
+		score := vcpus - cpu
 		if score < 0 {
 			continue
 		}
@@ -336,17 +340,17 @@ func getFlavorByHostType(input VmCreateInput) (string,error) {
 		}
 	}
 
-	return instanceType,nil 
+	return instanceType, nil
 }
 
-func waitVmJobOk(sc gophercloud.ServiceClient,jobId string)(string,error){
-	var jobRst cloudservers.JobResult
+func waitVmJobOk(sc *gophercloud.ServiceClient, jobId string) (string, error) {
+	var jobRst job.JobResult
 
 	for {
-		time.Sleep(time.Duration(10)*time.Second)
-		job, getJobErr := v1_1.GetJobResult(sc, jobId)
+		time.Sleep(time.Duration(10) * time.Second)
+		job, getJobErr := job.GetJobResult(sc, jobId)
 		if getJobErr != nil {
-			return getJobErr
+			return "", getJobErr
 		}
 
 		if strings.Compare("SUCCESS", job.Status) == 0 {
@@ -360,15 +364,15 @@ func waitVmJobOk(sc gophercloud.ServiceClient,jobId string)(string,error){
 	subJobs := jobRst.Entities.SubJobs
 	for _, value := range subJobs {
 		if strings.Compare("SUCCESS", value.Status) == 0 {
-			return  value.Entities.ServerId,nil 
+			return value.Entities.ServerId, nil
 		} else {
-			return "",fmt.Errorf("Vm job failed")
+			return "", fmt.Errorf("Vm job failed")
 		}
 	}
-	return "",fmt.Errorf("can't go to here")
+	return "", fmt.Errorf("can't go to here")
 }
 
-func createVm(input VmCreateInput)(output VmCreateOutput,err erorr){
+func createVm(input VmCreateInput) (output VmCreateOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
@@ -380,77 +384,77 @@ func createVm(input VmCreateInput)(output VmCreateOutput,err erorr){
 		}
 	}()
 
-	if err = checkVmCreateParams(input);err != nil {
-		return 
+	if err = checkVmCreateParams(input); err != nil {
+		return
 	}
 	if input.Id != "" {
-	   if _,err=getVmInfoById(input.CloudProviderParam,input.Id);err != nil {
-			output.Id= input.Id 
-			return 
-	   }
+		if _, err = getVmInfoById(input.CloudProviderParam, input.Id); err != nil {
+			output.Id = input.Id
+			return
+		}
 	}
 
-	//now create vm 
-	nics:=buildVmNicStruct(input)
-	tags:=buildServerTags(input.Labels)
-	SecurityGroups:=buildSecurityGroups(input.SecurityGroups)
-	serverExtendParam:=buildServerExtendParam(input)
-	rootVolume,err:=buildRootVolumeStruct(input)
+	//now create vm
+	nics := buildVmNicStruct(input)
+	tags := buildServerTags(input.Labels)
+	securityGroups := buildSecurityGroups(input.SecurityGroups)
+	serverExtendParam := buildServerExtendParam(input)
+	rootVolume, err := buildRootVolumeStruct(input)
 	if err != nil {
-		return 
+		return
 	}
 
-	flavor,err:=getFlavorByHostType(input)
+	flavor, err := getFlavorByHostType(input)
 	if err != nil {
-		return 
+		return
 	}
 
-	opts := cloudservers.CreateOpts{
+	opts := v1_1.CreateOpts{
 		Name:             input.Name,
 		FlavorRef:        flavor,
 		ImageRef:         input.ImageId,
 		VpcId:            input.VpcId,
 		Nics:             nics,
 		RootVolume:       rootVolume,
-		AvailabilityZone: input.input.AilabilityZone,
-		Count:1,
-		ServerExtendParam:serverExtendParam,
+		AvailabilityZone: input.AilabilityZone,
+		Count:            1,
+		ExtendParam:      &serverExtendParam,
 	}
-	if input.Password == ""{
+	if input.Password == "" {
 		input.Password = utils.CreateRandomPassword()
 	}
-	opts.AdminPass  = input.Password
+	opts.AdminPass = input.Password
 
-	if len(tags) > 0
-		opts.ServerTags =tags
+	if len(tags) > 0 {
+		opts.ServerTags = tags
 	}
 	if len(securityGroups) > 0 {
-		opts.SecurityGroups=securityGroups
+		opts.SecurityGroups = securityGroups
 	}
 
-	sc, err := createVmServiceClient(cloudProviderParam,CLOUD_SERVER_V1_1)
+	sc, err := createVmServiceClient(input.CloudProviderParam, CLOUD_SERVER_V1_1)
 	if err != nil {
-		return nil,err
+		return
 	}
 
-	resp, err :=  v1_1.Create(sc, opts)
+	jobId, _, err := v1_1.Create(sc, opts)
 	if err != nil {
-		return 
+		return
 	}
 
-	output.Id ,err=waitVmJobOk(sc,resp.Job.Id)
+	output.Id, err = waitVmJobOk(sc, jobId)
 	if err != nil {
-		return 
+		return
 	}
 
 	output.Password, err = utils.AesEnPassword(input.Guid, input.Seed, input.Password, utils.DEFALT_CIPHER)
-	cpu,mem,_:=getCpuAndMemoryFromHostType(input.HostType)
-	output.Cpu=fmt.Sprintf("%v",cpu)
-	output.Memory =fmt.Sprintf("%v",mem)
-	vmInfo,err：=getVmInfoById(input,output.Id)
+	cpu, mem, _ := getCpuAndMemoryFromHostType(input.HostType)
+	output.Cpu = fmt.Sprintf("%v", cpu)
+	output.Memory = fmt.Sprintf("%v", mem)
+	vmInfo, err := getVmInfoById(input.CloudProviderParam, output.Id)
 	output.PrivateIp = vmInfo.AccessIPv4
 
-	return 
+	return
 }
 
 func (action *VmCreateAction) Do(inputs interface{}) (interface{}, error) {
@@ -477,8 +481,8 @@ type VmDeleteInputs struct {
 type VmDeleteInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid  string `json:"guid,omitempty"`
-	Id    string `json:"id,omitempty"`
+	Guid string `json:"guid,omitempty"`
+	Id   string `json:"id,omitempty"`
 }
 
 type VmDeleteOutputs struct {
@@ -503,16 +507,7 @@ func (action *VmDeleteAction) ReadParam(param interface{}) (interface{}, error) 
 	return inputs, nil
 }
 
-func (action *VmDeleteAction) ReadParam(param interface{}) (interface{}, error) {
-	var inputs VmDeleteInputs
-	err := UnmarshalJson(param, &inputs)
-	if err != nil {
-		return nil, err
-	}
-	return inputs, nil
-}
-
-func deleteVm(input VmDeleteInput)(output VmDeleteOutput,err erorr){
+func deleteVm(input VmDeleteInput) (output VmDeleteOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
@@ -525,14 +520,14 @@ func deleteVm(input VmDeleteInput)(output VmDeleteOutput,err erorr){
 	}()
 
 	if err = isCloudProvicerParamValid(input.CloudProviderParam); err != nil {
-		return 
+		return
 	}
-	if input.Id =="" {
-		err =fmt.ErrorF("id is empty")
-		return 
+	if input.Id == "" {
+		err = fmt.Errorf("id is empty")
+		return
 	}
 
-	exist,err:=isVmExist(input.CloudProviderParam,input.Id)
+	exist, err := isVmExist(input.CloudProviderParam, input.Id)
 	if err != nil || !exist {
 		return
 	}
@@ -540,14 +535,18 @@ func deleteVm(input VmDeleteInput)(output VmDeleteOutput,err erorr){
 	provider, err := createGopherCloudProviderClient(input.CloudProviderParam)
 	if err != nil {
 		logrus.Errorf("Get gophercloud provider client failed, error=%v", err)
-		return 
+		return
 	}
 
-	client, clientErr := openstack.NewComputeV2(provider, gophercloud.EndpointOpts{})
-	if err = servers.Delete(client, input.Id).ExtractErr();err != nil {
-		logrus.Errorf("delete vm(%v) failed ,err=%v",input.Id,err)
+	client, err := openstack.NewComputeV2(provider, gophercloud.EndpointOpts{})
+	if err != nil {
+		return
 	}
-	return 
+
+	if err = servers.Delete(client, input.Id).ExtractErr(); err != nil {
+		logrus.Errorf("delete vm(%v) failed ,err=%v", input.Id, err)
+	}
+	return
 }
 
 func (action *VmDeleteAction) Do(inputs interface{}) (interface{}, error) {
@@ -569,7 +568,7 @@ func (action *VmDeleteAction) Do(inputs interface{}) (interface{}, error) {
 
 type VmStartInput VmDeleteInput
 type VmStartInputs struct {
-	Inputs []VmStartInput`json:"inputs,omitempty"`
+	Inputs []VmStartInput `json:"inputs,omitempty"`
 }
 
 type VmStartOutput VmDeleteOutput
@@ -589,7 +588,7 @@ func (action *VmStartAction) ReadParam(param interface{}) (interface{}, error) {
 	return inputs, nil
 }
 
-func startVm(input VmStartInput)(output VmStartOutput,err error){
+func startVm(input VmStartInput) (output VmStartOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
@@ -602,21 +601,21 @@ func startVm(input VmStartInput)(output VmStartOutput,err error){
 	}()
 
 	if err = isCloudProvicerParamValid(input.CloudProviderParam); err != nil {
-		return 
+		return
 	}
-	if input.Id =="" {
-		err =fmt.ErrorF("id is empty")
-		return 
+	if input.Id == "" {
+		err = fmt.Errorf("id is empty")
+		return
 	}
 
-	sc, err := createVmServiceClient(cloudProviderParam,CLOUD_SERVER_V1)
+	sc, err := createVmServiceClient(input.CloudProviderParam, CLOUD_SERVER_V1)
 	if err != nil {
-		return 
+		return
 	}
 
 	opts := v1.BatchStartOpts{
 		Servers: []v1.Server{
-			{ID: input.Id,},
+			{ID: input.Id},
 		},
 	}
 
@@ -625,11 +624,11 @@ func startVm(input VmStartInput)(output VmStartOutput,err error){
 		return
 	}
 
-	if _ ,err=waitVmJobOk(sc,resp.Job.Id);err != nil {
-		logrus.Errorf("wait start job failed,err=%v",err)
-	}	
+	if _, err = waitVmJobOk(sc, resp.ID); err != nil {
+		logrus.Errorf("wait start job failed,err=%v", err)
+	}
 
-	return 
+	return
 }
 
 func (action *VmStartAction) Do(inputs interface{}) (interface{}, error) {
@@ -638,7 +637,7 @@ func (action *VmStartAction) Do(inputs interface{}) (interface{}, error) {
 	var finalErr error
 
 	for _, input := range vms.Inputs {
-		output, err := stopVm(input)
+		output, err := startVm(input)
 		if err != nil {
 			finalErr = err
 		}
@@ -649,10 +648,9 @@ func (action *VmStartAction) Do(inputs interface{}) (interface{}, error) {
 	return &outputs, finalErr
 }
 
-
 type VmStopInput VmDeleteInput
 type VmStopInputs struct {
-	Inputs []VmStopInput`json:"inputs,omitempty"`
+	Inputs []VmStopInput `json:"inputs,omitempty"`
 }
 
 type VmStopOutput VmDeleteOutput
@@ -663,7 +661,6 @@ type VmStopOutputs struct {
 type VmStopAction struct {
 }
 
-
 func (action *VmStopAction) ReadParam(param interface{}) (interface{}, error) {
 	var inputs VmStopInputs
 	err := UnmarshalJson(param, &inputs)
@@ -673,7 +670,7 @@ func (action *VmStopAction) ReadParam(param interface{}) (interface{}, error) {
 	return inputs, nil
 }
 
-func stopVm(input VmStopInput)(output VmStopOutput,err error){
+func stopVm(input VmStopInput) (output VmStopOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
@@ -686,34 +683,34 @@ func stopVm(input VmStopInput)(output VmStopOutput,err error){
 	}()
 
 	if err = isCloudProvicerParamValid(input.CloudProviderParam); err != nil {
-		return 
+		return
 	}
-	if input.Id =="" {
-		err =fmt.ErrorF("id is empty")
-		return 
-	}
-
-	sc, err := createVmServiceClient(cloudProviderParam,CLOUD_SERVER_V1)
-	if err != nil {
-		return 
+	if input.Id == "" {
+		err = fmt.Errorf("id is empty")
+		return
 	}
 
-	opts := cloudservers.BatchStopOpts{
-		Type: cloudservers.Type(cloudservers.Hard),
-		Servers: []cloudservers.Server{
-			{ID: input.Id},
-		},
-	}
-
-	resp, err := cloudservers.BatchStop(sc, opts).ExtractJob()
+	sc, err := createVmServiceClient(input.CloudProviderParam, CLOUD_SERVER_V1)
 	if err != nil {
 		return
 	}
 
-	if _ ,err=waitVmJobOk(sc,resp.Job.Id);err != nil {
-		logrus.Errorf("wait stop job failed,err=%v",err)
-	}	
-	return 
+	opts := v1.BatchStopOpts{
+		Type: v1.Type(v1.Hard),
+		Servers: []v1.Server{
+			{ID: input.Id},
+		},
+	}
+
+	resp, err := v1.BatchStop(sc, opts).ExtractJob()
+	if err != nil {
+		return
+	}
+
+	if _, err = waitVmJobOk(sc, resp.ID); err != nil {
+		logrus.Errorf("wait stop job failed,err=%v", err)
+	}
+	return
 }
 
 func (action *VmStopAction) Do(inputs interface{}) (interface{}, error) {
@@ -732,5 +729,3 @@ func (action *VmStopAction) Do(inputs interface{}) (interface{}, error) {
 	logrus.Infof("all vms= %v are stop", vms)
 	return &outputs, finalErr
 }
-
-
