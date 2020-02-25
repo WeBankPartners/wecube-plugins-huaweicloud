@@ -471,9 +471,13 @@ func createVm(input VmCreateInput) (output VmCreateOutput, err error) {
 	}
 
 	output.Password, err = utils.AesEnPassword(input.Guid, input.Seed, input.Password, utils.DEFALT_CIPHER)
+	if err != nil {
+		return
+	}
 	cpu, mem, _ := getCpuAndMemoryFromHostType(input.HostType)
 	output.Cpu = fmt.Sprintf("%v", cpu)
 	output.Memory = fmt.Sprintf("%v", mem)
+
 	output.PrivateIp, err = getVmIpAddress(input.CloudProviderParam, output.Id)
 
 	return
