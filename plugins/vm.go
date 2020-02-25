@@ -8,7 +8,6 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 	v1 "github.com/gophercloud/gophercloud/openstack/ecs/v1/cloudservers"
 	flavor "github.com/gophercloud/gophercloud/openstack/ecs/v1/flavor"
-	"github.com/gophercloud/gophercloud/openstack/ecs/v1/job"
 	v1_1 "github.com/gophercloud/gophercloud/openstack/ecs/v1_1/cloudservers"
 	"github.com/sirupsen/logrus"
 	"strconv"
@@ -118,7 +117,7 @@ type VmCreateAction struct {
 }
 
 func (action *VmCreateAction) ReadParam(param interface{}) (interface{}, error) {
-	var inputs VpcCreateInputs
+	var inputs VmCreateInputs
 	err := UnmarshalJson(param, &inputs)
 	if err != nil {
 		return nil, err
@@ -171,7 +170,7 @@ func checkVmCreateParams(input VmCreateInput) error {
 }
 
 func isVmExist(cloudProviderParam CloudProviderParam, id string) (bool, error) {
-	_, err := getVmInfoById(cloudProviderParam, id)
+	vmInfo, err := getVmInfoById(cloudProviderParam, id)
 	if err != nil {
 		if ue, ok := err.(*gophercloud.UnifiedError); ok {
 			if strings.Contains(ue.Message(), "could not be found") {
@@ -179,6 +178,9 @@ func isVmExist(cloudProviderParam CloudProviderParam, id string) (bool, error) {
 			}
 		}
 		return false, err
+	}
+	if vmInfo.Status == "DELETED" {
+		return false, nil
 	}
 	return true, nil
 }
@@ -190,7 +192,25 @@ func getVmInfoById(cloudProviderParam CloudProviderParam, id string) (*v1.CloudS
 	}
 
 	vmInfo, err := v1.Get(sc, id).Extract()
+	if err != nil {
+		logrus.Errorf("getvmInfoById failed err=%v\n", err)
+	}
 	return vmInfo, err
+}
+
+func getVmIpAddress(cloudProviderParam CloudProviderParam, id string) (string, error) {
+	vmInfo, err := getVmInfoById(cloudProviderParam, id)
+	if err != nil {
+		return "", err
+	}
+
+	for _, addresses := range vmInfo.Addresses {
+		for _, address := range addresses {
+			return address.Addr, nil
+		}
+	}
+
+	return "", fmt.Errorf("can't get vm(%v) lan ip", id)
 }
 
 func buildVmNicStruct(input VmCreateInput) []v1_1.Nic {
@@ -339,17 +359,18 @@ func getFlavorByHostType(input VmCreateInput) (string, error) {
 			instanceType = item.ID
 		}
 	}
-
+	logrus.Infof("get instancetype=%v", instanceType)
 	return instanceType, nil
 }
 
 func waitVmJobOk(sc *gophercloud.ServiceClient, jobId string) (string, error) {
-	var jobRst job.JobResult
+	var jobRst v1_1.JobResult
 
 	for {
-		time.Sleep(time.Duration(10) * time.Second)
-		job, getJobErr := job.GetJobResult(sc, jobId)
+		time.Sleep(time.Duration(5) * time.Second)
+		job, getJobErr := v1_1.GetJobResult(sc, jobId)
 		if getJobErr != nil {
+			logrus.Errorf("getJobResult failed err =%v", getJobErr)
 			return "", getJobErr
 		}
 
@@ -388,7 +409,9 @@ func createVm(input VmCreateInput) (output VmCreateOutput, err error) {
 		return
 	}
 	if input.Id != "" {
-		if _, err = getVmInfoById(input.CloudProviderParam, input.Id); err != nil {
+		exist := false
+		exist, err = isVmExist(input.CloudProviderParam, input.Id)
+		if err == nil && exist {
 			output.Id = input.Id
 			return
 		}
@@ -451,8 +474,7 @@ func createVm(input VmCreateInput) (output VmCreateOutput, err error) {
 	cpu, mem, _ := getCpuAndMemoryFromHostType(input.HostType)
 	output.Cpu = fmt.Sprintf("%v", cpu)
 	output.Memory = fmt.Sprintf("%v", mem)
-	vmInfo, err := getVmInfoById(input.CloudProviderParam, output.Id)
-	output.PrivateIp = vmInfo.AccessIPv4
+	output.PrivateIp, err = getVmIpAddress(input.CloudProviderParam, output.Id)
 
 	return
 }
