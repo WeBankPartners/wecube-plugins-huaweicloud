@@ -307,17 +307,17 @@ func (action *SubnetDeleteAction) Do(inputs interface{}) (interface{}, error) {
 	return &outputs, finalErr
 }
 
-func getSubnetIdByNetworkId(param CloudProviderParam,id string)(string,error){
-	sc, err := CreateVpcServiceClientV1(input.CloudProviderParam)
+func getSubnetIdByNetworkId(param CloudProviderParam, id string) (string, error) {
+	sc, err := CreateVpcServiceClientV1(param)
 	if err != nil {
 		logrus.Errorf("CreateVpcServiceClient[%v] meet error=%v", VPC_SERVICE_CLIENT_V1, err)
-		return "",err
+		return "", err
 	}
 
 	resp, err := subnets.Get(sc, id).Extract()
 	if err != nil {
-		return "",err
+		return "", err
 	}
-	return resp.NeutronSubnetID,nil
+	return resp.NeutronSubnetID, nil
 
 }

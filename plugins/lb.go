@@ -208,9 +208,9 @@ func createLb(input CreateLbInput) (output CreateLbOutput, err error) {
 		}
 	}
 
-	neutronSubnetID,err:=getSubnetIdByNetworkId(input.CloudProviderParam,input.SubnetId)
+	neutronSubnetID, err := getSubnetIdByNetworkId(input.CloudProviderParam, input.SubnetId)
 	if err != nil {
-		return 
+		return
 	}
 
 	trueVlaue := true

@@ -37,6 +37,7 @@ func createPublicIp(params CloudProviderParam, bandwidthSize string, enterpriseP
 			IPVersion: 4,
 		},
 		Bandwidth: publicips.BandWidth{
+			Name:      "wecubeCreated",
 			ShareType: BANDWIDTH_SHARE_TYPE_PER,
 			Size:      size,
 		},
@@ -53,8 +54,7 @@ func updatePublicIpPortId(params CloudProviderParam, lbId string, portId string)
 	}
 
 	_, err = publicips.Update(sc, lbId, publicips.UpdateOpts{
-		IPVersion: 4,
-		PortId:    portId,
+		PortId: portId,
 	}).Extract()
 
 	return err
