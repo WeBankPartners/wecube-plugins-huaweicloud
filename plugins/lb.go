@@ -208,12 +208,17 @@ func createLb(input CreateLbInput) (output CreateLbOutput, err error) {
 		}
 	}
 
+	neutronSubnetID,err:=getSubnetIdByNetworkId(input.CloudProviderParam,input.SubnetId)
+	if err != nil {
+		return 
+	}
+
 	trueVlaue := true
 	opts := loadbalancers.CreateOpts{
 		Name:         input.Name,
 		AdminStateUp: &trueVlaue,
 		Provider:     "vlb",
-		VipSubnetID:  input.SubnetId,
+		VipSubnetID:  neutronSubnetID,
 	}
 
 	sc, err := createLbServiceClient(input.CloudProviderParam)
