@@ -24,6 +24,9 @@ const (
 	CLOUD_SERVER_V1   = "v1"
 	CLOUD_SERVER_V1_1 = "v1_1"
 	CLOUD_SERVER_V2   = "v2"
+
+	MEMORY_UNIT="G"
+	CPU_UNIT="C"
 )
 
 var vmActions = make(map[string]Action)
@@ -282,7 +285,7 @@ func buildRootVolumeStruct(input VmCreateInput) (v1_1.RootVolume, error) {
 func getCpuAndMemoryFromHostType(hostType string) (int64, int64, error) {
 	//1C2G, 2C4G, 2C8G
 	upperCase := strings.ToUpper(hostType)
-	index := strings.Index(upperCase, "C")
+	index := strings.Index(upperCase, CPU_UNIT)
 	if index <= 0 {
 		return 0, 0, fmt.Errorf("hostType(%v) invalid", hostType)
 	}
@@ -292,7 +295,7 @@ func getCpuAndMemoryFromHostType(hostType string) (int64, int64, error) {
 	}
 
 	memStr := upperCase[index+1:]
-	index2 := strings.Index(memStr, "G")
+	index2 := strings.Index(memStr, MEMORY_UNIT)
 	if index2 <= 0 {
 		return 0, 0, fmt.Errorf("hostType(%v) invalid", hostType)
 	}
@@ -408,11 +411,17 @@ func createVm(input VmCreateInput) (output VmCreateOutput, err error) {
 	if err = checkVmCreateParams(input); err != nil {
 		return
 	}
+
+	cpu, mem, _ := getCpuAndMemoryFromHostType(input.HostType)
+	output.Cpu = fmt.Sprintf("%v", cpu)
+	output.Memory = fmt.Sprintf("%v", mem)
+
 	if input.Id != "" {
 		exist := false
 		exist, err = isVmExist(input.CloudProviderParam, input.Id)
 		if err == nil && exist {
 			output.Id = input.Id
+			output.PrivateIp, _ = getVmIpAddress(input.CloudProviderParam, input.Id)
 			return
 		}
 	}
@@ -447,7 +456,6 @@ func createVm(input VmCreateInput) (output VmCreateOutput, err error) {
 		input.Password = utils.CreateRandomPassword()
 	}
 	opts.AdminPass = input.Password
-
 	if len(tags) > 0 {
 		opts.ServerTags = tags
 	}
@@ -474,10 +482,6 @@ func createVm(input VmCreateInput) (output VmCreateOutput, err error) {
 	if err != nil {
 		return
 	}
-	cpu, mem, _ := getCpuAndMemoryFromHostType(input.HostType)
-	output.Cpu = fmt.Sprintf("%v", cpu)
-	output.Memory = fmt.Sprintf("%v", mem)
-
 	output.PrivateIp, err = getVmIpAddress(input.CloudProviderParam, output.Id)
 
 	return
