@@ -25,8 +25,8 @@ const (
 	CLOUD_SERVER_V1_1 = "v1_1"
 	CLOUD_SERVER_V2   = "v2"
 
-	MEMORY_UNIT="G"
-	CPU_UNIT="C"
+	MEMORY_UNIT = "G"
+	CPU_UNIT    = "C"
 )
 
 var vmActions = make(map[string]Action)

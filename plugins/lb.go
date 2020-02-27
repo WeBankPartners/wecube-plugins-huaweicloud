@@ -3,9 +3,9 @@ package plugins
 import (
 	"fmt"
 	"github.com/gophercloud/gophercloud"
-	"github.com/sirupsen/logrus"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/loadbalancers"
+	"github.com/sirupsen/logrus"
 	"strings"
 	"time"
 )
@@ -18,13 +18,13 @@ const (
 var lbActions = make(map[string]Action)
 
 func init() {
-	lbActions["create"] = new(lbCreateAction)
-	lbActions["delete"] = new(lbDeleteAction)
-	lbActions["add-host"] = new(lbAddHostAction)
-	lbActions["delete-host"] = new(lbDeleteHostAction)
+	lbActions["create"] = new(CreateLbAction)
+	lbActions["delete"] = new(DeleteLbAction)
+	//	lbActions["add-host"] = new(LbAddHostAction)
+	//	lbActions["delete-host"] = new(LbDeleteHostAction)
 }
 
-func createLbServiceClient(params CloudProviderParam)(*gophercloud.ServiceClient, error) {
+func createLbServiceClient(params CloudProviderParam) (*gophercloud.ServiceClient, error) {
 	provider, err := createGopherCloudProviderClient(params)
 	if err != nil {
 		return nil, err
@@ -32,9 +32,9 @@ func createLbServiceClient(params CloudProviderParam)(*gophercloud.ServiceClient
 
 	sc, err := openstack.NewNetworkV2(provider, gophercloud.EndpointOpts{})
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
-	return sc,err 
+	return sc, err
 }
 
 type LoadbalancerPlugin struct {
@@ -62,18 +62,18 @@ type CreateLbInput struct {
 	Guid string `json:"guid,omitempty"`
 	Id   string `json:"id,omitempty"`
 
-	Name           string `json:"name"`
+	Name string `json:"name"`
 	//VpcId          string `json:"vpc_id"`
-	Type           string `json:"type"` 
-	SubnetId       string `json:"subnet_id"` 
+	Type     string `json:"type"`
+	SubnetId string `json:"subnet_id"`
 
 	//external lb param
-	BandwidthSize  string `json:"bandwidth_size"` 
+	BandwidthSize       string `json:"bandwidth_size"`
 	EnterpriseProjectId string `json:"enterprise_project_id,omitempty"`
 }
 
 type CreateLbOutputs struct {
-	Outputs []CreateClbOutput `json:"outputs,omitempty"`
+	Outputs []CreateLbOutput `json:"outputs,omitempty"`
 }
 
 type CreateLbOutput struct {
@@ -93,7 +93,7 @@ func (action *CreateLbAction) ReadParam(param interface{}) (interface{}, error) 
 	return inputs, nil
 }
 
-func checkLbCreateParams(input LbCreateInput) error { 
+func checkLbCreateParams(input CreateLbInput) error {
 	if err := isCloudProvicerParamValid(input.CloudProviderParam); err != nil {
 		return err
 	}
@@ -101,37 +101,37 @@ func checkLbCreateParams(input LbCreateInput) error {
 		return fmt.Errorf("empty name")
 	}
 
-	if err :=isValidStringValue("lb type",input.Type,[]string{LB_TYPE_INTERNAL,	LB_TYPE_EXTERNAL});err!= nil {
-		return err 
+	if err := isValidStringValue("lb type", input.Type, []string{LB_TYPE_INTERNAL, LB_TYPE_EXTERNAL}); err != nil {
+		return err
 	}
-	
-	if input.SubnetId == ""{
-		return fmt.Errrorf("empty subnetId")
+
+	if input.SubnetId == "" {
+		return fmt.Errorf("empty subnetId")
 	}
-	if input.Type == LB_TYPE_EXTERNAL{
-		if _,err:=isValidInteger(input.BandwidthSize,BANDWIDTH_SIZE_MIN,BANDWIDTH_SIZE_MAX);err != nil {
-			return fmt.Errorf("bandwidth size(%v) is not in [%v,%v]",input.BandwidthSize,BANDWIDTH_SIZE_MIN,BANDWIDTH_SIZE_MAX)
+	if input.Type == LB_TYPE_EXTERNAL {
+		if _, err := isValidInteger(input.BandwidthSize, BANDWIDTH_SIZE_MIN, BANDWIDTH_SIZE_MAX); err != nil {
+			return fmt.Errorf("bandwidth size(%v) is not in [%v,%v]", input.BandwidthSize, BANDWIDTH_SIZE_MIN, BANDWIDTH_SIZE_MAX)
 		}
 	}
 
-	return nil 
+	return nil
 }
 
-func getLbInfoById(cloudProviderParam CloudProviderParam, id string)(*loadbalancers.LoadBalancer,error){
-	sc,err:=createLbServiceClient(cloudProviderParam)
+func getLbInfoById(cloudProviderParam CloudProviderParam, id string) (*loadbalancers.LoadBalancer, error) {
+	sc, err := createLbServiceClient(cloudProviderParam)
 	if err != nil {
-		return false,err
+		return nil, err
 	}
 
-	lbInfo,err:= loadbalancers.Get(sc,id).Extract()
+	lbInfo, err := loadbalancers.Get(sc, id).Extract()
 	if err != nil {
-		logrus.Errorf("getLbInfoById meet err=%v",err)
+		logrus.Errorf("getLbInfoById meet err=%v", err)
 	}
-	return lbInfo,err
+	return lbInfo, err
 }
 
 func isLbExist(cloudProviderParam CloudProviderParam, id string) (bool, error) {
-	lbInfo,err:=getLbInfoById(cloudProviderParam,id)
+	_, err := getLbInfoById(cloudProviderParam, id)
 	if err != nil {
 		if ue, ok := err.(*gophercloud.UnifiedError); ok {
 			if strings.Contains(ue.Message(), "could not be found") {
@@ -143,48 +143,48 @@ func isLbExist(cloudProviderParam CloudProviderParam, id string) (bool, error) {
 	return true, nil
 }
 
-func waitLbCreateOk(cloudProviderParam CloudProviderParam, id string)error{
+func waitLbCreateOk(cloudProviderParam CloudProviderParam, id string) error {
 	for {
 		time.Sleep(time.Duration(5) * time.Second)
-		lbInfo,err:=getLbInfoById(cloudProviderParam,id)
+		lbInfo, err := getLbInfoById(cloudProviderParam, id)
 		if err != nil {
-			return err 
+			return err
 		}
-		if lbInfo.ProvisoningStatus =="ERROR" {
+		if lbInfo.ProvisioningStatus == "ERROR" {
 			return fmt.Errorf("waitLb createOk,meet status ==ERROR")
 		}
 
-		if lbInfo.ProvisioningStatus =="ACTIVE"{
+		if lbInfo.ProvisioningStatus == "ACTIVE" {
 			break
 		}
 	}
 	return nil
 }
 
-func getLbIpAddress(input LbCreateInput,id string) (string,error){
-	lbInfo,err := getLbInfoById(input.CloudProviderParam,id)
+func getLbIpAddress(input CreateLbInput, id string) (string, error) {
+	lbInfo, err := getLbInfoById(input.CloudProviderParam, id)
 	if err != nil {
-		return "",err
+		return "", err
 	}
-	if input.Type == LB_TYPE_INTERNAL{
-		return lbInfo.VipAddress,nil 
+	if input.Type == LB_TYPE_INTERNAL {
+		return lbInfo.VipAddress, nil
 	}
 
 	//https://support.huaweicloud.com/api-elb/zh-cn_topic_0096561535.html
-	publicIpInfo,err:=createPublicIp(input.CloudProviderParam,input.BandwidthSize,input.ShareType,input.EnterpriseProjectId)
+	publicIpInfo, err := createPublicIp(input.CloudProviderParam, input.BandwidthSize, input.EnterpriseProjectId)
 	if err != nil {
-		return "",err
+		return "", err
 	}
 
-	//update publicIp,bind public ip to port id 
-	if err =updatePublicIpPortId(input.CloudProviderParam,publicIpInfo.ID,lbInfo.PortID);err!= nil {
-		return "",err
+	//update publicIp,bind public ip to port id
+	if err = updatePublicIpPortId(input.CloudProviderParam, publicIpInfo.ID, lbInfo.VipPortID); err != nil {
+		return "", err
 	}
 
-	return publicIpInfo.PublicIpAddress,nil 
+	return publicIpInfo.PublicIpAddress, nil
 }
 
-func createLb(input LbCreateInput)(output LbCreateOutput,err error){
+func createLb(input CreateLbInput) (output CreateLbOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
@@ -196,11 +196,11 @@ func createLb(input LbCreateInput)(output LbCreateOutput,err error){
 		}
 	}()
 
-	if err = checkLbCreateParams(input);err != nil {
-		return 
+	if err = checkLbCreateParams(input); err != nil {
+		return
 	}
-	if input.Id!= "" {
-		exist:=false
+	if input.Id != "" {
+		exist := false
 		exist, err = isLbExist(input.CloudProviderParam, input.Id)
 		if err == nil && exist {
 			output.Id = input.Id
@@ -209,36 +209,36 @@ func createLb(input LbCreateInput)(output LbCreateOutput,err error){
 	}
 
 	trueVlaue := true
-	opts:=loadbalancers.CreateOpts{
-		Name:input.Name,
+	opts := loadbalancers.CreateOpts{
+		Name:         input.Name,
 		AdminStateUp: &trueVlaue,
 		Provider:     "vlb",
-		VipSubnetID:input.SubetId,
+		VipSubnetID:  input.SubnetId,
 	}
 
-	sc,err:=createLbServiceClient(input.CloudProviderParam)
+	sc, err := createLbServiceClient(input.CloudProviderParam)
 	if err != nil {
-		return 
+		return
 	}
 
-	resp,err:=loadbalancers.Create(sc,opts).Extract()
+	resp, err := loadbalancers.Create(sc, opts).Extract()
 	if err != nil {
-		return 
+		return
 	}
 	output.Id = resp.ID
-	if err = waitLbCreateOk(input.CloudProviderParam,resp.ID);err != nil {
-		return 
+	if err = waitLbCreateOk(input.CloudProviderParam, resp.ID); err != nil {
+		return
 	}
-	output.Vip,err =getLbIpAddress(input.CloudProviderParam,resp.ID,input.Type)
-	return 
+	output.Vip, err = getLbIpAddress(input, resp.ID)
+	return
 }
 
 func (action *CreateLbAction) Do(inputs interface{}) (interface{}, error) {
-	inputs, _ := inputs.(LbCreateInputs)
-	outputs := LbCreateOutputs{}
+	lbs, _ := inputs.(CreateLbInputs)
+	outputs := CreateLbOutputs{}
 	var finalErr error
 
-	for _, input := range inputs.Inputs {
+	for _, input := range lbs.Inputs {
 		output, err := createLb(input)
 		if err != nil {
 			finalErr = err
@@ -266,7 +266,7 @@ type DeleteLbInput struct {
 }
 
 type DeleteLbOutputs struct {
-	Outputs []DeleteClbOutput `json:"outputs,omitempty"`
+	Outputs []DeleteLbOutput `json:"outputs,omitempty"`
 }
 
 type DeleteLbOutput struct {
@@ -284,22 +284,22 @@ func (action *DeleteLbAction) ReadParam(param interface{}) (interface{}, error) 
 	return inputs, nil
 }
 
-func deleteLbPublicIp(cloudProviderParam CloudProviderParam,id string)error{
-	lbInfo,err:=getLbInfoById(cloudProviderParam, id)
+func deleteLbPublicIp(cloudProviderParam CloudProviderParam, id string) error {
+	lbInfo, err := getLbInfoById(cloudProviderParam, id)
 	if err != nil {
 		return err
 	}
 
-	publicIp,err:=getPublicIpByPortId(cloudProviderParam,lbInfo.PortID)
+	publicIp, err := getPublicIpByPortId(cloudProviderParam, lbInfo.VipPortID)
 	if err != nil {
 		return err
 	}
 
-	err = deletePublicIp(cloudProviderParam,publicIp.ID)
-	return err 
+	err = deletePublicIp(cloudProviderParam, publicIp.ID)
+	return err
 }
 
-func deleteLb(input LbDeleteInput)(output LbDeleteOutput,err error){
+func deleteLb(input DeleteLbInput) (output DeleteLbOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
@@ -312,42 +312,43 @@ func deleteLb(input LbDeleteInput)(output LbDeleteOutput,err error){
 	}()
 
 	if err = isCloudProvicerParamValid(input.CloudProviderParam); err != nil {
-		return 
+		return
 	}
 	if input.Id == "" {
-		return fmt.Errorf("empty id")
+		err = fmt.Errorf("empty id")
+		return
 	}
-	if err =isValidStringValue("lb type",input.Type,[]string{LB_TYPE_INTERNAL,	LB_TYPE_EXTERNAL});err!= nil {
-		return 
+	if err = isValidStringValue("lb type", input.Type, []string{LB_TYPE_INTERNAL, LB_TYPE_EXTERNAL}); err != nil {
+		return
 	}
 
-	exist,err=isLbExist(input.CloudProviderParam, input.Id)
+	exist, err := isLbExist(input.CloudProviderParam, input.Id)
 	if err != nil || !exist {
-		return 
+		return
 	}
 
-	if input.Type == LB_TYPE_EXTERNAL{
-		if err=deleteLbPublicIp(input.CloudProviderParam, input.Id);err != nil {
-			return 
+	if input.Type == LB_TYPE_EXTERNAL {
+		if err = deleteLbPublicIp(input.CloudProviderParam, input.Id); err != nil {
+			return
 		}
 	}
 
 	//delete lb
-	sc,err:=createLbServiceClient(input.CloudProviderParam)
+	sc, err := createLbServiceClient(input.CloudProviderParam)
 	if err != nil {
-		return 
+		return
 	}
 	err = loadbalancers.Delete(sc, input.Id).ExtractErr()
 
-	return 
+	return
 }
 
 func (action *DeleteLbAction) Do(inputs interface{}) (interface{}, error) {
-	inputs, _ := inputs.(LbDeleteInputs)
-	outputs := LbDeleteOutputs{}
+	lbs, _ := inputs.(DeleteLbInputs)
+	outputs := DeleteLbOutputs{}
 	var finalErr error
 
-	for _, input := range inputs.Inputs {
+	for _, input := range lbs.Inputs {
 		output, err := deleteLb(input)
 		if err != nil {
 			finalErr = err
