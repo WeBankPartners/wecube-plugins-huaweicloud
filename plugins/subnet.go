@@ -5,9 +5,9 @@ import (
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/vpc/v1/subnets"
 	"github.com/sirupsen/logrus"
+	"net"
 	"strings"
 	"time"
-	"net"
 )
 
 var subnetActions = make(map[string]Action)
@@ -52,7 +52,7 @@ type SubnetCreateOutput struct {
 	Result
 	Guid string `json:"guid,omitempty"`
 	Id   string `json:"id,omitempty"`
-	SubnetId string `json:"subnet_id,omitempty"`
+	//	SubnetId string `json:"subnet_id,omitempty"`
 }
 
 type SubnetCreateAction struct {
@@ -184,7 +184,7 @@ func createSubnet(input SubnetCreateInput) (output SubnetCreateOutput, err error
 	}
 
 	output.Id = resp.ID
-	output.SubnetId = resp.NeutronSubnetID
+	//output.SubnetId = resp.NeutronSubnetID
 	if err = waitSubnetCreateOk(sc, output.Id); err != nil {
 		logrus.Errorf("waitSubnetCreateOk meet err=%v", err)
 	}
@@ -316,18 +316,18 @@ func getSubnetIdByNetworkId(param CloudProviderParam, id string) (string, error)
 
 	resp, err := subnets.Get(sc, id).Extract()
 	if err != nil {
-		logrus.Errorf("getSubnetIdByNetworkId failed,id(%v),err=%v",id,err)
+		logrus.Errorf("getSubnetIdByNetworkId failed,id(%v),err=%v", id, err)
 		return "", err
 	}
 	return resp.NeutronSubnetID, nil
 }
 
-func getVpcAllSubnets(param CloudProviderParam,vpcId string)([]subnets.Subnet,error){
-	subnets:=[]subnets.Subnet{}
+func getVpcAllSubnets(param CloudProviderParam, vpcId string) ([]subnets.Subnet, error) {
+	rtnSubnets := []subnets.Subnet{}
 
 	sc, err := CreateVpcServiceClientV1(param)
 	if err != nil {
-		return subnets, err
+		return rtnSubnets, err
 	}
 
 	allPages, err := subnets.List(sc, subnets.ListOpts{
@@ -335,24 +335,24 @@ func getVpcAllSubnets(param CloudProviderParam,vpcId string)([]subnets.Subnet,er
 		Limit: 20,
 	}).AllPages()
 	if err != nil {
-		logrus.Errorf("getVpcAllSubnets,list meet err=%v",err)
-		return subnets, err
+		logrus.Errorf("getVpcAllSubnets,list meet err=%v", err)
+		return rtnSubnets, err
 	}
 
-	subnets, err= subnets.ExtractSubnets(allPages)
+	rtnSubnets, err = subnets.ExtractSubnets(allPages)
 	if err != nil {
-		logrus.Errorf("getVpcAllSubnets,ExtractSubnets meet err=%v",err)
+		logrus.Errorf("getVpcAllSubnets,ExtractSubnets meet err=%v", err)
 	}
-	return subnets,err
+	return rtnSubnets, err
 }
-func getSubnetIdByIpAddress(subnets []subnets.Subnet,address string)(string,error){
-	for _,subnet:=range subnets {
-		_,netRange,_:=net.ParseCIDR(subnet.Cidr)
-		ip:=net.ParseIP(address)
+func getSubnetIdByIpAddress(subnets []subnets.Subnet, address string) (string, error) {
+	for _, subnet := range subnets {
+		_, netRange, _ := net.ParseCIDR(subnet.Cidr)
+		ip := net.ParseIP(address)
 		if netRange.Contains(ip) {
-			return subnet.NeutronSubnetID,nil
+			return subnet.NeutronSubnetID, nil
 		}
 	}
-	logrus.Errorf("getSubnetIdByIpAddress,ip(%v) nout found",address)
-	return "",fmt.Errorf("ip(%v) is not found",address)
+	logrus.Errorf("getSubnetIdByIpAddress,ip(%v) nout found", address)
+	return "", fmt.Errorf("ip(%v) is not found", address)
 }
