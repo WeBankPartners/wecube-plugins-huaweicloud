@@ -307,9 +307,10 @@ func (action *DelLbHostAction) ReadParam(param interface{}) (interface{}, error)
 	return inputs, nil
 }
 
-func getMemberIdByIp(allMembers []pools.Member, ip string) (string, error) {
+func getMemberIdByIpAndPort(allMembers []pools.Member, ip string,port string) (string, error) {
+	portInt,_:=strconv.Atoi(port)
 	for _, member := range allMembers {
-		if member.Address == ip {
+		if member.Address == ip && portInt == member.ProtocolPort {
 			return member.ID, nil
 		}
 	}
@@ -317,29 +318,39 @@ func getMemberIdByIp(allMembers []pools.Member, ip string) (string, error) {
 	return "", fmt.Errorf("can't found address(%v) in pool member", ip)
 }
 
+func getAllPoolMembers(sc *gophercloud.ServiceClient,poolId string)([]pools.Member,error){
+	allMembers:=[]pools.Member{}
+	allPages, err := pools.ListMembers(sc, poolId, pools.ListMembersOpts{}).AllPages()
+	if err != nil {
+		logrus.Errorf("lb pool listMembers meet err=%v", err)
+		return allMembers,err
+	}
+	allMembers, err = pools.ExtractMembers(allPages)
+	if err != nil {
+		logrus.Errorf("lb pool ExtractMembers meet err=%v", err)
+		return allMembers,err
+	}
+	return allMembers,nil
+}
+
 func ensureDeleteHostFromPool(params CloudProviderParam, hostIds []string, hostPorts []string, poolId string) error {
 	sc, err := createLbServiceClient(params)
 	if err != nil {
 		return err
 	}
-	allPages, err := pools.ListMembers(sc, poolId, pools.ListMembersOpts{}).AllPages()
-	if err != nil {
-		logrus.Errorf("lb pool listMembers meet err=%v", err)
-		return err
-	}
-	allMembers, err := pools.ExtractMembers(allPages)
-	if err != nil {
-		logrus.Errorf("lb pool ExtractMembers meet err=%v", err)
-		return err
+
+	allMembers,err:=getAllPoolMembers(sc, poolId)
+	if err!= nil {
+		return err 
 	}
 
-	for _, hostId := range hostIds {
+	for i, hostId := range hostIds {
 		vm, err := getVmInfoById(params, hostId)
 		if err != nil {
 			return err
 		}
 		address, _ := getIpFromVmInfo(vm)
-		memberId, err := getMemberIdByIp(allMembers, address)
+		memberId, err := getMemberIdByIpAndPort(allMembers, address,hostPorts[i])
 		if err != nil {
 			continue
 		}
@@ -433,6 +444,18 @@ func deleteLbPools(params CloudProviderParam, id string) error {
 	if err = monitors.Delete(sc, pool.MonitorID).ExtractErr(); err != nil {
 		logrus.Errorf("delete monitor meet err=%v", err)
 		return err
+	}
+
+	//get member and delete
+	allMembers,err:=getAllPoolMembers(sc, poolId)
+	if err != nil {
+		return err 
+	} 
+	for _,member:=range allMembers{
+		if err = pools.DeleteMember(sc, poolId, member.ID).ExtractErr(); err != nil {
+			logrus.Errorf("lb pools deleteMember meet err=%v", err)
+			return err
+		}
 	}
 
 	err = pools.Delete(sc, id).ExtractErr()
