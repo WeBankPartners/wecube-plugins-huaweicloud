@@ -53,6 +53,7 @@ func init() {
 	RegisterPlugin("subnet", new(SubnetPlugin))
 	RegisterPlugin("vm", new(VmPlugin))
 	RegisterPlugin("lb", new(LoadbalancerPlugin))
+	RegisterPlugin("lb-target", new(LbTargetPlugin))
 
 }
 

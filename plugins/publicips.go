@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"github.com/gophercloud/gophercloud/openstack/vpc/v1/publicips"
 	"strconv"
 )
@@ -21,7 +22,11 @@ func getPublicIpInfo(params CloudProviderParam, id string) (*publicips.PublicIP,
 		return nil, err
 	}
 
-	return publicips.Get(sc, id).Extract()
+	publicIp,err:= publicips.Get(sc, id).Extract()
+	if err != nil {
+		logrus.Errorf("getPublicIp meet err=%v",err)
+	}
+	return publicIp,err
 }
 
 func createPublicIp(params CloudProviderParam, bandwidthSize string, enterpriseProjectId string) (*publicips.PublicIPCreateResp, error) {
@@ -43,6 +48,9 @@ func createPublicIp(params CloudProviderParam, bandwidthSize string, enterpriseP
 		},
 		EnterpriseProjectId: enterpriseProjectId,
 	}).Extract()
+	if err != nil {
+		logrus.Errorf("createPublicIp meet err=%v",err)
+	}
 
 	return resp, err
 }
@@ -56,6 +64,9 @@ func updatePublicIpPortId(params CloudProviderParam, lbId string, portId string)
 	_, err = publicips.Update(sc, lbId, publicips.UpdateOpts{
 		PortId: portId,
 	}).Extract()
+	if err != nil {
+		logrus.Errorf("updatePublicIpPortId meet err=%v",err)
+	}
 
 	return err
 }
@@ -68,6 +79,7 @@ func deletePublicIp(params CloudProviderParam, id string) error {
 
 	resp := publicips.Delete(sc, id)
 	if resp.Err != nil {
+		logrus.Errorf("deletePublicIp meet err=%v",err)
 		return resp.Err
 	}
 
@@ -84,11 +96,13 @@ func getPublicIpByPortId(params CloudProviderParam, portId string) (*publicips.P
 		Limit: 100,
 	}).AllPages()
 	if err != nil {
+		logrus.Errorf("getPublicIpByPortId list meet err=%v",err)
 		return nil, err
 	}
 
 	publicipList, err := publicips.ExtractPublicIPs(allPages)
 	if err != nil {
+		logrus.Errorf("getPublicIpByPortId ExtractPublicIPs meet err=%v",err)
 		return nil, err
 	}
 

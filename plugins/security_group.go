@@ -97,7 +97,6 @@ func (action *SecurityGroupCreateAction) createSecurityGroup(input *SecurityGrou
 	// create vpc service client
 	sc, err := CreateVpcServiceClientV1(input.CloudProviderParam)
 	if err != nil {
-		logrus.Errorf("CreateVpcServiceClient[%v] meet error=%v", VPC_SERVICE_CLIENT_V1, err)
 		return
 	}
 
@@ -215,7 +214,6 @@ func (action *SecurityGroupDeleteAction) deleteSecurityGroup(input *SecurityGrou
 	// Create vpc service client
 	sc, err := CreateVpcServiceClientV1(input.CloudProviderParam)
 	if err != nil {
-		logrus.Errorf("CreateVpcServiceClient[%v] meet error=%v", VPC_SERVICE_CLIENT_V1, err)
 		return
 	}
 

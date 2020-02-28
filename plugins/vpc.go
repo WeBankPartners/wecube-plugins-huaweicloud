@@ -120,7 +120,6 @@ func (action *VpcCreateAction) createVpc(input *VpcCreateInput) (output VpcCreat
 	// create vpc service client
 	sc, err := CreateVpcServiceClientV1(input.CloudProviderParam)
 	if err != nil {
-		logrus.Errorf("CreateVpcServiceClient[%v] meet error=%v", VPC_SERVICE_CLIENT_V1, err)
 		return
 	}
 
@@ -287,7 +286,6 @@ func (action *VpcDeleteAction) deleteVpc(input *VpcDeleteInput) (output VpcDelet
 	// Create vpc service client
 	sc, err := CreateVpcServiceClientV1(input.CloudProviderParam)
 	if err != nil {
-		logrus.Errorf("CreateVpcServiceClient[%v] meet error=%v", VPC_SERVICE_CLIENT_V1, err)
 		return
 	}
 

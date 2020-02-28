@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"strings"
 	"time"
+	"net"
 )
 
 var subnetActions = make(map[string]Action)
@@ -51,6 +52,7 @@ type SubnetCreateOutput struct {
 	Result
 	Guid string `json:"guid,omitempty"`
 	Id   string `json:"id,omitempty"`
+	SubnetId string `json:"subnet_id,omitempty"`
 }
 
 type SubnetCreateAction struct {
@@ -149,7 +151,6 @@ func createSubnet(input SubnetCreateInput) (output SubnetCreateOutput, err error
 
 	sc, err := CreateVpcServiceClientV1(input.CloudProviderParam)
 	if err != nil {
-		logrus.Errorf("CreateVpcServiceClient[%v] meet error=%v", VPC_SERVICE_CLIENT_V1, err)
 		return
 	}
 
@@ -183,6 +184,7 @@ func createSubnet(input SubnetCreateInput) (output SubnetCreateOutput, err error
 	}
 
 	output.Id = resp.ID
+	output.SubnetId = resp.NeutronSubnetID
 	if err = waitSubnetCreateOk(sc, output.Id); err != nil {
 		logrus.Errorf("waitSubnetCreateOk meet err=%v", err)
 	}
@@ -271,7 +273,6 @@ func deleteSubnet(input SubnetDeleteInput) (output SubnetDeleteOutput, err error
 
 	sc, err := CreateVpcServiceClientV1(input.CloudProviderParam)
 	if err != nil {
-		logrus.Errorf("CreateVpcServiceClient[%v] meet error=%v", VPC_SERVICE_CLIENT_V1, err)
 		return
 	}
 
@@ -310,14 +311,48 @@ func (action *SubnetDeleteAction) Do(inputs interface{}) (interface{}, error) {
 func getSubnetIdByNetworkId(param CloudProviderParam, id string) (string, error) {
 	sc, err := CreateVpcServiceClientV1(param)
 	if err != nil {
-		logrus.Errorf("CreateVpcServiceClient[%v] meet error=%v", VPC_SERVICE_CLIENT_V1, err)
 		return "", err
 	}
 
 	resp, err := subnets.Get(sc, id).Extract()
 	if err != nil {
+		logrus.Errorf("getSubnetIdByNetworkId failed,id(%v),err=%v",id,err)
 		return "", err
 	}
 	return resp.NeutronSubnetID, nil
+}
 
+func getVpcAllSubnets(param CloudProviderParam,vpcId string)([]subnets.Subnet,error){
+	subnets:=[]subnets.Subnet{}
+
+	sc, err := CreateVpcServiceClientV1(param)
+	if err != nil {
+		return subnets, err
+	}
+
+	allPages, err := subnets.List(sc, subnets.ListOpts{
+		VpcID: vpcId,
+		Limit: 20,
+	}).AllPages()
+	if err != nil {
+		logrus.Errorf("getVpcAllSubnets,list meet err=%v",err)
+		return subnets, err
+	}
+
+	subnets, err= subnets.ExtractSubnets(allPages)
+	if err != nil {
+		logrus.Errorf("getVpcAllSubnets,ExtractSubnets meet err=%v",err)
+	}
+	return subnets,err
+}
+func getSubnetIdByIpAddress(subnets []subnets.Subnet,address string)(string,error){
+	for _,subnet:=range subnets {
+		_,netRange,_:=net.ParseCIDR(subnet.Cidr)
+		ip:=net.ParseIP(address)
+		if netRange.Contains(ip) {
+			return subnet.NeutronSubnetID,nil
+		}
+	}
+	logrus.Errorf("getSubnetIdByIpAddress,ip(%v) nout found",address)
+	return "",fmt.Errorf("ip(%v) is not found",address)
 }

@@ -201,19 +201,23 @@ func getVmInfoById(cloudProviderParam CloudProviderParam, id string) (*v1.CloudS
 	return vmInfo, err
 }
 
+func getIpFromVmInfo(vm *v1.CloudServer)(string,error){
+	for _, addresses := range vm.Addresses {
+		for _, address := range addresses {
+			return address.Addr, nil
+		}
+	}
+	logrus.Errorf("can't get vm(%v) lan ip", id)
+	return "", fmt.Errorf("can't get vm(%v) lan ip", id)
+}
+
 func getVmIpAddress(cloudProviderParam CloudProviderParam, id string) (string, error) {
 	vmInfo, err := getVmInfoById(cloudProviderParam, id)
 	if err != nil {
 		return "", err
 	}
 
-	for _, addresses := range vmInfo.Addresses {
-		for _, address := range addresses {
-			return address.Addr, nil
-		}
-	}
-
-	return "", fmt.Errorf("can't get vm(%v) lan ip", id)
+	return getIpFromVmInfo(vmInfo)	
 }
 
 func buildVmNicStruct(input VmCreateInput) []v1_1.Nic {

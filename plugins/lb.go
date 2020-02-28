@@ -20,7 +20,7 @@ var lbActions = make(map[string]Action)
 func init() {
 	lbActions["create"] = new(CreateLbAction)
 	lbActions["delete"] = new(DeleteLbAction)
-	//	lbActions["add-host"] = new(LbAddHostAction)
+	lbActions["add-host"] = new(AddLbHostAction)
 	//	lbActions["delete-host"] = new(LbDeleteHostAction)
 }
 
@@ -32,6 +32,7 @@ func createLbServiceClient(params CloudProviderParam) (*gophercloud.ServiceClien
 
 	sc, err := openstack.NewNetworkV2(provider, gophercloud.EndpointOpts{})
 	if err != nil {
+		logrus.Errorf("createLbServiceClient meet err=%v",err)
 		return nil, err
 	}
 	return sc, err
@@ -228,6 +229,7 @@ func createLb(input CreateLbInput) (output CreateLbOutput, err error) {
 
 	resp, err := loadbalancers.Create(sc, opts).Extract()
 	if err != nil {
+		logrus.Errorf("createLb meet err=%v",err)
 		return
 	}
 	output.Id = resp.ID
@@ -304,6 +306,26 @@ func deleteLbPublicIp(cloudProviderParam CloudProviderParam, id string) error {
 	return err
 }
 
+func deleteLbListenerAndPool(input DeleteLbInput)error{
+	lbInfo,err:=getLbInfoById(input.CloudProviderParam, input.Id)
+	if err != nil {
+		return err 
+	}
+	
+	for _,pool:=range lbInfo.Pools{
+		if err = deleteLbPools(input.CloudProviderParam,pool.ID);err != nil {
+			return err 
+		}
+	}
+	for _,listener:=range lbInfo.Listeners{
+		if err  = deleteLbListener(input.CloudProviderParam,stener.ID);err != nil {
+			return err 	
+		}
+	}
+
+	return nil 
+}
+
 func deleteLb(input DeleteLbInput) (output DeleteLbOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
@@ -338,14 +360,22 @@ func deleteLb(input DeleteLbInput) (output DeleteLbOutput, err error) {
 		}
 	}
 
+	if err = deleteLbListenerAndPool(input);err != nil {
+		return 
+	}
+
 	//delete lb
 	sc, err := createLbServiceClient(input.CloudProviderParam)
 	if err != nil {
 		return
 	}
-	err = loadbalancers.Delete(sc, input.Id).ExtractErr()
 
-	return
+	err = loadbalancers.Delete(sc, input.Id).ExtractErr()
+	if err != nil {
+		logrus.Errorf("delete lb failed ,err=%v",err)
+	}
+
+	return 
 }
 
 func (action *DeleteLbAction) Do(inputs interface{}) (interface{}, error) {

@@ -29,6 +29,9 @@ const (
 	CLOUD_PARAM_CLOUD_DOAMIN_NAME = "CloudApiDomainName"
 	CLOUD_PARAM_PROJECT_ID        = "ProjectId"
 	CLOUD_PARAM_REGION            = "Region"
+
+	ARRAY_SIZE_REAL        = "realSize"
+	ARRAY_SIZE_AS_EXPECTED = "fillArrayWithExpectedNum"
 )
 
 type CloudProviderParam struct {
@@ -186,4 +189,35 @@ func isValidStringValue(prefix string, value string, validValues []string) error
 		}
 	}
 	return fmt.Errorf("%v value(%v) is not valid", prefix, value)
+}
+
+func GetArrayFromString(rawData string, arraySizeType string, expectedLen int) ([]string, error) {
+	if rawData == "" {
+		return []string{}, nil
+	}
+
+	data := rawData
+	startChar := rawData[0:1]
+	endChar := rawData[len(rawData)-1 : len(rawData)]
+	if startChar == "[" && endChar == "]" {
+		data = rawData[1 : len(rawData)-1]
+	}
+
+	entries := strings.Split(data, ",")
+	if arraySizeType == ARRAY_SIZE_REAL {
+		return entries, nil
+	} else if arraySizeType == ARRAY_SIZE_AS_EXPECTED {
+		if len(entries) == expectedLen {
+			return entries, nil
+		}
+
+		if len(entries) == 1 {
+			rtnData := []string{}
+			for i := 0; i < expectedLen; i++ {
+				rtnData = append(rtnData, entries[0])
+			}
+			return rtnData, nil
+		}
+	}
+	return []string{}, fmt.Errorf("getArrayFromString not in desire state rawData=%v,arraySizeType=%v,expectedLen=%v", rawData, arraySizeType, expectedLen)
 }
