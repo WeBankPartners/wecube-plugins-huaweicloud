@@ -126,14 +126,16 @@ func (action *VpcCreateAction) createVpc(input *VpcCreateInput) (output VpcCreat
 	// check whether the vpc exited
 	var vpcInfo *vpcs.VPC
 	if input.Id != "" {
-		vpcInfo, err = vpcs.Get(sc, input.Id).Extract()
+		vpcInfo, _, err = isVpcExist(sc, input.Id)
 		if err != nil {
 			logrus.Errorf("Get vpc by vpcId meet error=%v", err)
 			return
 		}
-		output.Id = input.Id
-		logrus.Infof("Get vpc by vpcId[vpcId=%v], vpcInfo=%++v", input.Id, *vpcInfo)
-		return
+		if vpcInfo != nil {
+			output.Id = input.Id
+			logrus.Infof("Get vpc by vpcId[vpcId=%v], vpcInfo=%++v", input.Id, *vpcInfo)
+			return
+		}
 	}
 
 	// create vpc
@@ -162,17 +164,17 @@ func (action *VpcCreateAction) createVpc(input *VpcCreateInput) (output VpcCreat
 	return
 }
 
-func isVpcExist(sc *gophercloud.ServiceClient, vpcId string) (bool, error) {
-	_, err := vpcs.Get(sc, vpcId).Extract()
+func isVpcExist(sc *gophercloud.ServiceClient, vpcId string) (*vpcs.VPC, bool, error) {
+	vpc, err := vpcs.Get(sc, vpcId).Extract()
 	if err != nil {
 		if ue, ok := err.(*gophercloud.UnifiedError); ok {
-			if strings.Contains(ue.Message(), "vpcId is invalid.") {
-				return false, nil
+			if strings.Contains(ue.Message(), "could not be found") {
+				return nil, false, nil
 			}
 		}
-		return false, err
+		return nil, false, err
 	}
-	return true, nil
+	return vpc, true, nil
 }
 
 func getVpcStatus(sc *gophercloud.ServiceClient, vpcId string) (string, error) {
@@ -241,6 +243,7 @@ type VpcDeleteOutput struct {
 	CallBackParameter
 	Result
 	Guid string `json:"guid,omitempty"`
+	Id   string `json:"id,omitempty"`
 }
 
 type VpcDeleteAction struct {
@@ -268,6 +271,7 @@ func (action *VpcDeleteAction) checkDeleteVpcParam(input VpcDeleteInput) error {
 func (action *VpcDeleteAction) deleteVpc(input *VpcDeleteInput) (output VpcDeleteOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
+		output.Id = input.Id
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
 		if err == nil {
 			output.Result.Code = RESULT_CODE_SUCCESS
@@ -290,7 +294,7 @@ func (action *VpcDeleteAction) deleteVpc(input *VpcDeleteInput) (output VpcDelet
 	}
 
 	//check vpc exist
-	exist, err := isVpcExist(sc, input.Id)
+	_, exist, err := isVpcExist(sc, input.Id)
 	if err != nil || !exist {
 		return
 	}

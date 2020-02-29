@@ -2,6 +2,10 @@ package plugins
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/WeBankPartners/wecube-plugins-huaweicloud/plugins/utils"
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
@@ -10,9 +14,6 @@ import (
 	flavor "github.com/gophercloud/gophercloud/openstack/ecs/v1/flavor"
 	v1_1 "github.com/gophercloud/gophercloud/openstack/ecs/v1_1/cloudservers"
 	"github.com/sirupsen/logrus"
-	"strconv"
-	"strings"
-	"time"
 )
 
 const (
@@ -154,7 +155,7 @@ func checkVmCreateParams(input VmCreateInput) error {
 		return fmt.Errorf("name is empty")
 	}
 	if input.AilabilityZone == "" {
-		return fmt.Errorf("ailaabilityZone is empty")
+		return fmt.Errorf("ailabilityZone is empty")
 	}
 	if err := isValidStringValue("chargeType", input.ChargeType, []string{PRE_PAID, POST_PAID}); err != nil {
 		return err
@@ -201,14 +202,14 @@ func getVmInfoById(cloudProviderParam CloudProviderParam, id string) (*v1.CloudS
 	return vmInfo, err
 }
 
-func getIpFromVmInfo(vm *v1.CloudServer)(string,error){
+func getIpFromVmInfo(vm *v1.CloudServer) (string, error) {
 	for _, addresses := range vm.Addresses {
 		for _, address := range addresses {
 			return address.Addr, nil
 		}
 	}
-	logrus.Errorf("can't get vm(%v) lan ip", id)
-	return "", fmt.Errorf("can't get vm(%v) lan ip", id)
+	logrus.Errorf("can't get vm(%v) lan ip", vm.ID)
+	return "", fmt.Errorf("can't get vm(%v) lan ip", vm.ID)
 }
 
 func getVmIpAddress(cloudProviderParam CloudProviderParam, id string) (string, error) {
@@ -217,7 +218,7 @@ func getVmIpAddress(cloudProviderParam CloudProviderParam, id string) (string, e
 		return "", err
 	}
 
-	return getIpFromVmInfo(vmInfo)	
+	return getIpFromVmInfo(vmInfo)
 }
 
 func buildVmNicStruct(input VmCreateInput) []v1_1.Nic {

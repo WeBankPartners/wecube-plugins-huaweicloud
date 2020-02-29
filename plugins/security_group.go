@@ -103,14 +103,16 @@ func (action *SecurityGroupCreateAction) createSecurityGroup(input *SecurityGrou
 	// Check whether the securitygroup exited
 	var securitygroupInfo *securitygroups.SecurityGroup
 	if input.Id != "" {
-		securitygroupInfo, err = securitygroups.Get(sc, input.Id).Extract()
+		securitygroupInfo, _, err = isSecurityGroupExist(sc, input.Id)
 		if err != nil {
 			logrus.Errorf("Get securitygroup by securitygroupId[%v] meet error=%v", input.Id, err)
 			return
 		}
-		output.Id = input.Id
-		logrus.Infof("Get securitygroup by securitygroupId[%v], securitygroupInfo=%++v", input.Id, *securitygroupInfo)
-		return
+		if securitygroupInfo != nil {
+			output.Id = securitygroupInfo.ID
+			logrus.Infof("Get securitygroup by securitygroupId[%v], securitygroupInfo=%++v", input.Id, *securitygroupInfo)
+			return
+		}
 	}
 
 	// Create securitygroup
@@ -197,6 +199,7 @@ func (action *SecurityGroupDeleteAction) checkDeleteSecurityGroupParam(input Sec
 func (action *SecurityGroupDeleteAction) deleteSecurityGroup(input *SecurityGroupDeleteInput) (output SecurityGroupDeleteOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
+		output.Id = input.Id
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
 		if err == nil {
 			output.Result.Code = RESULT_CODE_SUCCESS
@@ -218,7 +221,7 @@ func (action *SecurityGroupDeleteAction) deleteSecurityGroup(input *SecurityGrou
 	}
 
 	//check securitygroup exist
-	exist, err := isSecurityGroupExist(sc, input.Id)
+	_, exist, err := isSecurityGroupExist(sc, input.Id)
 	if err != nil || !exist {
 		return
 	}
@@ -234,17 +237,17 @@ func (action *SecurityGroupDeleteAction) deleteSecurityGroup(input *SecurityGrou
 	return
 }
 
-func isSecurityGroupExist(sc *gophercloud.ServiceClient, securitygroupId string) (bool, error) {
-	_, err := securitygroups.Get(sc, securitygroupId).Extract()
+func isSecurityGroupExist(sc *gophercloud.ServiceClient, securitygroupId string) (*securitygroups.SecurityGroup, bool, error) {
+	securitygroupInfo, err := securitygroups.Get(sc, securitygroupId).Extract()
 	if err != nil {
 		if ue, ok := err.(*gophercloud.UnifiedError); ok {
 			if strings.Contains(ue.Message(), "does not exist") {
-				return false, nil
+				return nil, false, nil
 			}
 		}
-		return false, err
+		return nil, false, err
 	}
-	return true, nil
+	return securitygroupInfo, true, nil
 }
 
 func (action *SecurityGroupDeleteAction) Do(inputs interface{}) (interface{}, error) {

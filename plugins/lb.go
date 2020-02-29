@@ -2,12 +2,13 @@ package plugins
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/loadbalancers"
 	"github.com/sirupsen/logrus"
-	"strings"
-	"time"
 )
 
 const (
@@ -32,7 +33,7 @@ func createLbServiceClient(params CloudProviderParam) (*gophercloud.ServiceClien
 
 	sc, err := openstack.NewNetworkV2(provider, gophercloud.EndpointOpts{})
 	if err != nil {
-		logrus.Errorf("createLbServiceClient meet err=%v",err)
+		logrus.Errorf("createLbServiceClient meet err=%v", err)
 		return nil, err
 	}
 	return sc, err
@@ -229,7 +230,7 @@ func createLb(input CreateLbInput) (output CreateLbOutput, err error) {
 
 	resp, err := loadbalancers.Create(sc, opts).Extract()
 	if err != nil {
-		logrus.Errorf("createLb meet err=%v",err)
+		logrus.Errorf("createLb meet err=%v", err)
 		return
 	}
 	output.Id = resp.ID
@@ -306,24 +307,24 @@ func deleteLbPublicIp(cloudProviderParam CloudProviderParam, id string) error {
 	return err
 }
 
-func deleteLbListenerAndPool(input DeleteLbInput)error{
-	lbInfo,err:=getLbInfoById(input.CloudProviderParam, input.Id)
+func deleteLbListenerAndPool(input DeleteLbInput) error {
+	lbInfo, err := getLbInfoById(input.CloudProviderParam, input.Id)
 	if err != nil {
-		return err 
+		return err
 	}
-	
-	for _,pool:=range lbInfo.Pools{
-		if err = deleteLbPools(input.CloudProviderParam,pool.ID);err != nil {
-			return err 
+
+	for _, pool := range lbInfo.Pools {
+		if err = deleteLbPools(input.CloudProviderParam, pool.ID); err != nil {
+			return err
 		}
 	}
-	for _,listener:=range lbInfo.Listeners{
-		if err  = deleteLbListener(input.CloudProviderParam,stener.ID);err != nil {
-			return err 	
+	for _, listener := range lbInfo.Listeners {
+		if err = deleteLbListener(input.CloudProviderParam, listener.ID); err != nil {
+			return err
 		}
 	}
 
-	return nil 
+	return nil
 }
 
 func deleteLb(input DeleteLbInput) (output DeleteLbOutput, err error) {
@@ -360,8 +361,8 @@ func deleteLb(input DeleteLbInput) (output DeleteLbOutput, err error) {
 		}
 	}
 
-	if err = deleteLbListenerAndPool(input);err != nil {
-		return 
+	if err = deleteLbListenerAndPool(input); err != nil {
+		return
 	}
 
 	//delete lb
@@ -372,10 +373,10 @@ func deleteLb(input DeleteLbInput) (output DeleteLbOutput, err error) {
 
 	err = loadbalancers.Delete(sc, input.Id).ExtractErr()
 	if err != nil {
-		logrus.Errorf("delete lb failed ,err=%v",err)
+		logrus.Errorf("delete lb failed ,err=%v", err)
 	}
 
-	return 
+	return
 }
 
 func (action *DeleteLbAction) Do(inputs interface{}) (interface{}, error) {
