@@ -54,7 +54,7 @@ func init() {
 	RegisterPlugin("vm", new(VmPlugin))
 	RegisterPlugin("lb", new(LoadbalancerPlugin))
 	RegisterPlugin("lb-target", new(LbTargetPlugin))
-
+	RegisterPlugin("security-group-rule", new(SecurityGroupRulePlugin))
 }
 
 type PluginRequest struct {

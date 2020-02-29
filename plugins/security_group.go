@@ -257,11 +257,11 @@ func (action *SecurityGroupDeleteAction) Do(inputs interface{}) (interface{}, er
 	var finalErr error
 	logrus.Infof("securitygroups.Inputs=%v", securitygroups.Inputs)
 	for _, securitygroup := range securitygroups.Inputs {
-		vpcOutput, err := action.deleteSecurityGroup(&securitygroup)
+		output, err := action.deleteSecurityGroup(&securitygroup)
 		if err != nil {
 			finalErr = err
 		}
-		outputs.Outputs = append(outputs.Outputs, vpcOutput)
+		outputs.Outputs = append(outputs.Outputs, output)
 	}
 
 	logrus.Infof("all securitygroups = %v are deleted", securitygroups)
