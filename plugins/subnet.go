@@ -51,9 +51,9 @@ type SubnetCreateOutputs struct {
 type SubnetCreateOutput struct {
 	CallBackParameter
 	Result
-	Guid     string `json:"guid,omitempty"`
-	Id       string `json:"id,omitempty"`
-	SubnetId string `json:"subnet_id,omitempty"`
+	Guid string `json:"guid,omitempty"`
+	Id   string `json:"id,omitempty"`
+	//	SubnetId string `json:"subnet_id,omitempty"`
 }
 
 type SubnetCreateAction struct {
@@ -185,7 +185,7 @@ func createSubnet(input SubnetCreateInput) (output SubnetCreateOutput, err error
 	}
 
 	output.Id = resp.ID
-	output.SubnetId = resp.NeutronSubnetID
+	//output.SubnetId = resp.NeutronSubnetID
 	if err = waitSubnetCreateOk(sc, output.Id); err != nil {
 		logrus.Errorf("waitSubnetCreateOk meet err=%v", err)
 	}
@@ -324,11 +324,11 @@ func getSubnetIdByNetworkId(param CloudProviderParam, id string) (string, error)
 }
 
 func getVpcAllSubnets(param CloudProviderParam, vpcId string) ([]subnets.Subnet, error) {
-	subnetInfos := []subnets.Subnet{}
+	rtnSubnets := []subnets.Subnet{}
 
 	sc, err := CreateVpcServiceClientV1(param)
 	if err != nil {
-		return subnetInfos, err
+		return rtnSubnets, err
 	}
 
 	allPages, err := subnets.List(sc, subnets.ListOpts{
@@ -337,14 +337,14 @@ func getVpcAllSubnets(param CloudProviderParam, vpcId string) ([]subnets.Subnet,
 	}).AllPages()
 	if err != nil {
 		logrus.Errorf("getVpcAllSubnets,list meet err=%v", err)
-		return subnetInfos, err
+		return rtnSubnets, err
 	}
 
-	subnetInfos, err = subnets.ExtractSubnets(allPages)
+	rtnSubnets, err = subnets.ExtractSubnets(allPages)
 	if err != nil {
 		logrus.Errorf("getVpcAllSubnets,ExtractSubnets meet err=%v", err)
 	}
-	return subnetInfos, err
+	return rtnSubnets, err
 }
 func getSubnetIdByIpAddress(subnets []subnets.Subnet, address string) (string, error) {
 	for _, subnet := range subnets {

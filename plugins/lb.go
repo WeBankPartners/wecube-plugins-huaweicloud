@@ -21,8 +21,6 @@ var lbActions = make(map[string]Action)
 func init() {
 	lbActions["create"] = new(CreateLbAction)
 	lbActions["delete"] = new(DeleteLbAction)
-	lbActions["add-host"] = new(AddLbHostAction)
-	//	lbActions["delete-host"] = new(LbDeleteHostAction)
 }
 
 func createLbServiceClient(params CloudProviderParam) (*gophercloud.ServiceClient, error) {
@@ -307,7 +305,7 @@ func deleteLbPublicIp(cloudProviderParam CloudProviderParam, id string) error {
 	return err
 }
 
-func deleteLbListenerAndPool(input DeleteLbInput) error {
+func deleteLbListenerAndPools(input DeleteLbInput) error {
 	lbInfo, err := getLbInfoById(input.CloudProviderParam, input.Id)
 	if err != nil {
 		return err
@@ -361,7 +359,7 @@ func deleteLb(input DeleteLbInput) (output DeleteLbOutput, err error) {
 		}
 	}
 
-	if err = deleteLbListenerAndPool(input); err != nil {
+	if err = deleteLbListenerAndPools(input); err != nil {
 		return
 	}
 
