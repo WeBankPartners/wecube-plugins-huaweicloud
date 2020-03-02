@@ -38,7 +38,7 @@ func createBlockStorageServiceClient(params CloudProviderParam) (*gophercloud.Se
 	return sc, nil
 }
 
-//将监听器藏起来
+
 func init() {
 	blockStorageActions["create-mount"] = new(CreateAndMountDiskAction)
 	blockStorageActions["umount-terminate"] = new(UmountAndTerminateDiskAction)
