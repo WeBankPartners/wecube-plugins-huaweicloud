@@ -94,7 +94,7 @@ func (action *CreateLbAction) ReadParam(param interface{}) (interface{}, error) 
 }
 
 func checkLbCreateParams(input CreateLbInput) error {
-	if err := isCloudProvicerParamValid(input.CloudProviderParam); err != nil {
+	if err := isCloudProviderParamValid(input.CloudProviderParam); err != nil {
 		return err
 	}
 	if input.Name == "" {
@@ -337,7 +337,7 @@ func deleteLb(input DeleteLbInput) (output DeleteLbOutput, err error) {
 		}
 	}()
 
-	if err = isCloudProvicerParamValid(input.CloudProviderParam); err != nil {
+	if err = isCloudProviderParamValid(input.CloudProviderParam); err != nil {
 		return
 	}
 	if input.Id == "" {

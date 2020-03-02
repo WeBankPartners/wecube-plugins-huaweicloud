@@ -69,7 +69,7 @@ func (action *SubnetCreateAction) ReadParam(param interface{}) (interface{}, err
 }
 
 func checkCreateSubnetInput(input SubnetCreateInput) error {
-	if err := isCloudProvicerParamValid(input.CloudProviderParam); err != nil {
+	if err := isCloudProviderParamValid(input.CloudProviderParam); err != nil {
 		return err
 	}
 	if input.VpcId == "" {
@@ -244,7 +244,7 @@ func (action *SubnetDeleteAction) ReadParam(param interface{}) (interface{}, err
 }
 
 func checkDeleteSubnetInput(input SubnetDeleteInput) error {
-	if err := isCloudProvicerParamValid(input.CloudProviderParam); err != nil {
+	if err := isCloudProviderParamValid(input.CloudProviderParam); err != nil {
 		return err
 	}
 	if input.VpcId == "" {

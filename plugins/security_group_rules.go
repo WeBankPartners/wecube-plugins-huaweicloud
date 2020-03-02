@@ -78,7 +78,7 @@ func (action *SecurityGroupRuleCreateAction) ReadParam(param interface{}) (inter
 }
 
 func (action *SecurityGroupRuleCreateAction) checkCreateRuleParams(input SecurityGroupRuleCreateInput) error {
-	if err := isCloudProvicerParamValid(input.CloudProviderParam); err != nil {
+	if err := isCloudProviderParamValid(input.CloudProviderParam); err != nil {
 		return err
 	}
 
@@ -262,7 +262,7 @@ func (action *SecurityGroupRuleDeleteAction) ReadParam(param interface{}) (inter
 }
 
 func (action *SecurityGroupRuleDeleteAction) checkDeleteRuleParams(input SecurityGroupRuleDeleteInput) error {
-	if err := isCloudProvicerParamValid(input.CloudProviderParam); err != nil {
+	if err := isCloudProviderParamValid(input.CloudProviderParam); err != nil {
 		return err
 	}
 	if input.Id == "" {
