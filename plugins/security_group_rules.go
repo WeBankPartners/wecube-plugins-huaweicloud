@@ -202,7 +202,7 @@ func isRuleExist(sc *gophercloud.ServiceClient, ruleId string) (*securitygroupru
 	ruleInfo, err := securitygrouprules.Get(sc, ruleId).Extract()
 	if err != nil {
 		if ue, ok := err.(*gophercloud.UnifiedError); ok {
-			if strings.Contains(ue.Message(), "could not found") {
+			if strings.Contains(ue.Message(), "could not be found") {
 				return nil, false, nil
 			}
 		}
