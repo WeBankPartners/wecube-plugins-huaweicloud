@@ -1,15 +1,21 @@
 package utils
 
 import (
+	"bytes"
+	"fmt"
 	"github.com/pkg/sftp"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
+	"net"
+	"os"
+	"time"
 )
+
 const (
 	SSH_DEFAULT_PORT = "22"
 )
 
-func createSshClient(ip string, password string,port string) (*ssh.Client, error) {
+func createSshClient(ip string, password string, port string) (*ssh.Client, error) {
 	auth := []ssh.AuthMethod{ssh.Password(password)}
 	addr := fmt.Sprintf("%s:%d", ip, port)
 	config := &ssh.ClientConfig{
@@ -22,14 +28,14 @@ func createSshClient(ip string, password string,port string) (*ssh.Client, error
 }
 
 func createSftpClient(ip string, password string) (*sftp.Client, error) {
-	sshClient, err := createSshClient(ip, password,SSH_DEFAULT_PORT)
+	sshClient, err := createSshClient(ip, password, SSH_DEFAULT_PORT)
 	if err != nil {
 		return nil, err
 	}
 	return sftp.NewClient(sshClient)
 }
 
-func copyFileToRemoteHost(ip string, password string, localFile string, remoteFile string) error {
+func CopyFileToRemoteHost(ip string, password string, localFile string, remoteFile string) error {
 	client, err := createSftpClient(ip, password)
 	if err != nil {
 		return err
@@ -64,8 +70,8 @@ func copyFileToRemoteHost(ip string, password string, localFile string, remoteFi
 	return nil
 }
 
-func runRemoteHostScript(ip string, password string, remoteFile string) (string, error) {
-	client, err := createSshClient(ip, password,SSH_DEFAULT_PORT)
+func RunRemoteHostScript(ip string, password string, remoteFile string) (string, error) {
+	client, err := createSshClient(ip, password, SSH_DEFAULT_PORT)
 	if err != nil {
 		return "", err
 	}

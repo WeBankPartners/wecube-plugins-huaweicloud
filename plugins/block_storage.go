@@ -1,14 +1,23 @@
 package plugins
+
 import (
-	"github.com/gophercloud/gophercloud/openstack"
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/volumeattach"
+	"encoding/json"
+	"fmt"
 	"github.com/WeBankPartners/wecube-plugins-huaweicloud/plugins/utils"
+	"github.com/gophercloud/gophercloud"
+	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/blockstorage/v2/volumes"
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/volumeattach"
+	"github.com/sirupsen/logrus"
+	"strconv"
+	"strings"
+	"time"
 )
+
 const (
-	DISK_TYPE_SSD="SSD"
-	DISK_TYPE_SAS="SAS"
-	DISK_TYPE_SATA="SATA"
+	DISK_TYPE_SSD  = "SSD"
+	DISK_TYPE_SAS  = "SAS"
+	DISK_TYPE_SATA = "SATA"
 )
 
 var blockStorageActions = make(map[string]Action)
@@ -53,15 +62,15 @@ type CreateAndMountDiskInputs struct {
 	Inputs []CreateAndMountDiskInput `json:"inputs,omitempty"`
 }
 
-type CreateAndMountInput struct {
+type CreateAndMountDiskInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid             string `json:"guid,omitempty"`
-	AilabilityZone   string `json:"az,omitempty"`
-	DiskType         string `json:"disk_type,omitempty"`
-	DiskSize         string `json:"disk_size,omitempty"`
-	DiskName         string `json:"disk_name,omitempty"`
-	Id               string `json:"id,omitempty"`
+	Guid           string `json:"guid,omitempty"`
+	AilabilityZone string `json:"az,omitempty"`
+	DiskType       string `json:"disk_type,omitempty"`
+	DiskSize       string `json:"disk_size,omitempty"`
+	DiskName       string `json:"disk_name,omitempty"`
+	Id             string `json:"id,omitempty"`
 
 	//use to attach and format
 	InstanceId       string `json:"instance_id,omitempty"`
@@ -69,12 +78,12 @@ type CreateAndMountInput struct {
 	InstanceSeed     string `json:"seed,omitempty"`
 	InstancePassword string `json:"password,omitempty"`
 
-	FileSystemType   string `json:"file_system_type,omitempty"`
-	MountDir         string `json:"mount_dir,omitempty"`
+	FileSystemType string `json:"file_system_type,omitempty"`
+	MountDir       string `json:"mount_dir,omitempty"`
 }
 
 type CreateAndMountDiskOutputs struct {
-	Outputs []CreateAndMountCbsDiskOutput `json:"outputs,omitempty"`
+	Outputs []CreateAndMountDiskOutput `json:"outputs,omitempty"`
 }
 
 type CreateAndMountDiskOutput struct {
@@ -82,7 +91,7 @@ type CreateAndMountDiskOutput struct {
 	Result
 	Guid       string `json:"guid,omitempty"`
 	VolumeName string `json:"volume_name,omitempty"`
-	DiskId     string `json:"disk_id,omitempty"`
+	Id         string `json:"disk_id,omitempty"`
 	AttachId   string `json:"attach_id,omitempty"`
 }
 
@@ -95,7 +104,7 @@ func (action *CreateAndMountDiskAction) ReadParam(param interface{}) (interface{
 	return inputs, nil
 }
 
-func checkCreateAndMountParam(input CreateAndMountDiskInput)error{
+func checkCreateAndMountParam(input CreateAndMountDiskInput) error {
 	if err := isCloudProviderParamValid(input.CloudProviderParam); err != nil {
 		return err
 	}
@@ -115,19 +124,19 @@ func checkCreateAndMountParam(input CreateAndMountDiskInput)error{
 	}
 
 	//buy disk related
-	if input.AilabilityZone  == "" {
+	if input.AilabilityZone == "" {
 		return fmt.Errorf("empty ailabilityZone")
 	}
-	if _,err:=strconv.Atoi(input.DiskSize);err != nil {
+	if _, err := strconv.Atoi(input.DiskSize); err != nil {
 		return err
 	}
 
-	validDiskTypes:=[]string {
+	validDiskTypes := []string{
 		DISK_TYPE_SSD,
 		DISK_TYPE_SAS,
 		DISK_TYPE_SATA,
 	}
-	if err:=isValidStringValue("diskType",input.DiskType,validDiskTypes);err != nil {
+	if err := isValidStringValue("diskType", input.DiskType, validDiskTypes); err != nil {
 		return err
 	}
 
@@ -135,22 +144,22 @@ func checkCreateAndMountParam(input CreateAndMountDiskInput)error{
 		return fmt.Errorf(" mountDir is empty")
 	}
 
-	if err := isValidStringValue("fileSystemType",input.FileSystemType, []string{"ext3", "ext4", "xfs"}); err != nil {
+	if err := isValidStringValue("fileSystemType", input.FileSystemType, []string{"ext3", "ext4", "xfs"}); err != nil {
 		return fmt.Errorf("%s is not valid file system type", input.FileSystemType)
 	}
-	return nil 
+	return nil
 }
 
-func waitVolumeCreateOk(*gophercloud.ServiceClient,id string) error{
+func waitVolumeCreateOk(sc *gophercloud.ServiceClient, id string) error {
 	for {
 		time.Sleep(time.Duration(5) * time.Second)
-		volume, err := volumes.Get(sc, createOpts).Extract()
+		volume, err := volumes.Get(sc, id).Extract()
 		if err != nil {
 			return err
 		}
 
-		logrus.Infof("waitVolumeCreateOk,now status =%v",volume.Status)
-		
+		logrus.Infof("waitVolumeCreateOk,now status =%v", volume.Status)
+
 		if volume.Status == "error" {
 			return fmt.Errorf("waitVolume createOk,meet status ==ERROR")
 		}
@@ -162,10 +171,10 @@ func waitVolumeCreateOk(*gophercloud.ServiceClient,id string) error{
 	return nil
 }
 
-func attachVolumeToVm(input CreateAndMountDisk,volumeId string,instanceId string)(string,string,error) {
-	sc,err:=createComputeV2Client(input.CloudProviderParam)
+func attachVolumeToVm(input CreateAndMountDiskInput, volumeId string, instanceId string) (string, string, error) {
+	sc, err := createComputeV2Client(input.CloudProviderParam)
 	if err != nil {
-		return "","",err
+		return "", "", err
 	}
 
 	volumeAttachOptions := volumeattach.CreateOpts{
@@ -173,19 +182,19 @@ func attachVolumeToVm(input CreateAndMountDisk,volumeId string,instanceId string
 	}
 	resp, err := volumeattach.Create(sc, instanceId, volumeAttachOptions).Extract()
 	if err != nil {
-		return "","",err 
+		return "", "", err
 	}
-	return resp.ID,resp.Device,nil
+	return resp.ID, resp.Device, nil
 }
 
-func buyDiskAndAttachToVm(input CreateAndMountDiskInput)(diskId string,attachId string,volumeName string,err error){
-	sc,err:=createBlockStorageServiceClient(input.CloudProviderParam)
-	if err!=nil {
-		return 
+func buyDiskAndAttachToVm(input CreateAndMountDiskInput) (diskId string, attachId string, volumeName string, err error) {
+	sc, err := createBlockStorageServiceClient(input.CloudProviderParam)
+	if err != nil {
+		return
 	}
 
 	//create new volume
-	diskSize,_:=strconv.Atoi(input.DiskSize)
+	diskSize, _ := strconv.Atoi(input.DiskSize)
 	createOpts := volumes.CreateOpts{
 		AvailabilityZone: input.AilabilityZone,
 		Size:             diskSize,
@@ -195,31 +204,30 @@ func buyDiskAndAttachToVm(input CreateAndMountDiskInput)(diskId string,attachId 
 
 	volume, err := volumes.Create(sc, createOpts).Extract()
 	if err != nil {
-		return 
+		return
 	}
 	diskId = volume.ID
-	//wait volume status become ok 
-	if err = waitVolumeCreateOk(sc,volume.ID);err != nil {
-		return 
+	//wait volume status become ok
+	if err = waitVolumeCreateOk(sc, volume.ID); err != nil {
+		return
 	}
 
 	//attach to vm
-	attatchId,volumeName,err=attachVolumeToVm(input,volume.ID)
-	logrus.Infof("attachVolumeToVm return ,attachId=%v,volumeName=%v,err=%v",attatchId,volumeName,err)
+	attachId, volumeName, err = attachVolumeToVm(input, volume.ID, input.InstanceId)
+	logrus.Infof("attachVolumeToVm return ,attachId=%v,volumeName=%v,err=%v", attachId, volumeName, err)
 
-	return 
+	return
 }
-
 
 type UnformatedDisks struct {
 	Volumes []string `json:"unformatedDisks,omitempty"`
 }
 
 func getUnformatDisks(privateIp string, password string) ([]string, error) {
-	if err := copyFileToRemoteHost(privateIp, password, "./scripts/getUnformatedDisk.py", "/tmp/getUnformatedDisk.py"); err != nil {
+	if err := utils.CopyFileToRemoteHost(privateIp, password, "./scripts/getUnformatedDisk.py", "/tmp/getUnformatedDisk.py"); err != nil {
 		return []string{}, err
 	}
-	output, err := runRemoteHostScript(privateIp, password, "python /tmp/getUnformatedDisk.py")
+	output, err := utils.RunRemoteHostScript(privateIp, password, "python /tmp/getUnformatedDisk.py")
 	if err != nil {
 		return []string{}, err
 	}
@@ -232,13 +240,13 @@ func getUnformatDisks(privateIp string, password string) ([]string, error) {
 	return unformatedDisks.Volumes, nil
 }
 
-func isBlockStorageExist(loudProviderParam CloudProviderParam, id string) (bool, error) {
-	sc,err:=createBlockStorageServiceClient(input.Cloud)
-	if err!=nil {
-		return false,err
+func isBlockStorageExist(param CloudProviderParam, id string) (bool, error) {
+	sc, err := createBlockStorageServiceClient(param)
+	if err != nil {
+		return false, err
 	}
 
-	volume, err := volumes.Get(sc, createOpts).Extract()
+	_, err = volumes.Get(sc, id).Extract()
 	if err != nil {
 		if ue, ok := err.(*gophercloud.UnifiedError); ok {
 			if strings.Contains(ue.Message(), "could not be found") {
@@ -247,20 +255,20 @@ func isBlockStorageExist(loudProviderParam CloudProviderParam, id string) (bool,
 		}
 		return false, err
 	}
-	return true,nil
+	return true, nil
 }
 
 func formatAndMountDisk(ip, password, volumeName, fileSystemType, mountDir string) error {
-	if err := copyFileToRemoteHost(ip, password, "./scripts/formatAndMountDisk.py", "/tmp/formatAndMountDisk.py"); err != nil {
+	if err := utils.CopyFileToRemoteHost(ip, password, "./scripts/formatAndMountDisk.py", "/tmp/formatAndMountDisk.py"); err != nil {
 		return err
 	}
 
 	execArgs := " -d " + volumeName + " -f " + fileSystemType + " -m " + mountDir
-	_, err := runRemoteHostScript(ip, password, "python /tmp/formatAndMountDisk.py"+execArgs)
+	_, err := utils.RunRemoteHostScript(ip, password, "python /tmp/formatAndMountDisk.py"+execArgs)
 	return err
 }
 
-func createAndMountDisk(input CreateAndMountDiskInput)(output CreateAndMountDiskOutput,err error){
+func createAndMountDisk(input CreateAndMountDiskInput) (output CreateAndMountDiskOutput, err error) {
 	output.Guid = input.Guid
 	output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
 	defer func() {
@@ -270,48 +278,47 @@ func createAndMountDisk(input CreateAndMountDiskInput)(output CreateAndMountDisk
 			output.Result.Code = RESULT_CODE_ERROR
 			output.Result.Message = err.Error()
 		}
-	}() 
+	}()
 
-	if err = checkCreateAndMountParam(input);err != nil {
-		 return 
+	if err = checkCreateAndMountParam(input); err != nil {
+		return
 	}
 
 	privateIp, err := getVmIpAddress(input.CloudProviderParam, input.InstanceId)
 	if err != nil {
-		return 
+		return
 	}
 
 	password, err := utils.AesDePassword(input.InstanceGuid, input.InstanceSeed, input.InstancePassword)
 	if err != nil {
 		logrus.Errorf("AesDePassword meet error(%v)", err)
-		return 
+		return
 	}
 
 	/*oldUnformatDisks, err := getUnformatDisks(privateIp,password)
 	if err != nil {
-		return 
+		return
 	}*/
 
 	//check if disk already exsit
 	if input.Id != "" {
-		exist:=false
-		exit,err=isBlockStorageExist(input.CloudProviderParam,input.Id)
+		exist := false
+		exist, err = isBlockStorageExist(input.CloudProviderParam, input.Id)
 		if err == nil && exist {
 			output.Id = input.Id
 			return
 		}
 	}
 
-	output.DiskId,output.AttachName,output.VolumeName, err = buyDiskAndAttachToVm(input)
+	output.Id, output.AttachId, output.VolumeName, err = buyDiskAndAttachToVm(input)
 	if err != nil {
-		return 
+		return
 	}
 
 	//format and mount
 	err = formatAndMountDisk(privateIp, password, output.VolumeName, input.FileSystemType, input.MountDir)
-	return 
+	return
 }
-
 
 func (action *CreateAndMountDiskAction) Do(input interface{}) (interface{}, error) {
 	inputs, _ := input.(CreateAndMountDiskInputs)
@@ -340,10 +347,10 @@ type UmountAndTerminateDiskInputs struct {
 type UmountAndTerminateDiskInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid             string `json:"guid,omitempty"`
-	AilabilityZone   string `json:"az,omitempty"`
-	Id               string `json:"id,omitempty"`
-	AttachId         string `json:"attach_id,omitempty"`
+	Guid           string `json:"guid,omitempty"`
+	AilabilityZone string `json:"az,omitempty"`
+	Id             string `json:"id,omitempty"`
+	AttachId       string `json:"attach_id,omitempty"`
 
 	//use to attach and format
 	InstanceId       string `json:"instance_id,omitempty"`
@@ -351,8 +358,8 @@ type UmountAndTerminateDiskInput struct {
 	InstanceSeed     string `json:"seed,omitempty"`
 	InstancePassword string `json:"password,omitempty"`
 
-	MountDir       string `json:"mount_dir,omitempty"`
-	VolumeName     string `json:"volume_name,omitempty"`
+	MountDir   string `json:"mount_dir,omitempty"`
+	VolumeName string `json:"volume_name,omitempty"`
 }
 
 type UmountAndTerminateDiskOutputs struct {
@@ -362,7 +369,7 @@ type UmountAndTerminateDiskOutputs struct {
 type UmountAndTerminateDiskOutput struct {
 	CallBackParameter
 	Result
-	Guid       string `json:"guid,omitempty"`
+	Guid string `json:"guid,omitempty"`
 }
 
 func (action *UmountAndTerminateDiskAction) ReadParam(param interface{}) (interface{}, error) {
@@ -374,7 +381,7 @@ func (action *UmountAndTerminateDiskAction) ReadParam(param interface{}) (interf
 	return inputs, nil
 }
 
-func checkUmountAndTerminateDiskParam(input UmountAndTerminateDiskInput)error{
+func checkUmountAndTerminateDiskParam(input UmountAndTerminateDiskInput) error {
 	if err := isCloudProviderParamValid(input.CloudProviderParam); err != nil {
 		return err
 	}
@@ -392,7 +399,7 @@ func checkUmountAndTerminateDiskParam(input UmountAndTerminateDiskInput)error{
 		return fmt.Errorf("empty instancePassword")
 	}
 
-	if input.Id  == "" {
+	if input.Id == "" {
 		return fmt.Errorf("id is empty")
 	}
 
@@ -406,46 +413,46 @@ func checkUmountAndTerminateDiskParam(input UmountAndTerminateDiskInput)error{
 		return fmt.Errorf("volumeName is empty")
 	}
 
-	return nil 
+	return nil
 }
 
 func umountDisk(ip, password, volumeName, mountDir string) error {
-	if err := copyFileToRemoteHost(ip, password, "./scripts/umountDisk.py", "/tmp/umountDisk.py"); err != nil {
+	if err := utils.CopyFileToRemoteHost(ip, password, "./scripts/umountDisk.py", "/tmp/umountDisk.py"); err != nil {
 		return err
 	}
 
 	execArgs := " -d " + volumeName + " -m " + mountDir
-	_, err := runRemoteHostScript(ip, password, "python /tmp/umountDisk.py"+execArgs)
+	_, err := utils.RunRemoteHostScript(ip, password, "python /tmp/umountDisk.py"+execArgs)
 	return err
 }
 
-func detachVolumeFromVm(input UmountAndTerminateDiskInput)(error) {
-	sc,err:=createComputeV2Client(input.CloudProviderParam)
+func detachVolumeFromVm(input UmountAndTerminateDiskInput) error {
+	sc, err := createComputeV2Client(input.CloudProviderParam)
 	if err != nil {
 		return err
 	}
 
 	err = volumeattach.Delete(sc, input.InstanceId, input.AttachId).ExtractErr()
 	if err != nil {
-		logrus.Errorf("volumeattach delete meet err=%v",err)
+		logrus.Errorf("volumeattach delete meet err=%v", err)
 	}
-	return err 
+	return err
 }
 
-func deleteVolume(input UmountAndTerminateDiskInput)error{
-	sc,err:=createBlockStorageServiceClient(input.CloudProviderParam)
+func deleteVolume(input UmountAndTerminateDiskInput) error {
+	sc, err := createBlockStorageServiceClient(input.CloudProviderParam)
 	if err != nil {
 		return err
 	}
 
-	if err = volumes.Delete(sc, input.Id).ExtractErr();err != nil {
-		logrus.Errorf("delete volume(%v) meet err=%v",input.Id)
+	if err = volumes.Delete(sc, input.Id).ExtractErr(); err != nil {
+		logrus.Errorf("delete volume(%v) meet err=%v", input.Id)
 	}
 
-	return err 
+	return err
 }
 
-func umountAndTerminateDisk(input UmountAndTerminateDiskInput)(output UmountAndTerminateDiskOutput,err error){
+func umountAndTerminateDisk(input UmountAndTerminateDiskInput) (output UmountAndTerminateDiskOutput, err error) {
 	output.Guid = input.Guid
 	output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
 	defer func() {
@@ -455,19 +462,19 @@ func umountAndTerminateDisk(input UmountAndTerminateDiskInput)(output UmountAndT
 			output.Result.Code = RESULT_CODE_ERROR
 			output.Result.Message = err.Error()
 		}
-	}() 
+	}()
 
-	if err = checkUmountAndTerminateDiskParam(input);if err != nil {
-		return 
+	if err = checkUmountAndTerminateDiskParam(input); err != nil {
+		return
 	}
 
-	exist,err:=isBlockStorageExist(input.CloudProviderParam,input.Id)
+	exist, err := isBlockStorageExist(input.CloudProviderParam, input.Id)
 	if err != nil || !exist {
 		return
 	}
 	privateIp, err := getVmIpAddress(input.CloudProviderParam, input.InstanceId)
 	if err != nil {
-		return 
+		return
 	}
 
 	password, err := utils.AesDePassword(input.InstanceGuid, input.InstanceSeed, input.InstancePassword)
@@ -478,18 +485,18 @@ func umountAndTerminateDisk(input UmountAndTerminateDiskInput)(output UmountAndT
 
 	//umount
 	if err = umountDisk(privateIp, password, input.VolumeName, input.MountDir); err != nil {
-		return 
+		return
 	}
 
 	//detach
-	if err = detachVolumeFromVm(input);err!= nil {
-		return  
+	if err = detachVolumeFromVm(input); err != nil {
+		return
 	}
 
 	//delete disk
 	err = deleteVolume(input)
 
-	return 
+	return
 }
 
 func (action *UmountAndTerminateDiskAction) Do(input interface{}) (interface{}, error) {
@@ -507,8 +514,3 @@ func (action *UmountAndTerminateDiskAction) Do(input interface{}) (interface{}, 
 
 	return outputs, finalErr
 }
-
-
-
-
-
