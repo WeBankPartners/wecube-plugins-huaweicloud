@@ -28,13 +28,13 @@ func init() {
 func CreateVpcServiceClientV1(params CloudProviderParam) (*gophercloud.ServiceClient, error) {
 	provider, err := createGopherCloudProviderClient(params)
 	if err != nil {
-		logrus.Errorf("Get gophercloud provider client failed, error=%v", err)
+		logrus.Errorf("get gophercloud provider client failed, error=%v", err)
 		return nil, err
 	}
 
 	sc, err := openstack.NewVPCV1(provider, gophercloud.EndpointOpts{})
 	if err != nil {
-		logrus.Errorf("Get vpc v1 client failed, error=%v", err)
+		logrus.Errorf("newVPCV1 failed, error=%v", err)
 		return nil, err
 	}
 
@@ -93,7 +93,7 @@ func (action *VpcCreateAction) ReadParam(param interface{}) (interface{}, error)
 }
 
 func (action *VpcCreateAction) checkCreateVpcParam(input VpcCreateInput) error {
-	if err := isCloudProvicerParamValid(input.CloudProviderParam); err != nil {
+	if err := isCloudProviderParamValid(input.CloudProviderParam); err != nil {
 		return err
 	}
 	return nil
@@ -259,7 +259,7 @@ func (action *VpcDeleteAction) ReadParam(param interface{}) (interface{}, error)
 }
 
 func (action *VpcDeleteAction) checkDeleteVpcParam(input VpcDeleteInput) error {
-	if err := isCloudProvicerParamValid(input.CloudProviderParam); err != nil {
+	if err := isCloudProviderParamValid(input.CloudProviderParam); err != nil {
 		return err
 	}
 	if input.Id == "" {

@@ -130,7 +130,7 @@ func (action *VmCreateAction) ReadParam(param interface{}) (interface{}, error) 
 }
 
 func checkVmCreateParams(input VmCreateInput) error {
-	if err := isCloudProvicerParamValid(input.CloudProviderParam); err != nil {
+	if err := isCloudProviderParamValid(input.CloudProviderParam); err != nil {
 		return err
 	}
 	if input.Seed == "" {
@@ -554,7 +554,7 @@ func deleteVm(input VmDeleteInput) (output VmDeleteOutput, err error) {
 		}
 	}()
 
-	if err = isCloudProvicerParamValid(input.CloudProviderParam); err != nil {
+	if err = isCloudProviderParamValid(input.CloudProviderParam); err != nil {
 		return
 	}
 	if input.Id == "" {
@@ -635,7 +635,7 @@ func startVm(input VmStartInput) (output VmStartOutput, err error) {
 		}
 	}()
 
-	if err = isCloudProvicerParamValid(input.CloudProviderParam); err != nil {
+	if err = isCloudProviderParamValid(input.CloudProviderParam); err != nil {
 		return
 	}
 	if input.Id == "" {
@@ -717,7 +717,7 @@ func stopVm(input VmStopInput) (output VmStopOutput, err error) {
 		}
 	}()
 
-	if err = isCloudProvicerParamValid(input.CloudProviderParam); err != nil {
+	if err = isCloudProviderParamValid(input.CloudProviderParam); err != nil {
 		return
 	}
 	if input.Id == "" {

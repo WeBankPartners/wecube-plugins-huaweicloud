@@ -78,7 +78,7 @@ func isMapHasKeys(inputMap map[string]string, keys []string, mapName string) err
 	return nil
 }
 
-func isCloudProvicerParamValid(param CloudProviderParam) error {
+func isCloudProviderParamValid(param CloudProviderParam) error {
 	identifyMap, err := GetMapFromString(param.IdentityParams)
 	if err != nil {
 		return err
@@ -106,7 +106,7 @@ func isCloudProvicerParamValid(param CloudProviderParam) error {
 }
 
 func createGopherCloudProviderClient(param CloudProviderParam) (*gophercloud.ProviderClient, error) {
-	if err := isCloudProvicerParamValid(param); err != nil {
+	if err := isCloudProviderParamValid(param); err != nil {
 		return nil, err
 	}
 
