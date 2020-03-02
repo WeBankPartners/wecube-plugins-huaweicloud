@@ -54,6 +54,7 @@ func init() {
 	RegisterPlugin("vm", new(VmPlugin))
 	RegisterPlugin("lb", new(LoadbalancerPlugin))
 	RegisterPlugin("lb-target", new(LbTargetPlugin))
+	RegisterPlugin("block-storage", new(BlockStoragePlugin))
 	RegisterPlugin("security-group-rule", new(SecurityGroupRulePlugin))
 }
 
