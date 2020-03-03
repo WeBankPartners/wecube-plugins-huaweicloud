@@ -41,7 +41,7 @@ func createBlockStorageServiceClient(params CloudProviderParam) (*gophercloud.Se
 
 func init() {
 	blockStorageActions["create-mount"] = new(CreateAndMountDiskAction)
-	blockStorageActions["umount-terminate"] = new(UmountAndTerminateDiskAction)
+	blockStorageActions["umount-delete"] = new(UmountAndTerminateDiskAction)
 }
 
 type BlockStoragePlugin struct {
@@ -90,7 +90,7 @@ type CreateAndMountDiskOutput struct {
 	Result
 	Guid       string `json:"guid,omitempty"`
 	VolumeName string `json:"volume_name,omitempty"`
-	Id         string `json:"disk_id,omitempty"`
+	Id         string `json:"id,omitempty"`
 	AttachId   string `json:"attach_id,omitempty"`
 }
 
@@ -149,7 +149,7 @@ func checkCreateAndMountParam(input CreateAndMountDiskInput) error {
 	return nil
 }
 
-func waitVolumeInDesireState(sc *gophercloud.ServiceClient, id string,desireState)error{
+func waitVolumeInDesireState(sc *gophercloud.ServiceClient, id string,desireState string)error{
 	for {
 		time.Sleep(time.Duration(5) * time.Second)
 		volume, err := volumes.Get(sc, id).Extract()
@@ -304,7 +304,6 @@ func createAndMountDisk(input CreateAndMountDiskInput) (output CreateAndMountDis
 	if err != nil {
 		return
 	}
-	fmt.Printf("private ip=%v\n",privateIp)
 	password, err := utils.AesDePassword(input.InstanceGuid, input.InstanceSeed, input.InstancePassword)
 	if err != nil {
 		logrus.Errorf("AesDePassword meet error(%v)", err)
