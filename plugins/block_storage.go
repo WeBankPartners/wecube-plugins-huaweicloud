@@ -69,7 +69,6 @@ type CreateAndMountDiskInput struct {
 	AilabilityZone string `json:"az,omitempty"`
 	DiskType       string `json:"disk_type,omitempty"`
 	DiskSize       string `json:"disk_size,omitempty"`
-	DiskName       string `json:"disk_name,omitempty"`
 	Id             string `json:"id,omitempty"`
 
 	//use to attach and format
@@ -288,7 +287,7 @@ func createAndMountDisk(input CreateAndMountDiskInput) (output CreateAndMountDis
 	if err != nil {
 		return
 	}
-
+	fmt.Printf("private ip=%v\n",privateIp)
 	password, err := utils.AesDePassword(input.InstanceGuid, input.InstanceSeed, input.InstancePassword)
 	if err != nil {
 		logrus.Errorf("AesDePassword meet error(%v)", err)

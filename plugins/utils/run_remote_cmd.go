@@ -17,7 +17,7 @@ const (
 
 func createSshClient(ip string, password string, port string) (*ssh.Client, error) {
 	auth := []ssh.AuthMethod{ssh.Password(password)}
-	addr := fmt.Sprintf("%s:%d", ip, port)
+	addr := fmt.Sprintf("%s:%s", ip, port)
 	config := &ssh.ClientConfig{
 		User:            "root",
 		Auth:            auth,
