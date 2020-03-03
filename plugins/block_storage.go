@@ -256,6 +256,35 @@ func getUnformatDisks(privateIp string, password string) ([]string, error) {
 	return unformatedDisks.Volumes, nil
 }
 
+func getNewCreateDiskVolumeName(ip, password string, lastUnformatedDisks []string) (string, error) {
+	lastUnformatedDiskNum := len(lastUnformatedDisks)
+
+	for i := 0; i < 20; i++ {
+		newDisks, err := getUnformatDisks(ip, password)
+		if err != nil {
+			return "", err
+		}
+		if len(newDisks) == lastUnformatedDiskNum {
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		for _, volumeName := range newDisks {
+			bFind := false
+			for _, oldDisk := range lastUnformatedDisks {
+				if volumeName == oldDisk {
+					bFind = true
+					break
+				}
+			}
+			if bFind == false {
+				return volumeName, nil
+			}
+		}
+	}
+
+	return "", errors.New("getNewCreateDiskVolumeName timeout")
+}
+
 func isBlockStorageExist(param CloudProviderParam, id string) (bool, error) {
 	sc, err := createBlockStorageServiceClient(param)
 	if err != nil {
@@ -310,10 +339,10 @@ func createAndMountDisk(input CreateAndMountDiskInput) (output CreateAndMountDis
 		return
 	}
 
-	/*oldUnformatDisks, err := getUnformatDisks(privateIp,password)
+	oldUnformatDisks, err := getUnformatDisks(privateIp,password)
 	if err != nil {
 		return
-	}*/
+	}
 
 	//check if disk already exsit
 	if input.Id != "" {
@@ -325,9 +354,14 @@ func createAndMountDisk(input CreateAndMountDiskInput) (output CreateAndMountDis
 		}
 	}
 
-	output.Id, output.AttachId, output.VolumeName, err = buyDiskAndAttachToVm(input)
+	output.Id, output.AttachId, _, err = buyDiskAndAttachToVm(input)
 	if err != nil {
 		return
+	}
+	
+	output.VolumeName, err = getNewCreateDiskVolumeName(privateIp, password, oldUnformatDisks)
+	if err != nil {
+		return 
 	}
 
 	//format and mount
