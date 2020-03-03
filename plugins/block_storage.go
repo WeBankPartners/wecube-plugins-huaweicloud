@@ -149,7 +149,7 @@ func checkCreateAndMountParam(input CreateAndMountDiskInput) error {
 	return nil
 }
 
-func waitVolumeCreateOk(sc *gophercloud.ServiceClient, id string) error {
+func waitVolumeInDesireState(sc *gophercloud.ServiceClient, id string,desireState)error{
 	for {
 		time.Sleep(time.Duration(5) * time.Second)
 		volume, err := volumes.Get(sc, id).Extract()
@@ -157,17 +157,29 @@ func waitVolumeCreateOk(sc *gophercloud.ServiceClient, id string) error {
 			return err
 		}
 
-		logrus.Infof("waitVolumeCreateOk,now status =%v", volume.Status)
+		logrus.Infof("waitVolumeInDesireState,now status =%v", volume.Status)
 
 		if volume.Status == "error" {
-			return fmt.Errorf("waitVolume createOk,meet status ==ERROR")
+			return fmt.Errorf("waitVolumeInDesireState,meet status ==ERROR")
 		}
 
-		if volume.Status == "available" {
+		if volume.Status == desireState {
 			break
 		}
 	}
 	return nil
+}
+
+func waitVolumeCreateOk(sc *gophercloud.ServiceClient, id string) error {
+	return  waitVolumeInDesireState(sc,id,"available")
+}
+
+func waitVolumeInAvailableState(sc *gophercloud.ServiceClient, id string)error{
+	return waitVolumeInDesireState(sc,id,"available")
+}
+
+func waitVolumeAttachOk(sc *gophercloud.ServiceClient, id string)error{
+	return waitVolumeInDesireState(sc,id,"in-use")
 }
 
 func attachVolumeToVm(input CreateAndMountDiskInput, volumeId string, instanceId string) (string, string, error) {
@@ -206,14 +218,19 @@ func buyDiskAndAttachToVm(input CreateAndMountDiskInput) (diskId string, attachI
 		return
 	}
 	diskId = volume.ID
+
 	//wait volume status become ok
 	if err = waitVolumeCreateOk(sc, volume.ID); err != nil {
 		return
 	}
 
 	//attach to vm
-	attachId, volumeName, err = attachVolumeToVm(input, volume.ID, input.InstanceId)
+	if attachId, volumeName, err = attachVolumeToVm(input, volume.ID, input.InstanceId);err != nil {
+		return 
+	}
 	logrus.Infof("attachVolumeToVm return ,attachId=%v,volumeName=%v,err=%v", attachId, volumeName, err)
+
+	err = waitVolumeAttachOk(sc,volume.ID)
 
 	return
 }
@@ -435,6 +452,9 @@ func detachVolumeFromVm(input UmountAndTerminateDiskInput) error {
 	if err != nil {
 		logrus.Errorf("volumeattach delete meet err=%v", err)
 	}
+
+	err = waitVolumeInAvailableState(sc,input.Id)
+
 	return err
 }
 
