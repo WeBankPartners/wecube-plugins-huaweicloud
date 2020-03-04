@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/WeBankPartners/wecube-plugins-huaweicloud/plugins/utils"
 	"github.com/gophercloud/gophercloud"
@@ -38,10 +39,9 @@ func createBlockStorageServiceClient(params CloudProviderParam) (*gophercloud.Se
 	return sc, nil
 }
 
-
 func init() {
 	blockStorageActions["create-mount"] = new(CreateAndMountDiskAction)
-	blockStorageActions["umount-terminate"] = new(UmountAndTerminateDiskAction)
+	blockStorageActions["umount-delete"] = new(UmountAndTerminateDiskAction)
 }
 
 type BlockStoragePlugin struct {
@@ -69,7 +69,6 @@ type CreateAndMountDiskInput struct {
 	AilabilityZone string `json:"az,omitempty"`
 	DiskType       string `json:"disk_type,omitempty"`
 	DiskSize       string `json:"disk_size,omitempty"`
-	DiskName       string `json:"disk_name,omitempty"`
 	Id             string `json:"id,omitempty"`
 
 	//use to attach and format
@@ -91,7 +90,7 @@ type CreateAndMountDiskOutput struct {
 	Result
 	Guid       string `json:"guid,omitempty"`
 	VolumeName string `json:"volume_name,omitempty"`
-	Id         string `json:"disk_id,omitempty"`
+	Id         string `json:"id,omitempty"`
 	AttachId   string `json:"attach_id,omitempty"`
 }
 
@@ -150,7 +149,7 @@ func checkCreateAndMountParam(input CreateAndMountDiskInput) error {
 	return nil
 }
 
-func waitVolumeCreateOk(sc *gophercloud.ServiceClient, id string) error {
+func waitVolumeInDesireState(sc *gophercloud.ServiceClient, id string, desireState string) error {
 	for {
 		time.Sleep(time.Duration(5) * time.Second)
 		volume, err := volumes.Get(sc, id).Extract()
@@ -158,17 +157,29 @@ func waitVolumeCreateOk(sc *gophercloud.ServiceClient, id string) error {
 			return err
 		}
 
-		logrus.Infof("waitVolumeCreateOk,now status =%v", volume.Status)
+		logrus.Infof("waitVolumeInDesireState,now status =%v", volume.Status)
 
 		if volume.Status == "error" {
-			return fmt.Errorf("waitVolume createOk,meet status ==ERROR")
+			return fmt.Errorf("waitVolumeInDesireState,meet status ==ERROR")
 		}
 
-		if volume.Status == "available" {
+		if volume.Status == desireState {
 			break
 		}
 	}
 	return nil
+}
+
+func waitVolumeCreateOk(sc *gophercloud.ServiceClient, id string) error {
+	return waitVolumeInDesireState(sc, id, "available")
+}
+
+func waitVolumeInAvailableState(sc *gophercloud.ServiceClient, id string) error {
+	return waitVolumeInDesireState(sc, id, "available")
+}
+
+func waitVolumeAttachOk(sc *gophercloud.ServiceClient, id string) error {
+	return waitVolumeInDesireState(sc, id, "in-use")
 }
 
 func attachVolumeToVm(input CreateAndMountDiskInput, volumeId string, instanceId string) (string, string, error) {
@@ -207,14 +218,19 @@ func buyDiskAndAttachToVm(input CreateAndMountDiskInput) (diskId string, attachI
 		return
 	}
 	diskId = volume.ID
+
 	//wait volume status become ok
 	if err = waitVolumeCreateOk(sc, volume.ID); err != nil {
 		return
 	}
 
 	//attach to vm
-	attachId, volumeName, err = attachVolumeToVm(input, volume.ID, input.InstanceId)
+	if attachId, volumeName, err = attachVolumeToVm(input, volume.ID, input.InstanceId); err != nil {
+		return
+	}
 	logrus.Infof("attachVolumeToVm return ,attachId=%v,volumeName=%v,err=%v", attachId, volumeName, err)
+
+	err = waitVolumeAttachOk(sc, volume.ID)
 
 	return
 }
@@ -238,6 +254,35 @@ func getUnformatDisks(privateIp string, password string) ([]string, error) {
 	}
 
 	return unformatedDisks.Volumes, nil
+}
+
+func getNewCreateDiskVolumeName(ip, password string, lastUnformatedDisks []string) (string, error) {
+	lastUnformatedDiskNum := len(lastUnformatedDisks)
+
+	for i := 0; i < 20; i++ {
+		newDisks, err := getUnformatDisks(ip, password)
+		if err != nil {
+			return "", err
+		}
+		if len(newDisks) == lastUnformatedDiskNum {
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		for _, volumeName := range newDisks {
+			bFind := false
+			for _, oldDisk := range lastUnformatedDisks {
+				if volumeName == oldDisk {
+					bFind = true
+					break
+				}
+			}
+			if bFind == false {
+				return volumeName, nil
+			}
+		}
+	}
+
+	return "", errors.New("getNewCreateDiskVolumeName timeout")
 }
 
 func isBlockStorageExist(param CloudProviderParam, id string) (bool, error) {
@@ -288,17 +333,16 @@ func createAndMountDisk(input CreateAndMountDiskInput) (output CreateAndMountDis
 	if err != nil {
 		return
 	}
-
 	password, err := utils.AesDePassword(input.InstanceGuid, input.InstanceSeed, input.InstancePassword)
 	if err != nil {
 		logrus.Errorf("AesDePassword meet error(%v)", err)
 		return
 	}
 
-	/*oldUnformatDisks, err := getUnformatDisks(privateIp,password)
+	oldUnformatDisks, err := getUnformatDisks(privateIp, password)
 	if err != nil {
 		return
-	}*/
+	}
 
 	//check if disk already exsit
 	if input.Id != "" {
@@ -310,7 +354,12 @@ func createAndMountDisk(input CreateAndMountDiskInput) (output CreateAndMountDis
 		}
 	}
 
-	output.Id, output.AttachId, output.VolumeName, err = buyDiskAndAttachToVm(input)
+	output.Id, output.AttachId, _, err = buyDiskAndAttachToVm(input)
+	if err != nil {
+		return
+	}
+
+	output.VolumeName, err = getNewCreateDiskVolumeName(privateIp, password, oldUnformatDisks)
 	if err != nil {
 		return
 	}
@@ -436,6 +485,9 @@ func detachVolumeFromVm(input UmountAndTerminateDiskInput) error {
 	if err != nil {
 		logrus.Errorf("volumeattach delete meet err=%v", err)
 	}
+
+	err = waitVolumeInAvailableState(sc, input.Id)
+
 	return err
 }
 
