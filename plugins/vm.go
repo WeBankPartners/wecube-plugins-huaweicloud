@@ -367,6 +367,10 @@ func getFlavorByHostType(input VmCreateInput) (string, error) {
 			instanceType = item.ID
 		}
 	}
+	if instanceType == "" {
+		return "", fmt.Errorf("could not get suitable instancetype")
+	}
+
 	logrus.Infof("get instancetype=%v", instanceType)
 	return instanceType, nil
 }

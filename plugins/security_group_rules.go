@@ -307,7 +307,6 @@ func (action *SecurityGroupRuleDeleteAction) deleteRule(input *SecurityGroupRule
 	if response.Err != nil {
 		err = response.Err
 		logrus.Errorf("Delete securitygroup rule[securitygrouprule=%v] failed, error=%v", input.Id, err)
-		return
 	}
 
 	return
