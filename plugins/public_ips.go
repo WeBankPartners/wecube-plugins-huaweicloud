@@ -178,6 +178,11 @@ func deletePluginPublicIp(input PublicIpDeleteInput) (output PublicIpDeleteOutpu
 		return
 	}
 
+	exist, err := isPublicIpExist(input.CloudProviderParam, input.Id)
+	if err != nil || !exist {
+		return
+	}
+
 	err = deletePublicIp(input.CloudProviderParam, input.Id)
 	return
 }
