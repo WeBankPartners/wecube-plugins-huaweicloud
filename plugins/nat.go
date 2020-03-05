@@ -1,19 +1,44 @@
 package plugins
 
 import (
-	"github.com/sirupsen/logrus"
-	"github.com/gophercloud/gophercloud/openstack"
-	"github.com/huaweicloud/golangsdk/openstack/networking/v2/extensions/snatrules"
+	"fmt"
+	"github.com/huaweicloud/golangsdk"
+	"github.com/huaweicloud/golangsdk/openstack"
 	"github.com/huaweicloud/golangsdk/openstack/networking/v2/extensions/natgateways"
+	"github.com/huaweicloud/golangsdk/openstack/networking/v2/extensions/snatrules"
+	"github.com/sirupsen/logrus"
+	"strings"
 )
 
-func createNatServiceClient(params CloudProviderParam) (*gophercloud.ServiceClient, error) {
-	provider, err := createGopherCloudProviderClient(params)
-	if err != nil {
+func createNatServiceClient(params CloudProviderParam) (*golangsdk.ServiceClient, error) {
+	if err := isCloudProviderParamValid(params); err != nil {
 		return nil, err
 	}
 
-	sc, err := openstack.NewNetworkV2(provider, gophercloud.EndpointOpts{})
+	identifyMap, _ := GetMapFromString(params.IdentityParams)
+	cloudMap, _ := GetMapFromString(params.CloudParams)
+	identityURL := "https://iam." + cloudMap[CLOUD_PARAM_REGION] + "." + cloudMap[CLOUD_PARAM_CLOUD_DOAMIN_NAME] + "." + "/v3"
+
+	opts := golangsdk.AKSKAuthOptions{
+		IdentityEndpoint: identityURL,
+		AccessKey:        identifyMap[IDENTITY_ACCESS_KEY],
+		SecretKey:        identifyMap[IDENTITY_SECRET_KEY],
+		DomainID:         identifyMap[IDENTITY_DOMAIN_ID],
+		ProjectId:        cloudMap[CLOUD_PARAM_PROJECT_ID],
+		Domain:           cloudMap[CLOUD_PARAM_CLOUD_DOAMIN_NAME],
+		Region:           cloudMap[CLOUD_PARAM_REGION],
+	}
+	client, err := openstack.NewClient(identityURL)
+	if err != nil {
+		logrus.Errorf("new client failed err=%v", err)
+		return nil, err
+	}
+	err = openstack.Authenticate(client, opts)
+	if err != nil {
+		logrus.Errorf("createNatServiceClient auth failed err=%v", err)
+		return nil, err
+	}
+	sc, err := openstack.NewNetworkV2(client, golangsdk.EndpointOpts{})
 	if err != nil {
 		logrus.Errorf("createNatServiceClient meet err=%v", err)
 		return nil, err
@@ -26,8 +51,8 @@ var natActions = make(map[string]Action)
 func init() {
 	natActions["create"] = new(NatCreateAction)
 	natActions["delete"] = new(NatDeleteAction)
-	natActions["add-snat-rule"]=new(AddSnatRuleAction)
-	natActions["delete-snat-rule"]=new(DeleteSnatRuleAction)
+	natActions["add-snat-rule"] = new(AddSnatRuleAction)
+	natActions["delete-snat-rule"] = new(DeleteSnatRuleAction)
 }
 
 type NatPlugin struct {
@@ -49,10 +74,10 @@ type NatCreateInputs struct {
 type NatCreateInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid  string `json:"guid,omitempty"`
-	Id    string `json:"id,omitempty"`
+	Guid string `json:"guid,omitempty"`
+	Id   string `json:"id,omitempty"`
 
-	VpcId string `json:"vpc_id,omitempty"`
+	VpcId    string `json:"vpc_id,omitempty"`
 	SubnetId string `json:"subnet_id,omitempty"`
 }
 
@@ -79,7 +104,7 @@ func (action *NatCreateAction) ReadParam(param interface{}) (interface{}, error)
 	return inputs, nil
 }
 
-func checkNatGatewayCreateParam(input NatCreateInput)error{
+func checkNatGatewayCreateParam(input NatCreateInput) error {
 	if err := isCloudProviderParamValid(input.CloudProviderParam); err != nil {
 		return err
 	}
@@ -91,23 +116,21 @@ func checkNatGatewayCreateParam(input NatCreateInput)error{
 	if input.SubnetId == "" {
 		return fmt.Errorf("subnetId is empty")
 	}
-	return nil 
+	return nil
 }
 
-func isNatGatewayExist(sc *gophercloud.ServiceClient,id string)(bool,error){
-	_,err:=natgateways.Get(sc,id).Extract()
+func isNatGatewayExist(sc *golangsdk.ServiceClient, id string) (bool, error) {
+	_, err := natgateways.Get(sc, id).Extract()
 	if err != nil {
-		if ue, ok := err.(*gophercloud.UnifiedError); ok {
-			if strings.Contains(ue.Message(), "could not be found") {
-				return false, nil
-			}
+		if strings.Contains(err.Error(), "could not be found") {
+			return false, nil
 		}
 		return false, err
 	}
 	return true, nil
 }
 
-func createNatGateway(input NatCreateInput)(output NatGatewayCreateOutput,err error){
+func createNatGateway(input NatCreateInput) (output NatCreateOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
@@ -119,45 +142,44 @@ func createNatGateway(input NatCreateInput)(output NatGatewayCreateOutput,err er
 		}
 	}()
 
-	if err = checkNatGatewayCreateParam(input);err != nil {
-		return 
+	if err = checkNatGatewayCreateParam(input); err != nil {
+		return
 	}
 
-	sc,err := createNatServiceClient(input.CloudProviderParam)
+	sc, err := createNatServiceClient(input.CloudProviderParam)
 	if err != nil {
-		return 
+		return
 	}
 
 	//check if exist
 	if input.Id != "" {
 		exist := false
-		exist,err =isNatGatewayExist(sc,input.Id)
+		exist, err = isNatGatewayExist(sc, input.Id)
 		if err == nil && exist {
 			output.Id = input.Id
 			return
 		}
 	}
-	
+
 	//create natgateway
-	opts:=natgateways.CreateOpts{
-		Name:"wecubeCreated",
-	    Spec:"1",
-	    RouterID:input.VpcId,
-	    InternalNetworkID:input.SubnetId,
+	opts := natgateways.CreateOpts{
+		Name:              "wecubeCreated",
+		Spec:              "1",
+		RouterID:          input.VpcId,
+		InternalNetworkID: input.SubnetId,
 	}
 
-	result,err:=natgateways.Create(sc,opts).Extract()
+	result, err := natgateways.Create(sc, opts).Extract()
 	if err != nil {
-		return 
+		return
 	}
-	output.Id= ID
-	return 
+	output.Id = result.ID
+	return
 }
-
 
 func (action *NatCreateAction) Do(inputs interface{}) (interface{}, error) {
 	gateways, _ := inputs.(NatCreateInputs)
-	outputs := NatGatewayCreateOutputs{}
+	outputs := NatCreateOutputs{}
 	var finalErr error
 
 	for _, input := range gateways.Inputs {
@@ -180,8 +202,8 @@ type NatDeleteInputs struct {
 type NatDeleteInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid  string `json:"guid,omitempty"`
-	Id    string `json:"id,omitempty"`
+	Guid string `json:"guid,omitempty"`
+	Id   string `json:"id,omitempty"`
 }
 
 type NatDeleteOutputs struct {
@@ -207,7 +229,7 @@ func (action *NatDeleteAction) ReadParam(param interface{}) (interface{}, error)
 	return inputs, nil
 }
 
-func deleteNatGateway(input NatDeleteInput)(output NatDeleteOutput,error){
+func deleteNatGateway(input NatDeleteInput) (output NatDeleteOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
@@ -227,24 +249,24 @@ func deleteNatGateway(input NatDeleteInput)(output NatDeleteOutput,error){
 		return
 	}
 
-	sc,err := createNatServiceClient(input.CloudProviderParam)
+	sc, err := createNatServiceClient(input.CloudProviderParam)
 	if err != nil {
-		return 
+		return
 	}
 
-	exist,err :=isNatGatewayExist(sc,input.Id)
-	if err!=nil || !exist {
-		return 
+	exist, err := isNatGatewayExist(sc, input.Id)
+	if err != nil || !exist {
+		return
 	}
 
-	if err=natgateways.Delete(sc,input.Id).ExtractErr();err!= nil{
-		logrus.Errorf("natgateway(%v) delete failed,err=%v",input.Id,err)
+	if err = natgateways.Delete(sc, input.Id).ExtractErr(); err != nil {
+		logrus.Errorf("natgateway(%v) delete failed,err=%v", input.Id, err)
 	}
 
 	return
 }
 
-func (action *NatCreateAction) Do(inputs interface{}) (interface{}, error) {
+func (action *NatDeleteAction) Do(inputs interface{}) (interface{}, error) {
 	gateways, _ := inputs.(NatDeleteInputs)
 	outputs := NatDeleteOutputs{}
 	var finalErr error
@@ -269,19 +291,19 @@ type AddSnatRuleInputs struct {
 type AddSnatRuleInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid  string `json:"guid,omitempty"`
-	Id    string `json:"id,omitempty"`
+	Guid string `json:"guid,omitempty"`
+	Id   string `json:"id,omitempty"`
 
-	GatewayId string `json:"gateway_id,omitempty"`
-	VpcId string `json:"vpc_id,omitempty"`
+	GatewayId  string `json:"gateway_id,omitempty"`
+	VpcId      string `json:"vpc_id,omitempty"`
 	PublicIpId string `json:"public_ip_id,omitempty"`
 }
 
-type NatCreateOutputs struct {
-	Outputs []NatCreateOutput `json:"outputs,omitempty"`
+type AddSnatRuleOutputs struct {
+	Outputs []AddSnatRuleOutput `json:"outputs,omitempty"`
 }
 
-type NatCreateOutput struct {
+type AddSnatRuleOutput struct {
 	CallBackParameter
 	Result
 	Guid string `json:"guid,omitempty"`
@@ -300,20 +322,18 @@ func (action *AddSnatRuleAction) ReadParam(param interface{}) (interface{}, erro
 	return inputs, nil
 }
 
-func isSnatRuleExist(sc *gophercloud.ServiceClient,id string)(bool,error){
-	_,err:=snatrules.Get(sc,id).Extract()
+func isSnatRuleExist(sc *golangsdk.ServiceClient, id string) (bool, error) {
+	_, err := snatrules.Get(sc, id).Extract()
 	if err != nil {
-		if ue, ok := err.(*gophercloud.UnifiedError); ok {
-			if strings.Contains(ue.Message(), "could not be found") {
-				return false, nil
-			}
+		if strings.Contains(err.Error(), "could not be found") {
+			return false, nil
 		}
 		return false, err
 	}
 	return true, nil
 }
 
-func checkAddSnatParam(input AddSnatRuleInput)error{
+func checkAddSnatParam(input AddSnatRuleInput) error {
 	if err := isCloudProviderParamValid(input.CloudProviderParam); err != nil {
 		return err
 	}
@@ -324,14 +344,14 @@ func checkAddSnatParam(input AddSnatRuleInput)error{
 	if input.GatewayId == "" {
 		return fmt.Errorf("gatewayId is empty")
 	}
-	if input.PublicIpId=="" {
+	if input.PublicIpId == "" {
 		return fmt.Errorf("publicIpId is empty")
 	}
 
-	return nil 
+	return nil
 }
 
-func addSnatRule(input AddSnatRuleInput)(output AddSnatRuleOutput,err error){
+func addSnatRule(input AddSnatRuleInput) (output AddSnatRuleOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
@@ -343,38 +363,38 @@ func addSnatRule(input AddSnatRuleInput)(output AddSnatRuleOutput,err error){
 		}
 	}()
 
-	if err = checkAddSnatParam(input);err != nil {
-		return 
+	if err = checkAddSnatParam(input); err != nil {
+		return
 	}
 
-	sc,err := createNatServiceClient(input.CloudProviderParam)
+	sc, err := createNatServiceClient(input.CloudProviderParam)
 	if err != nil {
-		return 
+		return
 	}
-	
-	if input.Id != ""{
-		exist:=false
-		exist,err= isSnatRuleExist(sc,input.Id)
+
+	if input.Id != "" {
+		exist := false
+		exist, err = isSnatRuleExist(sc, input.Id)
 		if err == nil && exist {
 			output.Id = input.Id
 			return
 		}
 	}
 
-	opts:=snatrules.CreateOpts{
-		NatGatewayID :input.GatewayId,
-		NetworkID    :input.VpcId,
-		FloatingIPID :input.PublicIpId,
+	opts := snatrules.CreateOpts{
+		NatGatewayID: input.GatewayId,
+		NetworkID:    input.VpcId,
+		FloatingIPID: input.PublicIpId,
 		SourceType:   0,
 	}
-	resp,err:=snatrules.Create(sc,opts).Extract()
-	if err !=nil {
-		logrus.Errorf("create snat rule failed,err=%v",err)
-		return 
+	resp, err := snatrules.Create(sc, opts).Extract()
+	if err != nil {
+		logrus.Errorf("create snat rule failed,err=%v", err)
+		return
 	}
 
-	output.Id= resp.ID
-	return 
+	output.Id = resp.ID
+	return
 }
 
 func (action *AddSnatRuleAction) Do(inputs interface{}) (interface{}, error) {
@@ -403,7 +423,8 @@ type DeleteSnatRuleInputs struct {
 type DeleteSnatRuleInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Id    string `json:"id,omitempty"`
+	Guid string `json:"guid,omitempty"`
+	Id   string `json:"id,omitempty"`
 }
 
 type DeleteSnatRuleOutputs struct {
@@ -414,7 +435,6 @@ type DeleteSnatRuleOutput struct {
 	CallBackParameter
 	Result
 	Guid string `json:"guid,omitempty"`
-
 }
 
 type DeleteSnatRuleAction struct {
@@ -429,7 +449,7 @@ func (action *DeleteSnatRuleAction) ReadParam(param interface{}) (interface{}, e
 	return inputs, nil
 }
 
-func deleteSnatRule(input DeleteSnatRuleInput)(output DeleteSnatRuleOutput,err error){
+func deleteSnatRule(input DeleteSnatRuleInput) (output DeleteSnatRuleOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
@@ -442,28 +462,28 @@ func deleteSnatRule(input DeleteSnatRuleInput)(output DeleteSnatRuleOutput,err e
 	}()
 
 	if err = isCloudProviderParamValid(input.CloudProviderParam); err != nil {
-		return 
+		return
 	}
-	if input.Id == ""{
-		err =fmt.Errorf("empty id")
-		return 
-	}
-
-	exist,err= isSnatRuleExist(sc,input.Id)
-	if err!=nil || !exist {
-		return 
+	if input.Id == "" {
+		err = fmt.Errorf("empty id")
+		return
 	}
 
-	sc,err := createNatServiceClient(input.CloudProviderParam)
+	sc, err := createNatServiceClient(input.CloudProviderParam)
 	if err != nil {
-		return 
+		return
 	}
 
-	if err=snatrules.Delete(sc,input.Id).ExtractErr();err != nil {
-		logrus.Errorf("delete snat rule failed err=%v",err)
+	exist, err := isSnatRuleExist(sc, input.Id)
+	if err != nil || !exist {
+		return
 	}
 
-	return 
+	if err = snatrules.Delete(sc, input.Id).ExtractErr(); err != nil {
+		logrus.Errorf("delete snat rule failed err=%v", err)
+	}
+
+	return
 }
 
 func (action *DeleteSnatRuleAction) Do(inputs interface{}) (interface{}, error) {

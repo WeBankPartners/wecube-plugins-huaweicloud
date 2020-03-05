@@ -37,7 +37,7 @@ func createVpcServiceClientV2(params CloudProviderParam) (*gophercloud.ServiceCl
 		return nil, err
 	}
 
-	return sc,nil 
+	return sc, nil
 }
 
 func CreateVpcServiceClientV1(params CloudProviderParam) (*gophercloud.ServiceClient, error) {

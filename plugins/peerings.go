@@ -1,9 +1,11 @@
 package plugins
 
 import (
-	"github.com/sirupsen/logrus"
 	"fmt"
+	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/vpc/v2.0/peerings"
+	"github.com/sirupsen/logrus"
+	"strings"
 )
 
 var peeringsActions = make(map[string]Action)
@@ -32,10 +34,10 @@ type PeeringsCreateInputs struct {
 type PeeringsCreateInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid  string `json:"guid,omitempty"`
-	Id    string `json:"id,omitempty"`
-	LocalVpcId  string  `json:"local_vpc_id,omitempty"`
-	PeerVpcId   string  `json:"peer_vpc_id,omitempty"`
+	Guid       string `json:"guid,omitempty"`
+	Id         string `json:"id,omitempty"`
+	LocalVpcId string `json:"local_vpc_id,omitempty"`
+	PeerVpcId  string `json:"peer_vpc_id,omitempty"`
 }
 
 type PeeringsCreateOutputs struct {
@@ -61,7 +63,7 @@ func (action *PeeringsCreateAction) ReadParam(param interface{}) (interface{}, e
 	return inputs, nil
 }
 
-func checkPeeringsCreateParam(input PeeringsCreateInput)error{
+func checkPeeringsCreateParam(input PeeringsCreateInput) error {
 	if err := isCloudProviderParamValid(input.CloudProviderParam); err != nil {
 		return err
 	}
@@ -72,10 +74,10 @@ func checkPeeringsCreateParam(input PeeringsCreateInput)error{
 	if input.PeerVpcId == "" {
 		return fmt.Errorf("peerVpcId is empty")
 	}
-	return nil 
+	return nil
 }
 
-func isPeeringsExist(sc *gophercloud.ServiceClient,id string)(bool,error){
+func isPeeringsExist(sc *gophercloud.ServiceClient, id string) (bool, error) {
 	_, err := peerings.Get(sc, id).Extract()
 	if err != nil {
 		if ue, ok := err.(*gophercloud.UnifiedError); ok {
@@ -83,12 +85,12 @@ func isPeeringsExist(sc *gophercloud.ServiceClient,id string)(bool,error){
 				return false, nil
 			}
 		}
-		return  false, err
+		return false, err
 	}
-	return true,nil 
+	return true, nil
 }
 
-func createPeerings(input PeeringsCreateInput)(output PeeringsCreateOutput,err error){
+func createPeerings(input PeeringsCreateInput) (output PeeringsCreateOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
@@ -101,17 +103,17 @@ func createPeerings(input PeeringsCreateInput)(output PeeringsCreateOutput,err e
 	}()
 
 	if err = checkPeeringsCreateParam(input); err != nil {
-		return 
+		return
 	}
 
-	sc,err:=createVpcServiceClientV2(input.CloudProviderParam)
+	sc, err := createVpcServiceClientV2(input.CloudProviderParam)
 	if err != nil {
-		return 
+		return
 	}
 
-	if input.Id != ""{
-		exist:=false
-		exist,err=isPeeringsExist(sc,input.Id)
+	if input.Id != "" {
+		exist := false
+		exist, err = isPeeringsExist(sc, input.Id)
 		if err != nil {
 			return
 		}
@@ -124,20 +126,20 @@ func createPeerings(input PeeringsCreateInput)(output PeeringsCreateOutput,err e
 	opts := peerings.CreateOpts{
 		Name: "wecubeCreated",
 		RequestVpcInfo: peerings.VPCInfo{
-			VpcID:   input.LocalVpcId,
+			VpcID: input.LocalVpcId,
 		},
 		AcceptVpcInfo: peerings.VPCInfo{
-			VpcID:   input.PeerVpcId,
+			VpcID: input.PeerVpcId,
 		},
 	}
 
 	result, createErr := peerings.Create(sc, opts).Extract()
 	if createErr != nil {
 		err = createErr
-		return 
+		return
 	}
-	output.Id= result.ID
-	return 
+	output.Id = result.ID
+	return
 }
 
 func (action *PeeringsCreateAction) Do(inputs interface{}) (interface{}, error) {
@@ -157,7 +159,6 @@ func (action *PeeringsCreateAction) Do(inputs interface{}) (interface{}, error) 
 	return &outputs, finalErr
 }
 
-
 type PeeringsDeleteInputs struct {
 	Inputs []PeeringsDeleteInput `json:"inputs,omitempty"`
 }
@@ -165,8 +166,8 @@ type PeeringsDeleteInputs struct {
 type PeeringsDeleteInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid  string `json:"guid,omitempty"`
-	Id    string `json:"id,omitempty"`
+	Guid string `json:"guid,omitempty"`
+	Id   string `json:"id,omitempty"`
 }
 
 type PeeringsDeleteOutputs struct {
@@ -191,7 +192,7 @@ func (action *PeeringsDeleteAction) ReadParam(param interface{}) (interface{}, e
 	return inputs, nil
 }
 
-func deletePeerings(input PeeringsDeleteInput)(output PeeringsDeleteOutput,err error){
+func deletePeerings(input PeeringsDeleteInput) (output PeeringsDeleteOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
@@ -204,19 +205,19 @@ func deletePeerings(input PeeringsDeleteInput)(output PeeringsDeleteOutput,err e
 	}()
 
 	if err = isCloudProviderParamValid(input.CloudProviderParam); err != nil {
-		return 
+		return
 	}
-	if input.Id == ""{
-		err= fmt.Errorf("empty peer id")
-		return 
+	if input.Id == "" {
+		err = fmt.Errorf("empty peer id")
+		return
 	}
 
-	sc,err:=createVpcServiceClientV2(input.CloudProviderParam)
+	sc, err := createVpcServiceClientV2(input.CloudProviderParam)
 	if err != nil {
-		return err 
+		return
 	}
 
-	exist,err=isPeeringsExist(sc,input.Id)
+	exist, err := isPeeringsExist(sc, input.Id)
 	if err != nil || !exist {
 		return
 	}
@@ -225,7 +226,7 @@ func deletePeerings(input PeeringsDeleteInput)(output PeeringsDeleteOutput,err e
 	if err != nil {
 		logrus.Errorf("delete peerings[id=%v] failed, error=%v", input.Id, err)
 	}
-	return 
+	return
 }
 
 func (action *PeeringsDeleteAction) Do(inputs interface{}) (interface{}, error) {
@@ -241,8 +242,6 @@ func (action *PeeringsDeleteAction) Do(inputs interface{}) (interface{}, error) 
 		outputs.Outputs = append(outputs.Outputs, output)
 	}
 
-	logrus.Infof("all peerings = %v are deleted",peerings)
+	logrus.Infof("all peerings = %v are deleted", peerings)
 	return &outputs, finalErr
 }
-
-

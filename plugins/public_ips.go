@@ -2,9 +2,11 @@ package plugins
 
 import (
 	"fmt"
+	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/vpc/v1/publicips"
 	"github.com/sirupsen/logrus"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -15,8 +17,6 @@ const (
 	BANDWIDTH_SIZE_MAX = 2000
 	BANDWIDTH_SIZE_MIN = 1
 )
-
-
 
 var publicIpActions = make(map[string]Action)
 
@@ -41,17 +41,17 @@ type PublicIpCreateInputs struct {
 	Inputs []PublicIpCreateInput `json:"inputs,omitempty"`
 }
 
-type PublicIpCreateInput  struct {
+type PublicIpCreateInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid  string `json:"guid,omitempty"`
-	Id    string `json:"id,omitempty"`
+	Guid string `json:"guid,omitempty"`
+	Id   string `json:"id,omitempty"`
 
-	BandWidth string  `json:"band_width,omitempty"`
+	BandWidth string `json:"band_width,omitempty"`
 }
 
 type PublicIpCreateOutputs struct {
-	Outputs [] PublicIpCreateOutput `json:"outputs,omitempty"`
+	Outputs []PublicIpCreateOutput `json:"outputs,omitempty"`
 }
 
 type PublicIpCreateOutput struct {
@@ -74,7 +74,7 @@ func (action *PublicIpCreateAction) ReadParam(param interface{}) (interface{}, e
 	return inputs, nil
 }
 
-func createPluginPublicIp(input PublicIpCreateInput)(output PublicIpCreateOutput,err error){
+func createPluginPublicIp(input PublicIpCreateInput) (output PublicIpCreateOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
@@ -87,24 +87,24 @@ func createPluginPublicIp(input PublicIpCreateInput)(output PublicIpCreateOutput
 	}()
 
 	if err = isCloudProviderParamValid(input.CloudProviderParam); err != nil {
-		return err
+		return
 	}
 	if input.Id != "" {
-		exist:=false
-		exist,err=isPublicIpExist(input.CloudProviderParam,input.Id)
+		exist := false
+		exist, err = isPublicIpExist(input.CloudProviderParam, input.Id)
 		if err == nil && exist {
 			output.Id = input.Id
 			return
 		}
 	}
 
-	resp,err:=createPublicIp(input.CloudProviderParam, input.BANDWIDTH_SIZE_MIN, "")
+	resp, err := createPublicIp(input.CloudProviderParam, input.BandWidth, "")
 	if err != nil {
-		return 
+		return
 	}
-	output.Id= resp.ID
-	output.Ip= resp.PublicIpAddress
-	return 
+	output.Id = resp.ID
+	output.Ip = resp.PublicIpAddress
+	return
 }
 
 func (action *PublicIpCreateAction) Do(inputs interface{}) (interface{}, error) {
@@ -129,15 +129,15 @@ type PublicIpDeleteInputs struct {
 	Inputs []PublicIpDeleteInput `json:"inputs,omitempty"`
 }
 
-type PublicIpDeleteInput  struct {
+type PublicIpDeleteInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid  string `json:"guid,omitempty"`
-	Id    string `json:"id,omitempty"`
+	Guid string `json:"guid,omitempty"`
+	Id   string `json:"id,omitempty"`
 }
 
 type PublicIpDeleteOutputs struct {
-	Outputs [] PublicIpDeleteOutput `json:"outputs,omitempty"`
+	Outputs []PublicIpDeleteOutput `json:"outputs,omitempty"`
 }
 
 type PublicIpDeleteOutput struct {
@@ -149,7 +149,7 @@ type PublicIpDeleteOutput struct {
 type PublicIpDeleteAction struct {
 }
 
-func (action *PublicIpDeleteAction ) ReadParam(param interface{}) (interface{}, error) {
+func (action *PublicIpDeleteAction) ReadParam(param interface{}) (interface{}, error) {
 	var inputs PublicIpDeleteInputs
 	err := UnmarshalJson(param, &inputs)
 	if err != nil {
@@ -158,7 +158,7 @@ func (action *PublicIpDeleteAction ) ReadParam(param interface{}) (interface{}, 
 	return inputs, nil
 }
 
-func deletePluginPublicIp(input PublicIpDeleteInput)(output PublicIpDeleteOutput,err error){
+func deletePluginPublicIp(input PublicIpDeleteInput) (output PublicIpDeleteOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
@@ -171,15 +171,15 @@ func deletePluginPublicIp(input PublicIpDeleteInput)(output PublicIpDeleteOutput
 	}()
 
 	if err = isCloudProviderParamValid(input.CloudProviderParam); err != nil {
-		return err
+		return
 	}
 	if input.Id == "" {
-		err =fmt.Errorf("empty id")
-		return 
+		err = fmt.Errorf("empty id")
+		return
 	}
 
-	err =  deletePublicIp(input.CloudProviderParam, input.Id)
-	return 
+	err = deletePublicIp(input.CloudProviderParam, input.Id)
+	return
 }
 
 func (action *PublicIpDeleteAction) Do(inputs interface{}) (interface{}, error) {
@@ -199,13 +199,13 @@ func (action *PublicIpDeleteAction) Do(inputs interface{}) (interface{}, error) 
 	return &outputs, finalErr
 }
 
-func isPublicIpExist(params CloudProviderParam, id string)(bool,error){
+func isPublicIpExist(params CloudProviderParam, id string) (bool, error) {
 	sc, err := CreateVpcServiceClientV1(params)
 	if err != nil {
 		return false, err
 	}
 
-	_, err := publicips.Get(sc, id).Extract()
+	_, err = publicips.Get(sc, id).Extract()
 	if err != nil {
 		if ue, ok := err.(*gophercloud.UnifiedError); ok {
 			if strings.Contains(ue.Message(), "could not be found") {
@@ -314,5 +314,3 @@ func getPublicIpByPortId(params CloudProviderParam, portId string) (*publicips.P
 	}
 	return nil, fmt.Errorf("can't found publicIp by portId(%v)", portId)
 }
-
-
