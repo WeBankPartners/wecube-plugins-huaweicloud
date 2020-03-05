@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/WeBankPartners/wecube-plugins-huaweicloud/plugins/utils"
 	"github.com/gophercloud/gophercloud"
@@ -37,7 +38,6 @@ func createBlockStorageServiceClient(params CloudProviderParam) (*gophercloud.Se
 
 	return sc, nil
 }
-
 
 func init() {
 	blockStorageActions["create-mount"] = new(CreateAndMountDiskAction)
@@ -149,7 +149,7 @@ func checkCreateAndMountParam(input CreateAndMountDiskInput) error {
 	return nil
 }
 
-func waitVolumeInDesireState(sc *gophercloud.ServiceClient, id string,desireState string)error{
+func waitVolumeInDesireState(sc *gophercloud.ServiceClient, id string, desireState string) error {
 	for {
 		time.Sleep(time.Duration(5) * time.Second)
 		volume, err := volumes.Get(sc, id).Extract()
@@ -171,15 +171,15 @@ func waitVolumeInDesireState(sc *gophercloud.ServiceClient, id string,desireStat
 }
 
 func waitVolumeCreateOk(sc *gophercloud.ServiceClient, id string) error {
-	return  waitVolumeInDesireState(sc,id,"available")
+	return waitVolumeInDesireState(sc, id, "available")
 }
 
-func waitVolumeInAvailableState(sc *gophercloud.ServiceClient, id string)error{
-	return waitVolumeInDesireState(sc,id,"available")
+func waitVolumeInAvailableState(sc *gophercloud.ServiceClient, id string) error {
+	return waitVolumeInDesireState(sc, id, "available")
 }
 
-func waitVolumeAttachOk(sc *gophercloud.ServiceClient, id string)error{
-	return waitVolumeInDesireState(sc,id,"in-use")
+func waitVolumeAttachOk(sc *gophercloud.ServiceClient, id string) error {
+	return waitVolumeInDesireState(sc, id, "in-use")
 }
 
 func attachVolumeToVm(input CreateAndMountDiskInput, volumeId string, instanceId string) (string, string, error) {
@@ -225,12 +225,12 @@ func buyDiskAndAttachToVm(input CreateAndMountDiskInput) (diskId string, attachI
 	}
 
 	//attach to vm
-	if attachId, volumeName, err = attachVolumeToVm(input, volume.ID, input.InstanceId);err != nil {
-		return 
+	if attachId, volumeName, err = attachVolumeToVm(input, volume.ID, input.InstanceId); err != nil {
+		return
 	}
 	logrus.Infof("attachVolumeToVm return ,attachId=%v,volumeName=%v,err=%v", attachId, volumeName, err)
 
-	err = waitVolumeAttachOk(sc,volume.ID)
+	err = waitVolumeAttachOk(sc, volume.ID)
 
 	return
 }
@@ -339,7 +339,7 @@ func createAndMountDisk(input CreateAndMountDiskInput) (output CreateAndMountDis
 		return
 	}
 
-	oldUnformatDisks, err := getUnformatDisks(privateIp,password)
+	oldUnformatDisks, err := getUnformatDisks(privateIp, password)
 	if err != nil {
 		return
 	}
@@ -358,10 +358,10 @@ func createAndMountDisk(input CreateAndMountDiskInput) (output CreateAndMountDis
 	if err != nil {
 		return
 	}
-	
+
 	output.VolumeName, err = getNewCreateDiskVolumeName(privateIp, password, oldUnformatDisks)
 	if err != nil {
-		return 
+		return
 	}
 
 	//format and mount
@@ -486,7 +486,7 @@ func detachVolumeFromVm(input UmountAndTerminateDiskInput) error {
 		logrus.Errorf("volumeattach delete meet err=%v", err)
 	}
 
-	err = waitVolumeInAvailableState(sc,input.Id)
+	err = waitVolumeInAvailableState(sc, input.Id)
 
 	return err
 }
