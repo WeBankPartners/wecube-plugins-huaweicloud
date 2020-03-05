@@ -25,6 +25,21 @@ func init() {
 	vpcActions["delete"] = new(VpcDeleteAction)
 }
 
+func createVpcServiceClientV2(params CloudProviderParam) (*gophercloud.ServiceClient, error) {
+	provider, err := createGopherCloudProviderClient(params)
+	if err != nil {
+		logrus.Errorf("get gophercloud provider client failed, error=%v", err)
+		return nil, err
+	}
+	sc, err := openstack.NewVPCV2(provider, gophercloud.EndpointOpts{})
+	if err != nil {
+		logrus.Errorf("newVPCV2 failed, error=%v", err)
+		return nil, err
+	}
+
+	return sc,nil 
+}
+
 func CreateVpcServiceClientV1(params CloudProviderParam) (*gophercloud.ServiceClient, error) {
 	provider, err := createGopherCloudProviderClient(params)
 	if err != nil {

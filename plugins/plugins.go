@@ -56,6 +56,9 @@ func init() {
 	RegisterPlugin("lb-target", new(LbTargetPlugin))
 	RegisterPlugin("block-storage", new(BlockStoragePlugin))
 	RegisterPlugin("security-group-rule", new(SecurityGroupRulePlugin))
+	RegisterPlugin("peerings", new(PeeringsPlugin))
+	RegisterPlugin("public-ip", new(PublicIpPlugin))
+	RegisterPlugin("nat-gateway", new(NatPlugin))
 }
 
 type PluginRequest struct {
