@@ -112,7 +112,7 @@ func createGopherCloudProviderClient(param CloudProviderParam) (*gophercloud.Pro
 
 	identifyMap, _ := GetMapFromString(param.IdentityParams)
 	cloudMap, _ := GetMapFromString(param.CloudParams)
-	identityURL := "https://iam." + cloudMap[CLOUD_PARAM_REGION] + "." + cloudMap[CLOUD_PARAM_CLOUD_DOAMIN_NAME] + "." + "/v3"
+	identityURL := "https://iam." + cloudMap[CLOUD_PARAM_REGION] + "." + cloudMap[CLOUD_PARAM_CLOUD_DOAMIN_NAME] + "/v3"
 
 	opts := aksk.AKSKOptions{
 		IdentityEndpoint: identityURL,

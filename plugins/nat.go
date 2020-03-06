@@ -17,7 +17,7 @@ func createNatServiceClient(params CloudProviderParam) (*golangsdk.ServiceClient
 
 	identifyMap, _ := GetMapFromString(params.IdentityParams)
 	cloudMap, _ := GetMapFromString(params.CloudParams)
-	identityURL := "https://iam." + cloudMap[CLOUD_PARAM_REGION] + "." + cloudMap[CLOUD_PARAM_CLOUD_DOAMIN_NAME] + "." + "/v3"
+	identityURL := "https://iam." + cloudMap[CLOUD_PARAM_REGION] + "." + cloudMap[CLOUD_PARAM_CLOUD_DOAMIN_NAME] + "/v3"
 
 	opts := golangsdk.AKSKAuthOptions{
 		IdentityEndpoint: identityURL,
@@ -38,7 +38,9 @@ func createNatServiceClient(params CloudProviderParam) (*golangsdk.ServiceClient
 		logrus.Errorf("createNatServiceClient auth failed err=%v", err)
 		return nil, err
 	}
-	sc, err := openstack.NewNetworkV2(client, golangsdk.EndpointOpts{})
+	sc, err := openstack.NewNatV2(client, golangsdk.EndpointOpts{
+		Region: cloudMap[CLOUD_PARAM_REGION],
+	})
 	if err != nil {
 		logrus.Errorf("createNatServiceClient meet err=%v", err)
 		return nil, err
@@ -162,12 +164,16 @@ func createNatGateway(input NatCreateInput) (output NatCreateOutput, err error) 
 	}
 
 	//create natgateway
+	//cloudMap, _ := GetMapFromString(input.CloudProviderParam.CloudParams)
 	opts := natgateways.CreateOpts{
+		//TenantID:cloudMap[CLOUD_PARAM_PROJECT_ID],
 		Name:              "wecubeCreated",
 		Spec:              "1",
 		RouterID:          input.VpcId,
 		InternalNetworkID: input.SubnetId,
 	}
+
+	fmt.Printf("opts=%++v\n", opts)
 
 	result, err := natgateways.Create(sc, opts).Extract()
 	if err != nil {
