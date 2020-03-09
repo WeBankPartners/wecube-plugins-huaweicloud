@@ -3,16 +3,18 @@ package plugins
 import (
 	"errors"
 	"fmt"
+
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/listeners"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/loadbalancers"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/monitors"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/lbaas_v2/pools"
 
-	"github.com/gophercloud/gophercloud/openstack/vpc/v1/subnets"
-	"github.com/sirupsen/logrus"
 	"strconv"
 	"strings"
+
+	"github.com/gophercloud/gophercloud/openstack/vpc/v1/subnets"
+	"github.com/sirupsen/logrus"
 )
 
 var lbTargetActions = make(map[string]Action)
@@ -404,7 +406,7 @@ func delHostFromLb(input LbHostInput) (output LbHostOutput, err error) {
 		return
 	}
 	if nil == listener.DefaultPoolID {
-		err = fmt.Errorf("listener hav no default pool")
+		err = fmt.Errorf("listener have no default pool")
 		return
 	}
 

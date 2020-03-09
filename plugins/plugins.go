@@ -59,6 +59,8 @@ func init() {
 	RegisterPlugin("peerings", new(PeeringsPlugin))
 	RegisterPlugin("public-ip", new(PublicIpPlugin))
 	RegisterPlugin("nat-gateway", new(NatPlugin))
+	RegisterPlugin("route", new(RoutePlugin))
+	RegisterPlugin("rds", new(RdsPlugin))
 }
 
 type PluginRequest struct {
