@@ -418,7 +418,7 @@ func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreat
 		return
 	}
 	output.Id = response.Instance.Id
-	instance, err := waitRdsInstanceJobOk(sc, response.Instance.Id, "create", 10)
+	instance, err := waitRdsInstanceJobOk(sc, response.Instance.Id, "create", 20)
 	if err != nil {
 		return
 	}
@@ -721,7 +721,7 @@ func (action *RdsCreateBackupAction) createRdsBackup(input *RdsCreateBackupInput
 	}
 	output.Id = response.Id
 
-	_, err = waitRdsBackupJobOk(sc, response.Id, response.Instanceid, "create", 10)
+	_, err = waitRdsBackupJobOk(sc, response.Id, response.Instanceid, "create", 20)
 	if err != nil {
 		logrus.Errorf("waitRdsBackupJobOk meet error=%v", err)
 		return
@@ -747,9 +747,9 @@ func (action *RdsCreateBackupAction) Do(inputs interface{}) (interface{}, error)
 }
 
 func isRdsBackupExist(sc *gophercloud.ServiceClient, backupId, instanceId string) (*backups.BackupsResp, bool, error) {
-	request := backups.ListBackupsOpts{}
-	if instanceId != "" {
-		request.InstanceId = instanceId
+	request := backups.ListBackupsOpts{
+		InstanceId: instanceId,
+		BackupId:   backupId,
 	}
 	allPages, err := backups.List(sc, request).AllPages()
 	if err != nil {
@@ -762,13 +762,11 @@ func isRdsBackupExist(sc *gophercloud.ServiceClient, backupId, instanceId string
 	if len(backupResp.Backups) == 0 {
 		return nil, false, nil
 	}
-	var backup backups.BackupsResp
-	for _, backup = range backupResp.Backups {
-		if strings.Compare(backupId, backup.Id) == 0 {
-			return &backup, true, nil
-		}
+	if len(backupResp.Backups) > 1 {
+		return nil, false, fmt.Errorf("more than one backup had been returned")
 	}
-	return nil, false, nil
+
+	return &backupResp.Backups[0], true, nil
 }
 
 func waitRdsBackupJobOk(sc *gophercloud.ServiceClient, backupId, instanceId, action string, times int) (*backups.BackupsResp, error) {
@@ -810,13 +808,24 @@ type RdsDeleteBackupInputs struct {
 	Inputs []RdsDeleteBackupInput `json:"inputs,omitempty"`
 }
 
-type RdsDeleteBackupInput RdsDeleteInput
+type RdsDeleteBackupInput struct {
+	CallBackParameter
+	CloudProviderParam
+	Guid       string `json:"guid,omitempty"`
+	Id         string `json:"id,omitempty"`
+	InstanceId string `json:"instance_id,omitempty"`
+}
 
 type RdsDeleteBackupOutputs struct {
 	Outputs []RdsDeleteBackupOutput `json:"outputs,omitempty"`
 }
 
-type RdsDeleteBackupOutput RdsDeleteOutput
+type RdsDeleteBackupOutput struct {
+	CallBackParameter
+	Result
+	Guid string `json:"guid,omitempty"`
+	Id   string `json:"id,omitempty"`
+}
 
 type RdsDeleteBackupAction struct {
 }
@@ -835,7 +844,10 @@ func (action *RdsDeleteBackupAction) checkDeleteBackupParams(input RdsDeleteBack
 		return err
 	}
 	if input.Id == "" {
-		return fmt.Errorf("Route id is empty")
+		return fmt.Errorf("Rds id is empty")
+	}
+	if input.InstanceId == "" {
+		return fmt.Errorf("Rds instanceId is empty")
 	}
 
 	return nil
@@ -866,7 +878,7 @@ func (action *RdsDeleteBackupAction) deleteBackup(input *RdsDeleteBackupInput) (
 	}
 
 	// check whether backup is exist.
-	_, ok, err := isRdsBackupExist(sc, input.Id, "")
+	_, ok, err := isRdsBackupExist(sc, input.Id, input.InstanceId)
 	if err != nil {
 		logrus.Errorf("check whether backup is exist meet error=%v", err)
 		return
@@ -884,7 +896,7 @@ func (action *RdsDeleteBackupAction) deleteBackup(input *RdsDeleteBackupInput) (
 		return
 	}
 
-	_, err = waitRdsBackupJobOk(sc, input.Id, "", "delete", 10)
+	_, err = waitRdsBackupJobOk(sc, input.Id, input.InstanceId, "delete", 10)
 	if err != nil {
 		logrus.Errorf("waitRdsBackupJobOk meet error=%v", err)
 		return
