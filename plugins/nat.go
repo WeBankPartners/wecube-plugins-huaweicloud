@@ -164,7 +164,7 @@ func createNatGateway(input NatCreateInput) (output NatCreateOutput, err error) 
 	}
 
 	//create natgateway
-	//cloudMap, _ := GetMapFromString(input.CloudProviderParam.CloudParams)
+	cloudMap, _ := GetMapFromString(input.CloudProviderParam.CloudParams)
 	opts := natgateways.CreateOpts{
 		TenantID:cloudMap[CLOUD_PARAM_PROJECT_ID],
 		Name:              "wecubeCreated",
