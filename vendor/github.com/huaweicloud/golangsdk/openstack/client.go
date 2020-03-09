@@ -116,7 +116,6 @@ func Authenticate(client *golangsdk.ProviderClient, options golangsdk.AuthOption
 	}
 
 	authOptions, isTokenAuthOptions := options.(golangsdk.AuthOptions)
-
 	if isTokenAuthOptions {
 		switch chosen.ID {
 		case v2:
@@ -132,7 +131,6 @@ func Authenticate(client *golangsdk.ProviderClient, options golangsdk.AuthOption
 		}
 	} else {
 		akskAuthOptions, isAkSkOptions := options.(golangsdk.AKSKAuthOptions)
-
 		if isAkSkOptions {
 			if akskAuthOptions.AgencyDomainName != "" && akskAuthOptions.AgencyName != "" {
 				return authWithAgencyByAKSK(client, endpoint, akskAuthOptions, golangsdk.EndpointOpts{})

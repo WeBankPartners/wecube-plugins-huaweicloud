@@ -81,7 +81,7 @@ func isPeeringsExist(sc *gophercloud.ServiceClient, id string) (bool, error) {
 	_, err := peerings.Get(sc, id).Extract()
 	if err != nil {
 		if ue, ok := err.(*gophercloud.UnifiedError); ok {
-			if strings.Contains(ue.Message(), "could not be found") {
+			if strings.Contains(ue.Message(), "No VPC peering exist") {
 				return false, nil
 			}
 		}

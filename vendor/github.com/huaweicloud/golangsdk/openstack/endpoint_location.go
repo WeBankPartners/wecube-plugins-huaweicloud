@@ -1,6 +1,7 @@
 package openstack
 
 import (
+        "fmt"
 	"github.com/huaweicloud/golangsdk"
 	tokens2 "github.com/huaweicloud/golangsdk/openstack/identity/v2/tokens"
 	tokens3 "github.com/huaweicloud/golangsdk/openstack/identity/v3/tokens"
@@ -71,6 +72,8 @@ available on your OpenStack deployment.
 func V3EndpointURL(catalog *tokens3.ServiceCatalog, opts golangsdk.EndpointOpts) (string, error) {
 	// Extract Endpoints from the catalog entries that match the requested Type, Interface,
 	// Name if provided, and Region if provided.
+
+	fmt.Printf("opts=%++v\n",opts)
 	var endpoints = make([]tokens3.Endpoint, 0, 1)
 	for _, entry := range catalog.Entries {
 		if (entry.Type == opts.Type) && (opts.Name == "" || entry.Name == opts.Name) {
@@ -99,6 +102,7 @@ func V3EndpointURL(catalog *tokens3.ServiceCatalog, opts golangsdk.EndpointOpts)
 
 	// Extract the URL from the matching Endpoint.
 	for _, endpoint := range endpoints {
+		fmt.Printf("%++v\n",endpoints)
 		return golangsdk.NormalizeURL(endpoint.URL), nil
 	}
 
