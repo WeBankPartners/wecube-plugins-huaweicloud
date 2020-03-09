@@ -23,7 +23,7 @@ func createNatServiceClient(params CloudProviderParam) (*golangsdk.ServiceClient
 		IdentityEndpoint: identityURL,
 		AccessKey:        identifyMap[IDENTITY_ACCESS_KEY],
 		SecretKey:        identifyMap[IDENTITY_SECRET_KEY],
-		DomainID:         identifyMap[IDENTITY_DOMAIN_ID],
+		//DomainID:         identifyMap[IDENTITY_DOMAIN_ID],
 		ProjectId:        cloudMap[CLOUD_PARAM_PROJECT_ID],
 		Domain:           cloudMap[CLOUD_PARAM_CLOUD_DOAMIN_NAME],
 		Region:           cloudMap[CLOUD_PARAM_REGION],
