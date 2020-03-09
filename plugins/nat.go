@@ -124,7 +124,7 @@ func checkNatGatewayCreateParam(input NatCreateInput) error {
 func isNatGatewayExist(sc *golangsdk.ServiceClient, id string) (bool, error) {
 	_, err := natgateways.Get(sc, id).Extract()
 	if err != nil {
-		if strings.Contains(err.Error(), "could not be found") {
+		if strings.Contains(err.Error(), "No Nat Gateway exist") {
 			return false, nil
 		}
 		return false, err
