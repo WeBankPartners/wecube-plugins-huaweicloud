@@ -301,7 +301,7 @@ type AddSnatRuleInput struct {
 	Id   string `json:"id,omitempty"`
 
 	GatewayId  string `json:"gateway_id,omitempty"`
-	VpcId      string `json:"vpc_id,omitempty"`
+	SubnetId      string `json:"subnet_id,omitempty"`
 	PublicIpId string `json:"public_ip_id,omitempty"`
 }
 
@@ -344,8 +344,8 @@ func checkAddSnatParam(input AddSnatRuleInput) error {
 		return err
 	}
 
-	if input.VpcId == "" {
-		return fmt.Errorf("vpcId is empty")
+	if input.SubnetId == "" {
+		return fmt.Errorf("subnetId is empty")
 	}
 	if input.GatewayId == "" {
 		return fmt.Errorf("gatewayId is empty")
@@ -389,7 +389,7 @@ func addSnatRule(input AddSnatRuleInput) (output AddSnatRuleOutput, err error) {
 
 	opts := snatrules.CreateOpts{
 		NatGatewayID: input.GatewayId,
-		NetworkID:    input.VpcId,
+		NetworkID:    input.SubnetId,
 		FloatingIPID: input.PublicIpId,
 		SourceType:   0,
 	}
