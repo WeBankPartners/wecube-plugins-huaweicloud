@@ -331,7 +331,7 @@ func (action *AddSnatRuleAction) ReadParam(param interface{}) (interface{}, erro
 func isSnatRuleExist(sc *golangsdk.ServiceClient, id string) (bool, error) {
 	_, err := snatrules.Get(sc, id).Extract()
 	if err != nil {
-		if strings.Contains(err.Error(), "could not be found") {
+		if strings.Contains(err.Error(), "No Snat Rule exist") {
 			return false, nil
 		}
 		return false, err
