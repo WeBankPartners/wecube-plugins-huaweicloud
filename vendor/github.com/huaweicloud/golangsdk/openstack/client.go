@@ -329,7 +329,8 @@ func v3AKSKAuth(client *golangsdk.ProviderClient, endpoint string, options golan
 	}
 
 	if options.DomainID == "" && options.Domain != "" {
-		id, err := getDomainID(options.Domain, v3Client)
+		//id, err := getDomainID(options.Domain, v3Client)
+		id:=""
 		if err != nil {
 			options.DomainID = ""
 		} else {
@@ -338,7 +339,8 @@ func v3AKSKAuth(client *golangsdk.ProviderClient, endpoint string, options golan
 	}
 
 	if options.BssDomainID == "" && options.BssDomain != "" {
-		id, err := getDomainID(options.BssDomain, v3Client)
+		//id, err := getDomainID(options.BssDomain, v3Client)
+		id:=""
 		if err != nil {
 			options.BssDomainID = ""
 		} else {
