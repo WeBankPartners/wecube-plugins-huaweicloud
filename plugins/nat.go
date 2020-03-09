@@ -24,9 +24,9 @@ func createNatServiceClient(params CloudProviderParam) (*golangsdk.ServiceClient
 		AccessKey:        identifyMap[IDENTITY_ACCESS_KEY],
 		SecretKey:        identifyMap[IDENTITY_SECRET_KEY],
 		//DomainID:         identifyMap[IDENTITY_DOMAIN_ID],
-		ProjectId:        cloudMap[CLOUD_PARAM_PROJECT_ID],
-		Domain:           cloudMap[CLOUD_PARAM_CLOUD_DOAMIN_NAME],
-		Region:           cloudMap[CLOUD_PARAM_REGION],
+		ProjectId: cloudMap[CLOUD_PARAM_PROJECT_ID],
+		Domain:    cloudMap[CLOUD_PARAM_CLOUD_DOAMIN_NAME],
+		Region:    cloudMap[CLOUD_PARAM_REGION],
 	}
 	client, err := openstack.NewClient(identityURL)
 	if err != nil {
@@ -166,7 +166,7 @@ func createNatGateway(input NatCreateInput) (output NatCreateOutput, err error) 
 	//create natgateway
 	cloudMap, _ := GetMapFromString(input.CloudProviderParam.CloudParams)
 	opts := natgateways.CreateOpts{
-		TenantID:cloudMap[CLOUD_PARAM_PROJECT_ID],
+		TenantID:          cloudMap[CLOUD_PARAM_PROJECT_ID],
 		Name:              "wecubeCreated",
 		Spec:              "1",
 		RouterID:          input.VpcId,
@@ -301,7 +301,7 @@ type AddSnatRuleInput struct {
 	Id   string `json:"id,omitempty"`
 
 	GatewayId  string `json:"gateway_id,omitempty"`
-	SubnetId      string `json:"subnet_id,omitempty"`
+	SubnetId   string `json:"subnet_id,omitempty"`
 	PublicIpId string `json:"public_ip_id,omitempty"`
 }
 
