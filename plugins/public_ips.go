@@ -2,11 +2,13 @@ package plugins
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/vpc/v1/publicips"
 	"github.com/sirupsen/logrus"
-	"strconv"
-	"strings"
 )
 
 const (
@@ -16,6 +18,9 @@ const (
 
 	BANDWIDTH_SIZE_MAX = 2000
 	BANDWIDTH_SIZE_MIN = 1
+
+	PUBLIC_IP_STATUS_BAD  = "ERROR"
+	PUBLIC_IP_STATUS_GOOD = "DOWN"
 )
 
 var publicIpActions = make(map[string]Action)
@@ -91,7 +96,7 @@ func createPluginPublicIp(input PublicIpCreateInput) (output PublicIpCreateOutpu
 	}
 	if input.Id != "" {
 		exist := false
-		exist, err = isPublicIpExist(input.CloudProviderParam, input.Id)
+		_, exist, err = isPublicIpExist(input.CloudProviderParam, input.Id)
 		if err == nil && exist {
 			output.Id = input.Id
 			return
@@ -100,10 +105,16 @@ func createPluginPublicIp(input PublicIpCreateInput) (output PublicIpCreateOutpu
 
 	resp, err := createPublicIp(input.CloudProviderParam, input.BandWidth, "")
 	if err != nil {
+		logrus.Errorf("create public ip meet error=%v", err)
 		return
 	}
 	output.Id = resp.ID
 	output.Ip = resp.PublicIpAddress
+
+	err = waitPublicIpJobOk(input.CloudProviderParam, output.Id, "create", 10)
+	if err != nil {
+		return
+	}
 	return
 }
 
@@ -178,7 +189,7 @@ func deletePluginPublicIp(input PublicIpDeleteInput) (output PublicIpDeleteOutpu
 		return
 	}
 
-	exist, err := isPublicIpExist(input.CloudProviderParam, input.Id)
+	_, exist, err := isPublicIpExist(input.CloudProviderParam, input.Id)
 	if err != nil || !exist {
 		return
 	}
@@ -204,22 +215,22 @@ func (action *PublicIpDeleteAction) Do(inputs interface{}) (interface{}, error) 
 	return &outputs, finalErr
 }
 
-func isPublicIpExist(params CloudProviderParam, id string) (bool, error) {
+func isPublicIpExist(params CloudProviderParam, id string) (*publicips.PublicIP, bool, error) {
 	sc, err := CreateVpcServiceClientV1(params)
 	if err != nil {
-		return false, err
+		return nil, false, err
 	}
 
-	_, err = publicips.Get(sc, id).Extract()
+	ipInfo, err := publicips.Get(sc, id).Extract()
 	if err != nil {
 		if ue, ok := err.(*gophercloud.UnifiedError); ok {
 			if strings.Contains(ue.Message(), "could not be found") {
-				return false, nil
+				return nil, false, nil
 			}
 		}
-		return false, err
+		return nil, false, err
 	}
-	return true, nil
+	return ipInfo, true, nil
 }
 
 func getPublicIpInfo(params CloudProviderParam, id string) (*publicips.PublicIP, error) {
@@ -290,6 +301,40 @@ func deletePublicIp(params CloudProviderParam, id string) error {
 	}
 
 	return nil
+}
+
+func waitPublicIpJobOk(params CloudProviderParam, id string, action string, times int) error {
+	var ipInfo *publicips.PublicIP
+	var err error
+	count := 1
+	for {
+		ipInfo, _, err = isPublicIpExist(params, id)
+		if err != nil {
+			return err
+		}
+		if ipInfo == nil {
+			if action == "delete" {
+				return nil
+			}
+			return fmt.Errorf("get public ip[id=%v] meet error=ip not be found", id)
+		}
+
+		if action == "create" {
+			if ipInfo.Status == PUBLIC_IP_STATUS_BAD {
+				break
+			}
+			if ipInfo.Status == PUBLIC_IP_STATUS_GOOD {
+				return nil
+			}
+		}
+
+		if count > times {
+			break
+		}
+		time.Sleep(5 * time.Second)
+		count++
+	}
+	return fmt.Errorf("after %vs, %v the rds instance[id=%v] status is %v", count*30, action, id, ipInfo.Status)
 }
 
 func getPublicIpByPortId(params CloudProviderParam, portId string) (*publicips.PublicIP, error) {
