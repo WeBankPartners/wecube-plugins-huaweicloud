@@ -2,10 +2,11 @@ package plugins
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/vpc/v2.0/peerings"
 	"github.com/sirupsen/logrus"
-	"strings"
 )
 
 var peeringsActions = make(map[string]Action)
@@ -177,6 +178,7 @@ type PeeringsDeleteOutputs struct {
 type PeeringsDeleteOutput struct {
 	CallBackParameter
 	Result
+	Id   string `json:"id,omitempty"`
 	Guid string `json:"guid,omitempty"`
 }
 
@@ -195,6 +197,7 @@ func (action *PeeringsDeleteAction) ReadParam(param interface{}) (interface{}, e
 func deletePeerings(input PeeringsDeleteInput) (output PeeringsDeleteOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
+		output.Id = input.Id
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
 		if err == nil {
 			output.Result.Code = RESULT_CODE_SUCCESS

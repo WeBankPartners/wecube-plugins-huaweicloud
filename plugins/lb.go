@@ -278,6 +278,7 @@ type DeleteLbOutputs struct {
 type DeleteLbOutput struct {
 	CallBackParameter
 	Result
+	Id   string `json:"id,omitempty"`
 	Guid string `json:"guid,omitempty"`
 }
 
@@ -328,6 +329,7 @@ func deleteLbListenerAndPools(input DeleteLbInput) error {
 func deleteLb(input DeleteLbInput) (output DeleteLbOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
+		output.Id = input.Id
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
 		if err == nil {
 			output.Result.Code = RESULT_CODE_SUCCESS
