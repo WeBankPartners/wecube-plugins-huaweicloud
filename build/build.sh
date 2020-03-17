@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 set -e -x 
-
+apk -U add bash git  gcc musl-dev
 cd $(dirname $0)/..
 source $(dirname $0)/version.sh
 

@@ -15,12 +15,11 @@ clean:
 	rm -rf  ./*.tar
 	rm -rf ./*.zip
 fmt:
-	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_name) --name build_$(project_name) -w /go/src/github.com/WeBankPartners/$(project_name)/  golang:1.12.9 go fmt ./...
-
+	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_name) --name build_$(project_name) -w /go/src/github.com/WeBankPartners/$(project_name)/  golang:1.13.3-alpine3.10   go fmt ./...
 
 build: clean
 	chmod +x ./build/*.sh
-	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_name) --name build_$(project_name) golang:1.12.9 /bin/bash /go/src/github.com/WeBankPartners/$(project_name)/build/build.sh 
+	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_name) --name build_$(project_name) golang:1.13.3-alpine3.10  /bin/sh /go/src/github.com/WeBankPartners/$(project_name)/build/build.sh 
 
 image: build
 	docker build -t $(project_name):$(version) .
