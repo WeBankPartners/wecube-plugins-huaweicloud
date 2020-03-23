@@ -41,13 +41,6 @@
 	![huaweicloud_build](images/huaweicloud_build.png)
 
 
-	执行以下命令将生成插件包的docker镜像，镜像的tag为github的commit号
-	```
-	make image
-	```
-
-	![huaweicloud_image](images/huaweicloud_image.png)
-
 	执行以下命令，将生成wecube使用的插件包：
 	```
 	make package PLUGIN_VERSION=v1.0
