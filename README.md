@@ -5,19 +5,17 @@
 
 ## 简介
 
-HuaweiCloud插件对华为云原生资源(如ECS、ELB、EIP,NAT网关、安全组等)的生命周期管理接口进行业务封装，提供符合Wecube插件规范的插件接口.
+HuaweiCloud插件对华为云原生资源(如ECS、ELB、EIP、NAT网关、安全组等)的生命周期管理接口进行业务封装，提供符合Wecube插件规范的插件接口.
 
 ## HuaweiCloud插件的使用场景
 
-在Wecube中注册该插件，即可通过wecube的编排调用该插件的接口。
-
-插件API包含的功能如下图所示：
+在Wecube中注册该插件，即可通过Wecube的编排调用该插件的接口。插件支持的Huawei云资源如下图所示：
 <img src="./docs/images/plugin_function.png" />
 
 
 ## HuaweiCloud插件开发环境搭建
 
-详情请查看[HaweiCloud插件开发环境搭建指引](docs/wecube-plugins-huaweicloud_build_dev_env.md)
+详情请查看[HuaweiCloud插件开发环境搭建指引](docs/wecube-plugins-huaweicloud_build_dev_env.md)
 
 开发环境搭建完成后，如果是linux用户，执行go build命令后，在当前目录下可看到wecube-plugins-huaweicloud的二进制程序，执行如下命令启动该程序,该程序启动后的默认端口为8083
 
