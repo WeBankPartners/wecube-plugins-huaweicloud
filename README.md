@@ -30,7 +30,6 @@ curl -X POST \
   http://119.28.98.80:8083/huaweicloud/v1/vpc/create \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
-  -H 'postman-token: a3d75e00-1b32-c348-297a-ef17cde50559' \
   -d '{
 	"inputs":[
 		{
