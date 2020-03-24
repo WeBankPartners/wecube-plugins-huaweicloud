@@ -33,8 +33,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">guid</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">identity_params</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">cloud_params</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">name</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">cidr</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">name</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">cidr</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">enterprise_project_id</parameter>
                 </inputParameters>
@@ -67,7 +67,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">identity_params</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">cloud_params</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">name</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">vpc_id</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">vpc_id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">enterprise_project_id</parameter>
                 </inputParameters>
@@ -144,7 +144,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">password</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">labels</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">az</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">security_groups</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">security_groups</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">charge_type</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">period_type</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">period_num</parameter>
@@ -332,10 +332,10 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">security_group_id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">direction</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">protocol</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">port_range_min</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">port_range_max</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">remote_ip_prefix</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">protocol</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">port_range_min</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">port_range_max</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">remote_ip_prefix</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">enterprise_project_id</parameter>
                 </inputParameters>
                 <outputParameters>
@@ -530,8 +530,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">seed</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">name</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">password</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">port</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">password</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">port</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">machine_spec</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">engine_type</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">engine_version</parameter>
