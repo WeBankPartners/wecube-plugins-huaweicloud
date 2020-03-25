@@ -471,7 +471,7 @@ guid|string|CI类型全局唯一ID
 输入：
 
 ```
-curl -X POST http://127.0.0.1:8083/huaweicloud/v1/vm/start\
+curl -X POST http://127.0.0.1:8083/huaweicloud/v1/vm/start \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
@@ -1232,7 +1232,8 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/peerings/create \
         {
             "guid":"0010_000000010",
             "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
-            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;          "id":"cc1a1fbc-baf7-4a55-9671-c9c70babf948",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;"
+            "id":"cc1a1fbc-baf7-4a55-9671-c9c70babf948",
             "local_vpc_id":"209e670a-95e2-4e73-81f8-7f931e5847a1",
             "peer_vpc_id": "2d470aeb-34e5-4b22-bb51-cf1a9e7d1a75"
         }
@@ -1876,7 +1877,7 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/rds/create \
 
 
 #### <span id="rds-delete">rds销毁</span>
-[POST] /huaweicloud/v1/security-group/delete
+[POST] /huaweicloud/v1/rds/delete
 
 ##### 输入参数：
 参数名称|类型|必选|描述
