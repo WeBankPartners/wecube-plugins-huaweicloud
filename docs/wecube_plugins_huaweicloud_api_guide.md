@@ -344,7 +344,7 @@ id|string|云服务器实例ID
 cpu|string|云服务器CPU核数
 memory|string|云服务器内存大小
 password|string|云服务器root密码，该密码为加密后的密码
-private_ip|string|是|内网IP
+private_ip|string|内网IP
 
 ##### 示例：
 输入：
@@ -936,7 +936,8 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/lb/del-backtarget \
             "protocol":"tcp",
             "host_ids": "[2cc3eeae-c4f3-4bc6-b5ee-2b5065c9870e,7c811c94-1053-4555-84ca-b343f101eb73]",
             "host_ports": "[8888,9999]"
-		}]
+       }
+    ]
 }'
 ```
 
@@ -989,14 +990,15 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/nat-gateway/create \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
-   "inputs": [
-	   {
-		"guid":"0010_000000010",
-     	"identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
-        "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
-        "vpc_id":"209e670a-95e2-4e73-81f8-7f931e5847a1",
-        "subnet_id":"2de6e922-d2f8-4d92-8d3f-484d81a03d16"
-		}]
+    "inputs": [
+        {
+            "guid":"0010_000000010",
+            "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
+            "vpc_id":"209e670a-95e2-4e73-81f8-7f931e5847a1",
+            "subnet_id":"2de6e922-d2f8-4d92-8d3f-484d81a03d16"
+        }
+    ]
 }'
 ```
 
@@ -1046,13 +1048,14 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/nat-gateway/delete \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
-   "inputs": [
-	   {
-		"guid":"0010_000000010",
-  	    "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
-    "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
-    "id":"2fa43ad2-6e82-45fd-b040-8e03670f492b"
-		}]
+    "inputs": [
+         {
+             "guid":"0010_000000010",
+             "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
+             "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
+             "id":"2fa43ad2-6e82-45fd-b040-8e03670f492b"
+        }
+    ]
 }'
 ```
 
@@ -1107,15 +1110,16 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/add-snat-rule \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
-   "inputs": [
-	   {
-		"guid":"0010_000000010",
-     	"identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
-      "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
-     "gateway_id":"2fa43ad2-6e82-45fd-b040-8e03670f492b",
-     "subnet_id":"2de6e922-d2f8-4d92-8d3f-484d81a03d16",
-     "public_ip_id": "56f76de6-ac4e-4221-8996-8b30128a98c2"
-		}]
+    "inputs": [
+        {
+            "guid":"0010_000000010",
+            "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
+            "gateway_id":"2fa43ad2-6e82-45fd-b040-8e03670f492b",
+            "subnet_id":"2de6e922-d2f8-4d92-8d3f-484d81a03d16",
+            "public_ip_id": "56f76de6-ac4e-4221-8996-8b30128a98c2"
+        }
+    ]
 }'
 ```
 
@@ -1165,13 +1169,14 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/add-snat-rule \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
-   "inputs": [
-	   {
-		"guid":"0010_000000010",
-     	"identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
-      "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
-     "id":"e477cdad-bc3b-4076-8609-e337b1162dbb"
-		}]
+    "inputs": [
+        {
+            "guid":"0010_000000010",
+           "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
+           "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
+           "id":"e477cdad-bc3b-4076-8609-e337b1162dbb"
+        }
+    ]
 }'
 ```
 
@@ -1212,7 +1217,6 @@ peer_vpc_id|string|是|另外一端VPC ID
 ##### 输出参数：
 参数名称|类型|描述
 :--|:--|:--    
-request_id|string|请求ID
 guid|string|CI类型全局唯一ID
 id|string|对等连接实例ID
 
@@ -1225,15 +1229,14 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/peerings/create \
   -H 'content-type: application/json' \
   -d '{
     "inputs": [
-    	{
-		"guid":"0010_000000010",
-  	     "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
-       "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
-       "id":"cc1a1fbc-baf7-4a55-9671-c9c70babf948",
-       "local_vpc_id":"209e670a-95e2-4e73-81f8-7f931e5847a1",
-        "peer_vpc_id": "2d470aeb-34e5-4b22-bb51-cf1a9e7d1a75"
-		}
-	]
+        {
+            "guid":"0010_000000010",
+            "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;            "id":"cc1a1fbc-baf7-4a55-9671-c9c70babf948",
+            "local_vpc_id":"209e670a-95e2-4e73-81f8-7f931e5847a1",
+            "peer_vpc_id": "2d470aeb-34e5-4b22-bb51-cf1a9e7d1a75"
+        }
+    ]
 }'
 ```
 
@@ -1282,13 +1285,13 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/peerings/delete \
   -H 'content-type: application/json' \
   -d '{
     "inputs": [
-    	{
-		"guid":"0010_000000010",
-  	    "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
-       "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
-       "id":"31201b76-7942-4ed9-9c6c-9db885161af3"
-		}
-	]
+        {
+            "guid":"0010_000000010",
+            "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
+            "id":"31201b76-7942-4ed9-9c6c-9db885161af3"
+        }
+    ]
 }'
 ```
 
@@ -1322,7 +1325,7 @@ guid|string|是|CI类型全局唯一ID
 identity_params|string|是|公有云用户鉴权参数， 包括access-key，secret-key和domain-id
 cloud_param|string|是|云api相关参数，包括云API域名，region和project-id
 id|string|否|如果该ID对应的弹性公网IP已经存在，将不会新建
-band_width|string|是带宽大小
+band_width|string|是|带宽大小
 
 ##### 输出参数：
 参数名称|类型|描述
@@ -1340,13 +1343,13 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/public-ip/create \
   -H 'content-type: application/json' \
   -d '{
     "inputs": [
-    	{
-		  "guid":"0010_000000010",
-  	       "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
-           "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
-           "band_width":"10"
-		}
-	]
+        {
+            "guid":"0010_000000010",
+            "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
+            "band_width":"10"
+        }
+    ]
 }'
 ```
 
@@ -1395,11 +1398,11 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/public-ip/delete \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
-    "inputs": [
-    	{
-		  "guid":"0010_000000010",
-  	       "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
-           "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
+        "inputs": [
+        {
+            "guid":"0010_000000010",
+            "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
             "id":"82a63f93-f97c-45f0-86f3-7160e47e69bc"
 		}
 	]
@@ -1456,16 +1459,16 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/route/create \
   -H 'content-type: application/json' \
   -d '{
     "inputs": [
-    	{
-		  "guid":"0010_000000010",
-  	       "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
-           "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
-           "destination":"192.168.0.0/16",
-		   "nexthop":"077bcc8d-cb6b-4771-990d-31eed3e7a98a",
-		   "type":"peering",
-		   "vpc_id": "beaa9d21-d5a7-4970-84a0-2de5b0240b69"
-		}
-	]
+        {
+            "guid":"0010_000000010",
+            "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
+            "destination":"192.168.0.0/16",
+            "nexthop":"077bcc8d-cb6b-4771-990d-31eed3e7a98a",
+            "type":"peering",
+            "vpc_id": "beaa9d21-d5a7-4970-84a0-2de5b0240b69"
+        }
+    ]
 }'
 ```
 
@@ -1513,13 +1516,12 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/route/delete \
   -H 'content-type: application/json' \
   -d '{
     "inputs": [
-    	{
-		  "guid":"0010_000000010",
-  	       "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
-           "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
-		   "id":"09b76b0c-e2a3-4374-ac3b-06da72b12e3d"
-		}
-	]
+        {
+            "guid":"0010_000000010",
+            "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;            "id":"09b76b0c-e2a3-4374-ac3b-06da72b12e3d"
+        }
+    ]
 }'
 ```
 
@@ -1570,13 +1572,13 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/security-group/create \
   -H 'content-type: application/json' \
   -d '{
     "inputs": [
-    	{
-		  "guid":"0010_000000010",
-  	       "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
+        {
+           "guid":"0010_000000010",
+           "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
-		   "name":"test"
-		}
-	]
+           "name":"test"
+        }
+    ]
 }'
 ```
 
@@ -1625,13 +1627,13 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/security-group/delete \
   -H 'content-type: application/json' \
   -d '{
     "inputs": [
-    	{
-		  "guid":"0010_000000010",
-  	       "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
-           "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
-		   "id":"2e0dd197-082b-4a50-85d3-1c45c58d224f"
-		}
-	]
+        {
+            "guid":"0010_000000010",
+            "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
+            "id":"2e0dd197-082b-4a50-85d3-1c45c58d224f"
+       }
+    ]
 }'
 ```
 
@@ -1669,7 +1671,7 @@ security_group_id|string|是|安全策略所属安全组ID
 direction|string|是|可选值为egress和ingress表示入站和出站规则
 port_range_min|string|是|开放的端口最小值
 port_range_max|string|是|开放的端口最大值
-remote_ip_prefix|string|安全组放通的IP网段
+remote_ip_prefix|string|是|安全组放通的IP网段
 
 
 ##### 输出参数：
@@ -1688,18 +1690,18 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/security-group-rule/create \
   -H 'content-type: application/json' \
   -d '{
     "inputs": [
-    	{
-		  "guid":"0010_000000010",
-  	       "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
-           "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
-		   "security_group_id":"43080ac1-b3d9-4cbf-92b3-402a6ca67085",
-           "direction": "egress",
-           "protocol": "tcp",
-           "port_range_min":"8080",
-           "port_range_max":"8088",
-           "remote_ip_prefix":"10.4.0.0/20"
-		}
-	]
+        {
+            "guid":"0010_000000010",
+            "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
+            "security_group_id":"43080ac1-b3d9-4cbf-92b3-402a6ca67085",
+            "direction": "egress",
+            "protocol": "tcp",
+            "port_range_min":"8080",
+            "port_range_max":"8088",
+            "remote_ip_prefix":"10.4.0.0/20"
+        }
+    ]
 }'
 ```
 
@@ -1748,13 +1750,13 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/security-group-rule/delete \
   -H 'content-type: application/json' \
   -d '{
     "inputs": [
-    	{
-		  "guid":"0010_000000010",
-  	       "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
-           "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
-           "id":"cc1a1fbc-baf7-4a55-9671-c9c70babf948"
-		}
-	]
+        {
+            "guid":"0010_000000010",
+            "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
+            "id":"cc1a1fbc-baf7-4a55-9671-c9c70babf948"
+        }
+    ]
 }'
 ```
 
@@ -1803,7 +1805,7 @@ volume_type|string|是|数据库实例的存储媒介，可以是SSD等
 volume_size|string|是|数据库实例的存储大小，单位为G
 charge_type|string|是|付费方式，支持 prePaid(包年包月) 和 postPaid(按量计费)
 period_type|string|否|包年包月时必填，可选值为month和year
-period_num |string|否|包年包月时必填，表示买多久
+period_num |string|否|包年包月时必填，表示买多久，单位为月或者年，取决于period_type是month还是year
 is_auto_renew|string|否|包年包月时必填，是否自动续费
 
 ##### 输出参数：
@@ -1825,26 +1827,26 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/rds/create \
   -H 'content-type: application/json' \
   -d '{
     "inputs": [
-    	{
-		 	"identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
-			 "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
-			"guid": "1234",
-			"seed":"seed-01",
-			"name":"test-mysql",
-			"password":"Abcd1234",
-			"port": "3306",
-			"machine_spec": "1C1G",
-			"engine_type": "MySQL",
-			"engine_version": "5.7",
-			"security_group_id":"43080ac1-b3d9-4cbf-92b3-402a6ca67085",
-			"vpc_id":"209e670a-95e2-4e73-81f8-7f931e5847a1",
-			"subnet_id":"5c7916bd-f84b-4a78-b6d4-5a723f3e669f",
-			"az":"cn-south-1c",
-			"volume_type":"ULTRAHIGH",
-			"volume_size":"40",
-			"charge_type":"postPaid"
-		}
-	]
+        {
+            "identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
+            "guid": "1234",
+            "seed":"seed-01",
+            "name":"test-mysql",
+            "password":"Abcd1234",
+            "port": "3306",
+            "machine_spec": "1C1G",
+            "engine_type": "MySQL",
+            "engine_version": "5.7",
+            "security_group_id":"43080ac1-b3d9-4cbf-92b3-402a6ca67085",
+            "vpc_id":"209e670a-95e2-4e73-81f8-7f931e5847a1",
+            "subnet_id":"5c7916bd-f84b-4a78-b6d4-5a723f3e669f",
+            "az":"cn-south-1c",
+            "volume_type":"ULTRAHIGH",
+            "volume_size":"40",
+            "charge_type":"postPaid"
+        }
+    ]
 }'
 ```
 
@@ -1898,13 +1900,13 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/rds/delete \
   -H 'content-type: application/json' \
   -d '{
     "inputs": [
-    	{
-		 	"identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
-			 "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
-			"guid": "1234",
-			"id":"ae174276008a499eaaf28799e6fa7d52in01"
-		}
-	]
+        {
+            "identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
+            "guid": "1234",
+            "id":"ae174276008a499eaaf28799e6fa7d52in01"
+        }
+    ]
 }'
 ```
 
@@ -1956,14 +1958,14 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/rds/create-backup \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
-    "inputs": [
-    	{
-		 	"identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
-			 "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
-			"guid": "1234",
-			"instance_id": "ae174276008a499eaaf28799e6fa7d52in01"
-		}
-	]
+       "inputs": [
+        {
+            "identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
+            "guid": "1234",
+            "instance_id": "ae174276008a499eaaf28799e6fa7d52in01"
+    }
+    ]
 }'
 ```
 
@@ -2013,13 +2015,13 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/rds/delete-backup \
   -H 'content-type: application/json' \
   -d '{
     "inputs": [
-    	{
-		 	"identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
-			 "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
-			"guid": "1234",
-			"id":"ae174276008a499eaaf28799e6fa7d52in01"
-		}
-	]
+        {
+            "identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
+            "guid": "1234",
+            "id":"ae174276008a499eaaf28799e6fa7d52in01"
+        }
+    ]
 }'
 ```
 
