@@ -102,7 +102,7 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/vpc/create \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
-	  "Inputs":[
+       "Inputs":[
         {
           "guid":"0010_000000010",
           "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
