@@ -478,7 +478,7 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/vm/start\
     "inputs": [
         {
             "identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
-             "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
             "guid": "1234",
             "id":"be31d19d-2e2a-43d1-a4fc-430a07b68f14"
         }
@@ -572,12 +572,12 @@ identity_params|string|是|公有云用户鉴权参数， 包括access-key，sec
 cloud_param|string|是|云api相关参数，包括云API域名，region和project-id
 id|string|否|云硬盘实例ID，若有值，则会检查该云硬盘是否已存在， 若已存在， 则不创建
 az|string|是|云硬盘所属可用区
-disk_type|string|是|云硬盘类型
-disk_size|int|是|云硬盘大小，单位为GB
+disk_type|string|是|云硬盘类型，可选值为SATA,SSD和SAS
+disk_size|string|是|云硬盘大小，单位为GB
 instance_id|string|是|需要挂载云硬盘的云服务器实例ID
-instance_guid|string|是|云服务器实例在cmdb中的guid
-seed|string|是|云服务器的种子
-password|string|是|云服务器的加密后的密码
+instance_guid|string|是|云服务器实例在wecmdb中的guid
+seed|string|是|云服务器密码加密用的种子，解密时需要使用
+password|string|是|云服务器加密后的密码
 file_system_type|string|是|云盘挂载到主机上格式化的文件系统，目前支持ext3,ext4和xfs
 mount_dir|string|是|云硬盘挂载到主机的目录
 
@@ -586,7 +586,7 @@ mount_dir|string|是|云硬盘挂载到主机的目录
 :--|:--|:--    
 guid|string|CI类型全局唯一ID
 id|string|云硬盘实例ID
-volume_name|云硬盘在主机上的卷名，格式如/dev/vdb
+volume_name|string|云硬盘在主机上的卷名，格式如/dev/vdb
 attach_id|string|云硬盘挂载到主机的id
 
 ##### 示例：
@@ -599,20 +599,20 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/block-storage/create-mount \
   -d '{
    "inputs": [
 	   {
-			"identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
-			 "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
-			"guid": "1234",
-			"az":"cn-south-1c",
-			"disk_type":"SATA",
-			"disk_size":"30",
-			"id": "",
-			"instance_id": "2cc3eeae-c4f3-4bc6-b5ee-2b5065c9870e",
-			"instance_guid": "0010_000000010",
-			"seed": "seed-001",
-			"password":"{cipher_a}459df6cbd84dc63dbc1270499f3812ba",
-			"file_system_type":"ext4",
-			"mount_dir": "/data/test"
-		}]
+            "identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
+            "guid": "1234",
+            "az":"cn-south-1c",
+            "disk_type":"SATA",
+            "disk_size":"30",
+            "instance_id": "2cc3eeae-c4f3-4bc6-b5ee-2b5065c9870e",
+            "instance_guid": "0010_000000010",
+            "seed": "seed-001",
+            "password":"{cipher_a}459df6cbd84dc63dbc1270499f3812ba",
+            "file_system_type":"ext4",
+            "mount_dir": "/data/test"
+        }
+    ]
 }'
 ```
 
@@ -648,11 +648,11 @@ guid|string|是|CI类型全局唯一ID
 identity_params|string|是|公有云用户鉴权参数， 包括access-key，secret-key和domain-id
 cloud_param|string|是|云api相关参数，包括云API域名，region和project-id
 id|string|是|云硬盘实例ID
-attach_id|是|云硬盘挂载到主机的id
+attach_id|string|是|云硬盘挂载到主机的id
 az|string|是|云硬盘所属可用区
 instance_id|string|是|需要挂载云硬盘的云服务器实例ID
 instance_guid|string|是|云服务器实例在cmdb中的guid
-seed|string|是|云服务器的种子
+seed|string|是|云服务器密码加密时用的种子，解密时需要使用
 password|string|是|云服务器的加密后的密码
 mount_dir|string|是|云硬盘挂载到主机的目录
 volume_name|string|是|云盘的卷名称
@@ -660,7 +660,6 @@ volume_name|string|是|云盘的卷名称
 ##### 输出参数：
 参数名称|类型|描述
 :--|:--|:--
-request_id|string|请求ID
 guid|string|CI类型全局唯一ID
 
 ##### 示例：
@@ -673,19 +672,20 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/block-storage/umount-delete \
   -d '{
    "inputs": [
 	   {
-			"identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
-			 "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
-			"guid": "1234",
-			"az":"cn-south-1c",
-			"attach_id":"f66fe20e-9241-4544-b1be-1ba7f5773a12",
-			"id": "f66fe20e-9241-4544-b1be-1ba7f5773a12",
-			"instance_id": "2cc3eeae-c4f3-4bc6-b5ee-2b5065c9870e",
-			"instance_guid": "0010_000000010",
-			"seed": "seed-001",
-			"password":"{cipher_a}459df6cbd84dc63dbc1270499f3812ba",
-			"volume_name":"/dev/vdc",
-			"mount_dir": "/data/test"
-		}]
+            "identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
+            "guid": "1234",
+            "az":"cn-south-1c",
+            "attach_id":"f66fe20e-9241-4544-b1be-1ba7f5773a12",
+            "id": "f66fe20e-9241-4544-b1be-1ba7f5773a12",
+            "instance_id": "2cc3eeae-c4f3-4bc6-b5ee-2b5065c9870e",
+            "instance_guid": "0010_000000010",
+            "seed": "seed-001",
+            "password":"{cipher_a}459df6cbd84dc63dbc1270499f3812ba",
+            "volume_name":"/dev/vdc",
+            "mount_dir": "/data/test"
+        }
+    ]
 }'
 ```
 
