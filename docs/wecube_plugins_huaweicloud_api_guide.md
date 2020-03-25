@@ -740,16 +740,17 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/lb/create \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
-   "inputs": [
-	   {
-			"identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
-			"cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
-			"guid": "1234",
-			"name":"tyler-test-lb1",
-			"type":"External",
-			"subnet_id": "2de6e922-d2f8-4d92-8d3f-484d81a03d16",
-			"bandwidth_size": "10"
-		}]
+    "inputs": [
+        {
+            "identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
+            "guid": "1234",
+            "name":"tyler-test-lb1",
+            "type":"External",
+            "subnet_id": "2de6e922-d2f8-4d92-8d3f-484d81a03d16",
+            "bandwidth_size": "10"
+        }
+    ]
 }'
 ```
 
@@ -801,14 +802,15 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/lb/delete \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
-   "inputs": [
-	   {
-			"identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
-			"cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
-			"guid": "1234",
-			"id":"8b9f1d04-992f-42b9-a658-b556210e641a",
-			"type":"External"
-		}]
+    "inputs": [
+        {
+            "identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
+            "guid": "1234",
+            "id":"8b9f1d04-992f-42b9-a658-b556210e641a",
+            "type":"External"
+        }
+    ]
 }'
 ```
 
@@ -860,17 +862,18 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/lb/add-backtarget \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
-   "inputs": [
-	   {
-			"identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
-			 "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
-			"guid": "1234",
-			"lb_id":"2e7f0bc6-ec49-41ba-ab40-37152cff814e",
-			"lb_port":"8080",
-			"protocol":"tcp",
-			"host_ids": "[2cc3eeae-c4f3-4bc6-b5ee-2b5065c9870e,7c811c94-1053-4555-84ca-b343f101eb73]",
-			"host_ports": "[8888,9999]"
-		}]
+    "inputs": [
+        {
+            "identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
+            "guid": "1234",
+            "lb_id":"2e7f0bc6-ec49-41ba-ab40-37152cff814e",
+            "lb_port":"8080",
+            "protocol":"tcp",
+            "host_ids": "[2cc3eeae-c4f3-4bc6-b5ee-2b5065c9870e,7c811c94-1053-4555-84ca-b343f101eb73]",
+            "host_ports": "[8888,9999]"
+        }
+    ]
 }'
 ```
 
@@ -923,16 +926,16 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/lb/del-backtarget \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
-   "inputs": [
-	   {
-			"identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
-			 "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
-			"guid": "1234",
-			"lb_id":"2e7f0bc6-ec49-41ba-ab40-37152cff814e",
-			"lb_port":"8080",
-			"protocol":"tcp",
-			"host_ids": "[2cc3eeae-c4f3-4bc6-b5ee-2b5065c9870e,7c811c94-1053-4555-84ca-b343f101eb73]",
-			"host_ports": "[8888,9999]"
+    "inputs": [
+        {
+            "identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
+            "guid": "1234",
+            "lb_id":"2e7f0bc6-ec49-41ba-ab40-37152cff814e",
+            "lb_port":"8080",
+            "protocol":"tcp",
+            "host_ids": "[2cc3eeae-c4f3-4bc6-b5ee-2b5065c9870e,7c811c94-1053-4555-84ca-b343f101eb73]",
+            "host_ports": "[8888,9999]"
 		}]
 }'
 ```
