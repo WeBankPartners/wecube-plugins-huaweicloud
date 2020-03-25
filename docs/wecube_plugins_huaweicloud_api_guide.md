@@ -331,7 +331,7 @@ charge_type|string|是|付费方式，支持按量计费和包年包月,可选�
 period_type|string|否|包年包月时需指定，可选值为month和year
 period_num|string|否|当period_type为month时，表示多少个月;period_type为year表示几年
 is_auto_renew|string|否|包年包月时需指定，是否自动续费
-name|string|string|是|云服务器实例名称
+name|string|是|云服务器实例名称
 labels|string|否|云服务器的标签
 private_ip|string|否|如果指定该参数，创建的vm将使用该ip作为局域网ip地址
 
@@ -365,12 +365,12 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/vm/create \
             "system_disk_size":"40",
             "password":"Abcd1234",
             "az":"cn-south-1c",
-             "security_groups":"c92366ef-4650-4496-8843-4bd02ce3910d",
+            "security_groups":"c92366ef-4650-4496-8843-4bd02ce3910d",
             "charge_type":"postPaid",
             "name":"tyler_test_vm",
             "labels": "aa=bb;key=v"
         }
-	]
+    ]
 }'
 ```
 
@@ -421,14 +421,14 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/vm/terminate \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
- 	"inputs": [
- 	    {
-			"identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
-		   "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
-		   "guid": "1234",
-		  "id":"be31d19d-2e2a-43d1-a4fc-430a07b68f14"
-		}
-	]
+    "inputs": [
+    {
+        "identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
+        "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
+		"guid": "1234",
+        "id":"be31d19d-2e2a-43d1-a4fc-430a07b68f14"
+	}
+  ]
 }'
 ```
 
@@ -475,14 +475,14 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/vm/start\
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
- 	"inputs": [
- 	    {
-			"identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
+    "inputs": [
+        {
+            "identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
 		   "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
 		   "guid": "1234",
 		   "id":"be31d19d-2e2a-43d1-a4fc-430a07b68f14"
-		}
-	]
+        }
+    ]
 }'
 ```
 
@@ -529,14 +529,14 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/vm/stop \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
- 	"inputs": [
- 	    {
-			"identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
-		   "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
-		   "guid": "1234",
-		   "id":"be31d19d-2e2a-43d1-a4fc-430a07b68f14"
-		}
-	]
+    "inputs": [
+       {
+            "identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
+		    "guid": "1234",
+		    "id":"be31d19d-2e2a-43d1-a4fc-430a07b68f14"
+        }
+    ]
 }'
 ```
 
