@@ -90,7 +90,7 @@ type VmCreateInput struct {
 	Password       string `json:"password,omitempty"`
 	Labels         string `json:"labels,omitempty"`
 	AilabilityZone string `json:"az,omitempty"`
-	SecurityGroups string `json:"securityGroup,omitempty"`
+	SecurityGroups string `json:"security_groups,omitempty"`
 
 	ChargeType string `json:"charge_type,omitempty"`
 
