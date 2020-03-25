@@ -1,6 +1,5 @@
 # Wecube HuaweiCloud API Guid
   
-提供统一接口定义，为使用者提供清晰明了的使用方法。
 
 ## API 操作资源（Resources）: 
 
