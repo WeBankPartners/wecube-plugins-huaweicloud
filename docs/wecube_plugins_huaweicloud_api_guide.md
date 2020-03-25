@@ -149,7 +149,6 @@ id|string|是|VPC实例ID
 参数名称|类型|描述
 :--|:--|:--    
 guid|string|CI类型全局唯一ID
-id|string|VPC实例ID
 
 ##### 示例：
 输入：
@@ -159,14 +158,14 @@ id|string|VPC实例ID
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
-	   "inputs":[
-		{
+        "inputs":[
+        {
             "guid":"0010_000000010",
-  	        identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
+            "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
             "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
             "id":"d19d6b34-67aa-43ff-943b-3d0b35888110"
-       }
-	]
+        }
+    ]
  }'
 ```
 
@@ -181,8 +180,7 @@ id|string|VPC实例ID
             {
                 "errorCode": "0",
                 "errorMessage": "",
-                "guid": "0010_000000010",
-                "id": "d19d6b34-67aa-43ff-943b-3d0b35888110"
+                "guid": "0010_000000010"
             }
         ]
     }
@@ -220,16 +218,16 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/subnet/create \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
-	   "inputs":[
-		{
+        "inputs":[
+        {
             "guid":"0010_000000010",
-  	        "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
+            "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
             "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
             "vpc_id":"beaa9d21-d5a7-4970-84a0-2de5b0240b69",
             "name": "test_subnet",
             "cidr":"192.x.x.x/24"
         }
-	]
+    ]
 }'
 ```
 
@@ -278,15 +276,15 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/subnet/delete \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
-	"inputs":[
-		{
-		 "guid":"0010_000000010",
-       	 "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
-         "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
-         "id":"2e0dd197-082b-4a50-85d3-1c45c58d224f",
-         "vpc_id":"beaa9d21-d5a7-4970-84a0-2de5b0240b69"
-		}
-	]
+        "inputs":[
+        {
+            "guid":"0010_000000010",
+            "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
+            "id":"2e0dd197-082b-4a50-85d3-1c45c58d224f",
+            "vpc_id":"beaa9d21-d5a7-4970-84a0-2de5b0240b69"
+        }
+    ]
 }'
 ```
 
@@ -320,20 +318,20 @@ guid|string|是|CI类型全局唯一ID
 identity_params|string|是|公有云用户鉴权参数， 包括access-key，secret-key和domain-id
 cloud_param|string|是|云api相关参数，包括云API域名，region和project-id
 id|string|否|云服务器实例ID，若有值，则会检查该云服务器是否已存在， 若已存在， 则不创建
-seed|string|是|云服务器密钥种子
+seed|string|是|云服务器密码加密种子
 vpc_id|string|是|VPC实例ID
 subnet_id|string|是|子网实例ID
 image_id|string|是|虚拟机要安装的操作系统镜像ID
 machine_spec|string|是|机器规格，使用2c2g的格式，插件后端会根据输入自动查找最匹配的机型
-system_disk_size|是|系统盘大小
-password|否|虚拟机的密码，如果不设置，插件后端会生成随机密码
-az|是|虚拟机所属可用区
-security_groups|否|虚拟机关联的安全组
-charge_type|是|付费方式，支持按量计费和包年包月
-period_type|否|包年包月时需指定，可选值为month和year
-period_num|否|包年包月的数量，如几个月或几年
-is_auto_renew|否|包年包月时需指定，是否自动续费
-name|string|是|云服务器实例名称
+system_disk_size|string|是|系统盘大小，单位为G
+password|string|否|虚拟机密码，如果不设置，插件后端会生成随机密码
+az|string|是|虚拟机所属可用区
+security_groups|string|否|虚拟机关联的安全组
+charge_type|string|是|付费方式，支持按量计费和包年包月,可选值为prePaid和postPaid
+period_type|string|否|包年包月时需指定，可选值为month和year
+period_num|string|否|当period_type为month时，表示多少个月;period_type为year表示几年
+is_auto_renew|string|否|包年包月时需指定，是否自动续费
+name|string|string|是|云服务器实例名称
 labels|string|否|云服务器的标签
 private_ip|string|否|如果指定该参数，创建的vm将使用该ip作为局域网ip地址
 
@@ -358,7 +356,7 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/vm/create \
   -d '{
      "inputs": [
  	    {
-			"guid":"0010_000000010",
+            "guid":"0010_000000010",
             "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
             "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
             "seed":"seed-001",
@@ -371,7 +369,7 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/vm/create \
             "charge_type":"postPaid",
             "name":"tyler_test_vm",
             "labels": "aa=bb;key=v"
-		}
+        }
 	]
 }'
 ```
