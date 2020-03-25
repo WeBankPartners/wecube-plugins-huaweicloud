@@ -1165,13 +1165,13 @@ guid|string|CI类型全局唯一ID
 输入：
 
 ```
-curl -X POST http://127.0.0.1:8083/huaweicloud/v1/add-snat-rule \
+curl -X POST http://127.0.0.1:8083/huaweicloud/v1/delete-snat-rule \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
     "inputs": [
         {
-            "guid":"0010_000000010",
+           "guid":"0010_000000010",
            "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
            "id":"e477cdad-bc3b-4076-8609-e337b1162dbb"
@@ -1232,7 +1232,7 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/peerings/create \
         {
             "guid":"0010_000000010",
             "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
-            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;            "id":"cc1a1fbc-baf7-4a55-9671-c9c70babf948",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;          "id":"cc1a1fbc-baf7-4a55-9671-c9c70babf948",
             "local_vpc_id":"209e670a-95e2-4e73-81f8-7f931e5847a1",
             "peer_vpc_id": "2d470aeb-34e5-4b22-bb51-cf1a9e7d1a75"
         }
@@ -1304,7 +1304,7 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/peerings/delete \
     "results": {
         "outputs": [
             {
-               "errorCode": "0",
+                "errorCode": "0",
                 "errorMessage": "",
                 "guid": "0010_000000010"
             }
@@ -1404,7 +1404,7 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/public-ip/delete \
             "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
             "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
             "id":"82a63f93-f97c-45f0-86f3-7160e47e69bc"
-		}
+        }
 	]
 }'
 ```
@@ -1519,7 +1519,8 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/route/delete \
         {
             "guid":"0010_000000010",
             "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
-            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;            "id":"09b76b0c-e2a3-4374-ac3b-06da72b12e3d"
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
+            "id":"09b76b0c-e2a3-4374-ac3b-06da72b12e3d"
         }
     ]
 }'
@@ -1594,7 +1595,7 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/security-group/create \
                 "errorCode": "0",
                 "errorMessage": "",
                 "guid":"0010_000000010"，
-                 "id": "2e0dd197-082b-4a50-85d3-1c45c58d224f"
+                "id": "2e0dd197-082b-4a50-85d3-1c45c58d224f"
             }
         ]
     }
@@ -1958,13 +1959,13 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/rds/create-backup \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
-       "inputs": [
+    "inputs": [
         {
             "identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
             "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
             "guid": "1234",
             "instance_id": "ae174276008a499eaaf28799e6fa7d52in01"
-    }
+        }
     ]
 }'
 ```
