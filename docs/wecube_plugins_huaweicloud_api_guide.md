@@ -425,7 +425,7 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/vm/terminate \
     {
         "identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
         "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
-		"guid": "1234",
+	    "guid": "1234",
         "id":"be31d19d-2e2a-43d1-a4fc-430a07b68f14"
 	}
   ]
@@ -478,9 +478,9 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/vm/start\
     "inputs": [
         {
             "identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
-		   "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
-		   "guid": "1234",
-		   "id":"be31d19d-2e2a-43d1-a4fc-430a07b68f14"
+             "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
+            "guid": "1234",
+            "id":"be31d19d-2e2a-43d1-a4fc-430a07b68f14"
         }
     ]
 }'
@@ -533,8 +533,8 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/vm/stop \
        {
             "identity_params":"AccessKey=xxx;SecretKey=xxx;DomainId=xxx",
             "cloud_params":"CloudApiDomainName=myhuaweicloud.com;ProjectId=07b04b0a66000f092f6ec00f79a087c6;Region=cn-south-1",
-		    "guid": "1234",
-		    "id":"be31d19d-2e2a-43d1-a4fc-430a07b68f14"
+            "guid": "1234",
+            "id":"be31d19d-2e2a-43d1-a4fc-430a07b68f14"
         }
     ]
 }'
