@@ -83,7 +83,7 @@
 guid|string|是|CI类型全局唯一ID
 identity_params|string|是|公有云用户鉴权参数， 包括access-key，secret-key和domain-id
 cloud_param|string|是|云api相关参数，包括云API域名，region和project-id
-id|string|否|VPC实例ID，若有值，则会检查该VPC是否已存在， 若已存在， 则不创建
+id|string|否|VPC实例ID，若有值，则会检查该VPC是否已存在 若已存在， 则不创建
 name|string|否|VPC名称
 cidr_block|string|是|VPC网段
 enterprise_project_id|string|否|资源所属huaweicloud project
@@ -103,16 +103,15 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/vpc/create \
   -H 'content-type: application/json' \
   -d '{
 	  "Inputs":[
-  {
-   "guid":"0010_000000010",
-  	"identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
-   "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1; ProjectId=07b04b0a66000f092f6ec00f79a087c6",
-    "name":"test_vpc",
-    "cidr":"192.x.x.x/16"
-  }
- ]
-}
-}'
+      {
+          "guid":"0010_000000010",
+  	      "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
+          "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1; ProjectId=07b04b0a66000f092f6ec00f79a087c6",
+          "name":"test_vpc",
+          "cidr":"192.x.x.x/16"
+      }
+   ]
+ }'
 ```
 
 输出：
@@ -149,7 +148,6 @@ id|string|是|VPC实例ID
 ##### 输出参数：
 参数名称|类型|描述
 :--|:--|:--    
-request_id|string|请求ID
 guid|string|CI类型全局唯一ID
 id|string|VPC实例ID
 
@@ -161,15 +159,15 @@ id|string|VPC实例ID
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
-	"inputs":[
-		 {
-   "guid":"0010_000000010",
-  	"identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
-   "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
-    "id":"d19d6b34-67aa-43ff-943b-3d0b35888110"
-  }
+	   "inputs":[
+		{
+            "guid":"0010_000000010",
+  	        identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
+            "id":"d19d6b34-67aa-43ff-943b-3d0b35888110"
+       }
 	]
-}'
+ }'
 ```
 
 输出：
@@ -223,14 +221,14 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/subnet/create \
   -H 'content-type: application/json' \
   -d '{
 	   "inputs":[
-		 {
-   "guid":"0010_000000010",
-  	"identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
-   "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
-    "vpc_id":"beaa9d21-d5a7-4970-84a0-2de5b0240b69",
-    "name": "test_subnet",
-    "cidr":"192.x.x.x/24"
-  }
+		{
+            "guid":"0010_000000010",
+  	        "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
+            "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1;ProjectId=07b04b0a66000f092f6ec00f79a087c6",
+            "vpc_id":"beaa9d21-d5a7-4970-84a0-2de5b0240b69",
+            "name": "test_subnet",
+            "cidr":"192.x.x.x/24"
+        }
 	]
 }'
 ```
