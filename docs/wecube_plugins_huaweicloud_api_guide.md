@@ -103,14 +103,14 @@ curl -X POST http://127.0.0.1:8083/huaweicloud/v1/vpc/create \
   -H 'content-type: application/json' \
   -d '{
 	  "Inputs":[
-      {
+        {
           "guid":"0010_000000010",
-  	      "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
+          "identity_params": "SecretKey=xxx;AccessKey=xxx;DomainId=xxx",
           "cloud_params":"CloudApiDomainName=myhuaweicloud.com;Region=cn-south-1; ProjectId=07b04b0a66000f092f6ec00f79a087c6",
           "name":"test_vpc",
           "cidr":"192.x.x.x/16"
-      }
-   ]
+       }
+    ]
  }'
 ```
 
