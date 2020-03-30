@@ -27,7 +27,7 @@ HuaweiCloud插件对华为云原生资源(如ECS、ELB、EIP、NAT网关、安�
 
 ```
 curl -X POST \
-  http://119.28.98.80:8083/huaweicloud/v1/vpc/create \
+  http://127.0.0.1:8083/huaweicloud/v1/vpc/create \
   -H 'cache-control: no-cache' \
   -H 'content-type: application/json' \
   -d '{
