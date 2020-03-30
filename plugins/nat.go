@@ -2,12 +2,13 @@ package plugins
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/huaweicloud/golangsdk"
 	"github.com/huaweicloud/golangsdk/openstack"
 	"github.com/huaweicloud/golangsdk/openstack/networking/v2/extensions/natgateways"
 	"github.com/huaweicloud/golangsdk/openstack/networking/v2/extensions/snatrules"
 	"github.com/sirupsen/logrus"
-	"strings"
 )
 
 func createNatServiceClient(params CloudProviderParam) (*golangsdk.ServiceClient, error) {
@@ -440,6 +441,7 @@ type DeleteSnatRuleOutputs struct {
 type DeleteSnatRuleOutput struct {
 	CallBackParameter
 	Result
+	Id   string `json:"id,omitempty"`
 	Guid string `json:"guid,omitempty"`
 }
 
@@ -458,6 +460,7 @@ func (action *DeleteSnatRuleAction) ReadParam(param interface{}) (interface{}, e
 func deleteSnatRule(input DeleteSnatRuleInput) (output DeleteSnatRuleOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
+		output.Id = input.Id
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
 		if err == nil {
 			output.Result.Code = RESULT_CODE_SUCCESS
