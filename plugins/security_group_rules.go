@@ -95,8 +95,10 @@ func (action *SecurityGroupRuleCreateAction) checkCreateRuleParams(input Securit
 		}
 	}
 
-	if err := checkPortRangeParams(input.PortRangeMin, input.PortRangeMax); err != nil {
-		return err
+	if strings.ToLower(input.Protocol) != "icmp" {
+		if err := checkPortRangeParams(input.PortRangeMin, input.PortRangeMax); err != nil {
+			return err
+		}
 	}
 
 	return nil

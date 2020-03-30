@@ -532,6 +532,7 @@ type VmDeleteOutput struct {
 	CallBackParameter
 	Result
 	Guid string `json:"guid,omitempty"`
+	Id   string `json:"id,omitempty"`
 }
 
 type VmDeleteAction struct {
@@ -549,6 +550,7 @@ func (action *VmDeleteAction) ReadParam(param interface{}) (interface{}, error) 
 func deleteVm(input VmDeleteInput) (output VmDeleteOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
+		output.Id = input.Id
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
 		if err == nil {
 			output.Result.Code = RESULT_CODE_SUCCESS

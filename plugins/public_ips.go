@@ -154,6 +154,7 @@ type PublicIpDeleteOutputs struct {
 type PublicIpDeleteOutput struct {
 	CallBackParameter
 	Result
+	Id   string `json:"id,omitempty"`
 	Guid string `json:"guid,omitempty"`
 }
 
@@ -172,6 +173,7 @@ func (action *PublicIpDeleteAction) ReadParam(param interface{}) (interface{}, e
 func deletePluginPublicIp(input PublicIpDeleteInput) (output PublicIpDeleteOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
+		output.Id = input.Id
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
 		if err == nil {
 			output.Result.Code = RESULT_CODE_SUCCESS
