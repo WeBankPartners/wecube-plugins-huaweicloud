@@ -79,18 +79,18 @@ type VmCreateInput struct {
 	Guid string `json:"guid,omitempty"`
 	Id   string `json:"id,omitempty"`
 
-	Seed           string `json:"seed,omitempty"`
-	ImageId        string `json:"image_id,omitempty"`
-	HostType       string `json:"machine_spec,omitempty"` //4c8g
-	SystemDiskSize string `json:"system_disk_size,omitempty"`
-	VpcId          string `json:"vpc_id,omitempty"`
-	SubnetId       string `json:"subnet_id,omitempty"`
-	PrivateIp      string `json:"private_ip,omitempty"`
-	Name           string `json:"name,omitempty"`
-	Password       string `json:"password,omitempty"`
-	Labels         string `json:"labels,omitempty"`
-	AilabilityZone string `json:"az,omitempty"`
-	SecurityGroups string `json:"securityGroup,omitempty"`
+	Seed             string `json:"seed,omitempty"`
+	ImageId          string `json:"image_id,omitempty"`
+	HostType         string `json:"machine_spec,omitempty"` //4c8g
+	SystemDiskSize   string `json:"system_disk_size,omitempty"`
+	VpcId            string `json:"vpc_id,omitempty"`
+	SubnetId         string `json:"subnet_id,omitempty"`
+	PrivateIp        string `json:"private_ip,omitempty"`
+	Name             string `json:"name,omitempty"`
+	Password         string `json:"password,omitempty"`
+	Labels           string `json:"labels,omitempty"`
+	AvailabilityZone string `json:"az,omitempty"`
+	SecurityGroups   string `json:"securityGroup,omitempty"`
 
 	ChargeType string `json:"charge_type,omitempty"`
 
@@ -154,8 +154,8 @@ func checkVmCreateParams(input VmCreateInput) error {
 	if input.Name == "" {
 		return fmt.Errorf("name is empty")
 	}
-	if input.AilabilityZone == "" {
-		return fmt.Errorf("ailabilityZone is empty")
+	if input.AvailabilityZone == "" {
+		return fmt.Errorf("availabilityZone is empty")
 	}
 	if err := isValidStringValue("chargeType", input.ChargeType, []string{PRE_PAID, POST_PAID}); err != nil {
 		return err
@@ -318,7 +318,7 @@ func getFlavorByHostType(input VmCreateInput) (string, error) {
 		return "", err
 	}
 	listOpts := flavor.ListOpts{
-		AvailabilityZone: input.AilabilityZone,
+		AvailabilityZone: input.AvailabilityZone,
 	}
 
 	sc, err := createVmServiceClient(input.CloudProviderParam, CLOUD_SERVER_V1)
@@ -457,7 +457,7 @@ func createVm(input VmCreateInput) (output VmCreateOutput, err error) {
 		VpcId:            input.VpcId,
 		Nics:             nics,
 		RootVolume:       rootVolume,
-		AvailabilityZone: input.AilabilityZone,
+		AvailabilityZone: input.AvailabilityZone,
 		Count:            1,
 		ExtendParam:      &serverExtendParam,
 	}
