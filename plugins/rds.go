@@ -82,22 +82,22 @@ type RdsCreateInputs struct {
 type RdsCreateInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid            string `json:"guid,omitempty"`
-	Id              string `json:"id,omitempty"`
-	Seed            string `json:"seed,omitempty"`
-	Name            string `json:"name,omitempty"`
-	Password        string `json:"password,omitempty"`
-	Port            string `json:"port,omitempty"`
-	HostType        string `json:"machine_spec,omitempty"` //4c8g
-	EngineType      string `json:"engine_type,omitempty"`
-	EngineVersion   string `json:"engine_version,omitempty"`
-	SecurityGroupId string `json:"security_group_id,omitempty"`
-	VpcId           string `json:"vpc_id,omitempty"`
-	SubnetId        string `json:"subnet_id,omitempty"`
-	AilabilityZone  string `json:"az,omitempty"`
-	VolumeType      string `json:"volume_type,omitempty"`
-	VolumeSize      string `json:"volume_size,omitempty"`
-	ChargeType      string `json:"charge_type,omitempty"`
+	Guid             string `json:"guid,omitempty"`
+	Id               string `json:"id,omitempty"`
+	Seed             string `json:"seed,omitempty"`
+	Name             string `json:"name,omitempty"`
+	Password         string `json:"password,omitempty"`
+	Port             string `json:"port,omitempty"`
+	HostType         string `json:"machine_spec,omitempty"` //4c8g
+	EngineType       string `json:"engine_type,omitempty"`
+	EngineVersion    string `json:"engine_version,omitempty"`
+	SecurityGroupId  string `json:"security_group_id,omitempty"`
+	VpcId            string `json:"vpc_id,omitempty"`
+	SubnetId         string `json:"subnet_id,omitempty"`
+	AvailabilityZone string `json:"az,omitempty"`
+	VolumeType       string `json:"volume_type,omitempty"`
+	VolumeSize       string `json:"volume_size,omitempty"`
+	ChargeType       string `json:"charge_type,omitempty"`
 
 	//包年包月
 	PeriodType  string `json:"period_type,omitempty"`   //年或月
@@ -175,8 +175,8 @@ func (action *RdsCreateAction) checkCreateRdsParams(input RdsCreateInput) error 
 	if err := checkEngineParams(input.CloudProviderParam, input.EngineType, input.EngineVersion); err != nil {
 		return err
 	}
-	if input.AilabilityZone == "" {
-		return fmt.Errorf("ailabilityZone is empty")
+	if input.AvailabilityZone == "" {
+		return fmt.Errorf("availabilityZone is empty")
 	}
 	if err := isValidStringValue("chargeType", input.ChargeType, []string{PRE_PAID, POST_PAID}); err != nil {
 		return err
@@ -401,7 +401,7 @@ func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreat
 		SecurityGroupId:  input.SecurityGroupId,
 		Password:         input.Password,
 		FlavorRef:        flavor,
-		AvailabilityZone: input.AilabilityZone,
+		AvailabilityZone: input.AvailabilityZone,
 		Region:           cloudMap[CLOUD_PARAM_REGION],
 		Volume:           volume,
 		ChargeInfo:       buildChargeInfoStruct(input),

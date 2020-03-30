@@ -37,6 +37,7 @@ type PeeringsCreateInput struct {
 	CloudProviderParam
 	Guid       string `json:"guid,omitempty"`
 	Id         string `json:"id,omitempty"`
+	Name       string `json:"name,omitempty"`
 	LocalVpcId string `json:"local_vpc_id,omitempty"`
 	PeerVpcId  string `json:"peer_vpc_id,omitempty"`
 }
@@ -69,6 +70,9 @@ func checkPeeringsCreateParam(input PeeringsCreateInput) error {
 		return err
 	}
 
+	if input.Name == "" {
+		return fmt.Errorf("name is empty")
+	}
 	if input.LocalVpcId == "" {
 		return fmt.Errorf("localVpcId is empty")
 	}
@@ -125,7 +129,7 @@ func createPeerings(input PeeringsCreateInput) (output PeeringsCreateOutput, err
 	}
 
 	opts := peerings.CreateOpts{
-		Name: "wecubeCreated",
+		Name: input.Name,
 		RequestVpcInfo: peerings.VPCInfo{
 			VpcID: input.LocalVpcId,
 		},
