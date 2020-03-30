@@ -37,11 +37,12 @@ type SubnetCreateInputs struct {
 type SubnetCreateInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid  string `json:"guid,omitempty"`
-	Id    string `json:"id,omitempty"`
-	VpcId string `json:"vpc_id,omitempty"`
-	Name  string `json:"name,omitempty"`
-	Cidr  string `json:"cidr,omitempty"`
+	Guid             string `json:"guid,omitempty"`
+	Id               string `json:"id,omitempty"`
+	VpcId            string `json:"vpc_id,omitempty"`
+	Name             string `json:"name,omitempty"`
+	Cidr             string `json:"cidr,omitempty"`
+	AvailabilityZone string `json:"az,omitempty"`
 }
 
 type SubnetCreateOutputs struct {
@@ -86,6 +87,9 @@ func checkCreateSubnetInput(input SubnetCreateInput) error {
 		return err
 	}
 
+	if input.AvailabilityZone == "" {
+		return fmt.Errorf("az is empty")
+	}
 	return nil
 }
 
@@ -174,10 +178,11 @@ func createSubnet(input SubnetCreateInput) (output SubnetCreateOutput, err error
 	}
 
 	resp, err := subnets.Create(sc, subnets.CreateOpts{
-		Name:      input.Name,
-		Cidr:      input.Cidr,
-		GatewayIP: gatewayIp,
-		VpcID:     input.VpcId,
+		Name:             input.Name,
+		Cidr:             input.Cidr,
+		GatewayIP:        gatewayIp,
+		VpcID:            input.VpcId,
+		AvailabilityZone: input.AvailabilityZone,
 	}).Extract()
 	if err != nil {
 		logrus.Errorf("create subnet meet error=%v", err)

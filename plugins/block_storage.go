@@ -4,15 +4,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/WeBankPartners/wecube-plugins-huaweicloud/plugins/utils"
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/blockstorage/v2/volumes"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/volumeattach"
 	"github.com/sirupsen/logrus"
-	"strconv"
-	"strings"
-	"time"
 )
 
 const (
@@ -65,11 +66,12 @@ type CreateAndMountDiskInputs struct {
 type CreateAndMountDiskInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid           string `json:"guid,omitempty"`
-	AilabilityZone string `json:"az,omitempty"`
-	DiskType       string `json:"disk_type,omitempty"`
-	DiskSize       string `json:"disk_size,omitempty"`
-	Id             string `json:"id,omitempty"`
+	Guid             string `json:"guid,omitempty"`
+	AvailabilityZone string `json:"az,omitempty"`
+	DiskType         string `json:"disk_type,omitempty"`
+	DiskSize         string `json:"disk_size,omitempty"`
+	Id               string `json:"id,omitempty"`
+	Name             string `json:"name,omitempty"`
 
 	//use to attach and format
 	InstanceId       string `json:"instance_id,omitempty"`
@@ -123,8 +125,8 @@ func checkCreateAndMountParam(input CreateAndMountDiskInput) error {
 	}
 
 	//buy disk related
-	if input.AilabilityZone == "" {
-		return fmt.Errorf("empty ailabilityZone")
+	if input.AvailabilityZone == "" {
+		return fmt.Errorf("empty availabilityZone")
 	}
 	if _, err := strconv.Atoi(input.DiskSize); err != nil {
 		return err
@@ -207,10 +209,12 @@ func buyDiskAndAttachToVm(input CreateAndMountDiskInput) (diskId string, attachI
 	//create new volume
 	diskSize, _ := strconv.Atoi(input.DiskSize)
 	createOpts := volumes.CreateOpts{
-		AvailabilityZone: input.AilabilityZone,
+		AvailabilityZone: input.AvailabilityZone,
 		Size:             diskSize,
-		Name:             "wecubeCreated",
 		VolumeType:       input.DiskType,
+	}
+	if input.Name != "" {
+		createOpts.Name = input.Name
 	}
 
 	volume, err := volumes.Create(sc, createOpts).Extract()
@@ -396,10 +400,10 @@ type UmountAndTerminateDiskInputs struct {
 type UmountAndTerminateDiskInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid           string `json:"guid,omitempty"`
-	AilabilityZone string `json:"az,omitempty"`
-	Id             string `json:"id,omitempty"`
-	AttachId       string `json:"attach_id,omitempty"`
+	Guid             string `json:"guid,omitempty"`
+	AvailabilityZone string `json:"az,omitempty"`
+	Id               string `json:"id,omitempty"`
+	AttachId         string `json:"attach_id,omitempty"`
 
 	//use to attach and format
 	InstanceId       string `json:"instance_id,omitempty"`

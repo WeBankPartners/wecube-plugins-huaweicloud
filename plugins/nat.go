@@ -79,6 +79,7 @@ type NatCreateInput struct {
 	CloudProviderParam
 	Guid string `json:"guid,omitempty"`
 	Id   string `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
 
 	VpcId    string `json:"vpc_id,omitempty"`
 	SubnetId string `json:"subnet_id,omitempty"`
@@ -110,6 +111,10 @@ func (action *NatCreateAction) ReadParam(param interface{}) (interface{}, error)
 func checkNatGatewayCreateParam(input NatCreateInput) error {
 	if err := isCloudProviderParamValid(input.CloudProviderParam); err != nil {
 		return err
+	}
+
+	if input.Name == "" {
+		return fmt.Errorf("name is empty")
 	}
 
 	if input.VpcId == "" {
@@ -168,7 +173,7 @@ func createNatGateway(input NatCreateInput) (output NatCreateOutput, err error) 
 	cloudMap, _ := GetMapFromString(input.CloudProviderParam.CloudParams)
 	opts := natgateways.CreateOpts{
 		TenantID:          cloudMap[CLOUD_PARAM_PROJECT_ID],
-		Name:              "wecubeCreated",
+		Name:              input.Name,
 		Spec:              "1",
 		RouterID:          input.VpcId,
 		InternalNetworkID: input.SubnetId,

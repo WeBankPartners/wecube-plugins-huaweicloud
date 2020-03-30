@@ -54,7 +54,6 @@
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">id</parameter>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
@@ -87,7 +86,6 @@
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">id</parameter>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
@@ -117,10 +115,10 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">identity_params</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">cloud_params</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">id</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">vpc_id</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">id</parameter>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
@@ -171,7 +169,6 @@
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">id</parameter>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
@@ -233,7 +230,6 @@
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">id</parameter>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
@@ -354,7 +350,6 @@
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">id</parameter>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
@@ -368,6 +363,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">cloud_params</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">local_vpc_id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">id</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">name</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">peer_vpc_id</parameter>
                 </inputParameters>
                 <outputParameters>
@@ -386,7 +382,6 @@
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">id</parameter>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
@@ -418,7 +413,6 @@
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">id</parameter>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
@@ -432,6 +426,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">cloud_params</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">vpc_id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">subnet_id</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">Name</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">id</parameter>
                 </inputParameters>
                 <outputParameters>
@@ -450,7 +445,6 @@
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">id</parameter>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
@@ -481,7 +475,6 @@
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">id</parameter>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
@@ -515,7 +508,6 @@
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">id</parameter>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
@@ -567,7 +559,6 @@
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">id</parameter>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
@@ -598,7 +589,6 @@
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">id</parameter>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
