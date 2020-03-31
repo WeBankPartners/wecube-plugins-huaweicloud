@@ -101,6 +101,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">cidr</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">vpc_id</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">az</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>

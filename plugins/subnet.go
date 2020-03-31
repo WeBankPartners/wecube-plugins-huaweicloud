@@ -86,10 +86,6 @@ func checkCreateSubnetInput(input SubnetCreateInput) error {
 	if err := isValidCidr(input.Cidr); err != nil {
 		return err
 	}
-
-	if input.AvailabilityZone == "" {
-		return fmt.Errorf("az is empty")
-	}
 	return nil
 }
 
@@ -177,13 +173,17 @@ func createSubnet(input SubnetCreateInput) (output SubnetCreateOutput, err error
 		return
 	}
 
-	resp, err := subnets.Create(sc, subnets.CreateOpts{
-		Name:             input.Name,
-		Cidr:             input.Cidr,
-		GatewayIP:        gatewayIp,
-		VpcID:            input.VpcId,
-		AvailabilityZone: input.AvailabilityZone,
-	}).Extract()
+	opts := subnets.CreateOpts{
+		Name:      input.Name,
+		Cidr:      input.Cidr,
+		GatewayIP: gatewayIp,
+		VpcID:     input.VpcId,
+	}
+	if input.AvailabilityZone != "" {
+		opts.AvailabilityZone = input.AvailabilityZone
+	}
+
+	resp, err := subnets.Create(sc, opts).Extract()
 	if err != nil {
 		logrus.Errorf("create subnet meet error=%v", err)
 		return
