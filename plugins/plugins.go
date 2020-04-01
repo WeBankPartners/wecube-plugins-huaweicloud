@@ -59,6 +59,7 @@ func init() {
 	RegisterPlugin("peerings", new(PeeringsPlugin))
 	RegisterPlugin("public-ip", new(PublicIpPlugin))
 	RegisterPlugin("nat-gateway", new(NatPlugin))
+	RegisterPlugin("snat-rule", new(SnatRulePlugin))
 	RegisterPlugin("route", new(RoutePlugin))
 	RegisterPlugin("rds", new(RdsPlugin))
 }
