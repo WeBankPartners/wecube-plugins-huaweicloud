@@ -280,6 +280,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">cloud_params</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">az</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">name</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">disk_type</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">disk_size</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance_id</parameter>
