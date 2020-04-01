@@ -90,7 +90,7 @@ type VmCreateInput struct {
 	Password         string `json:"password,omitempty"`
 	Labels           string `json:"labels,omitempty"`
 	AvailabilityZone string `json:"az,omitempty"`
-	SecurityGroups   string `json:"securityGroup,omitempty"`
+	SecurityGroups   string `json:"security_group,omitempty"`
 
 	ChargeType string `json:"charge_type,omitempty"`
 
@@ -242,6 +242,7 @@ func buildServerExtendParam(input VmCreateInput) v1_1.ServerExtendParam {
 
 	if input.ChargeType == PRE_PAID {
 		param.PeriodType = input.PeriodType
+		param.IsAutoPay = "true"
 		if input.IsAutoRenew != "" {
 			param.IsAutoRenew = input.IsAutoRenew
 		}
