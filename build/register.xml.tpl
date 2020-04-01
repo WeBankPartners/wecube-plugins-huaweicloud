@@ -143,7 +143,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">password</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">labels</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">az</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">security_groups</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">security_group</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">charge_type</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">period_type</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">period_num</parameter>
