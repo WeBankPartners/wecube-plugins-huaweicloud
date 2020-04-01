@@ -450,7 +450,9 @@
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="add-snat-rule" path="/huaweicloud/v1/nat-gateway/add-snat-rule">
+        </plugin>
+         <plugin name="snat-rule" targetPackage="" targetEntity="">
+            <interface action="add" path="/huaweicloud/v1/snat-rule/add">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">guid</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">identity_params</parameter>
@@ -467,7 +469,7 @@
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="delete-snat-rule" path="/huaweicloud/v1/nat-gateway/delete-snat-rule">
+            <interface action="delete" path="/huaweicloud/v1/snat-rule/delete">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">guid</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">identity_params</parameter>
