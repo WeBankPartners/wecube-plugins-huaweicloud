@@ -161,7 +161,7 @@ type CreatedResources struct {
 	RdsBackupId string
 
 	SecurityGroupId string
-	SecurityRuleId  string
+	SecurityGroupRuleId  string
 
 	RouteId string
 }
@@ -178,9 +178,9 @@ var resourceFuncTable = []ResourceFuncEntry{
 	//create funcs
 	{"createVpc", "/huaweicloud/v1/vpc/create", createVpc},
 	{"createSubnet", "/huaweicloud/v1/subnet/create", createSubnet},
-	/*{"createSecurityGroup","",createSecurityGroup},
-	{"addSecurityRule","",addSecurityRule},
-	{"createPostPaidVm","/huaweicloud/v1/vm/create",createPostPaidVm},
+	{"createSecurityGroup","security-group",createSecurityGroup},
+	{"addSecurityRule","security-group-rule",addSecurityRule},
+	/*{"createPostPaidVm","/huaweicloud/v1/vm/create",createPostPaidVm},
 	{"createPrePaidVm","",createPrePaidVm},
 	{"stopVm","",stopVm},
 	{"startVm","",startVm},
@@ -206,9 +206,9 @@ var resourceFuncTable = []ResourceFuncEntry{
 	{"deletePublicIp","",deletePublicIp},
 	{"deletePostPaidVm","",deletePostPaidVm},
 	{"deletePrePaidVm","",deletePrePaidVm},
-	{"deletePeers","",deletePeers},
-	{"deleteSecurityRule","",deleteSecurityRule},
-	{"deleteSecurityGroup","",deleteSecurityGroup},*/
+	{"deletePeers","",deletePeers},,*/
+	{"deleteSecurityRule","security-group",deleteSecurityGroup},
+	{"deleteSecurityGroup","security-group-rule",deleteSecurityGroupRule}
 	{"deleteSubnet", "/huaweicloud/v1/subnet/delete", deleteSubnet},
 	{"deleteVpc", "/huaweicloud/v1/vpc/delete", deleteVpc},
 }
@@ -306,6 +306,96 @@ func deleteSubnet(path string, createdResources *CreatedResources) error {
 	}
 
 	outputs := plugins.VpcDeleteOutputs{}
+	if err := doHttpRequest(path, inputs, &outputs); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func createSecurityGroup(path string, createdResources *CreatedResources) error {
+	inputs := plugins.SecurityGroupCreateInputs{
+		Inputs: []plugins.SecurityGroupCreateInput{
+			{
+				CloudProviderParam: getCloudProviderParam(),
+				Guid:               "123",
+				VpcId:              createdResources.VpcId,
+				Name:               "testApiCreated",
+			},
+		},
+	}
+
+	outputs := plugins.SecurityGroupCreateOutputs{}
+	if err := doHttpRequest(path, inputs, &outputs); err != nil {
+		return err
+	}
+	if outputs.Outputs[0].Id == "" {
+		return fmt.Errorf("securityGroupId is invalid")
+	}
+
+	createdResources.SecurityGroupId  = outputs.Outputs[0].Id
+	return nil
+}
+
+func addSecurityGroupRule(path string, createdResources *CreatedResources) error {
+	inputs := plugins.SecurityGroupRuleCreateInputs{
+		Inputs: []plugins.SecurityGroupRuleCreateInput{
+			{
+				CloudProviderParam: getCloudProviderParam(),
+				Guid:               "123",
+				SecurityGroupId:    createdResources.SecurityGroupId,
+				Direction:"egress",
+				Protocol:"tcp",
+				PortRangeMin:"8080",
+				PortRangeMax:"8080",
+				RemoteIpPrefix:"10.4.0.0/20",
+			},
+		},
+	}
+
+	outputs := plugins.SubnetCreateOutputs{}
+	if err := doHttpRequest(path, inputs, &outputs); err != nil {
+		return err
+	}
+	if outputs.Outputs[0].Id == "" {
+		return fmt.Errorf("securityGroupRuleId is invalid")
+	}
+
+	createdResources.SecurityGroupRuleId = outputs.Outputs[0].Id
+	return nil
+}
+
+func deleteSecurityGroup(path string, createdResources *CreatedResources)error{
+	inputs := plugins.SecurityGroupDeleteInputs{
+		Inputs: []plugins.SecurityGroupDeleteInput{
+			{
+				CloudProviderParam: getCloudProviderParam(),
+				Guid:               "123",
+				Id:                 createdResources.SecurityGroupId,
+			},
+		},
+	}
+
+	outputs := plugins.SecurityGroupDeleteOutputs{}
+	if err := doHttpRequest(path, inputs, &outputs); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func deleteSecurityGroupRule(path string, createdResources *CreatedResources)error{
+	inputs := plugins.SecurityGroupRuleDeleteInputs{
+		Inputs: []plugins.SecurityGroupRuleDeleteInput{
+			{
+				CloudProviderParam: getCloudProviderParam(),
+				Guid:               "123",
+				Id:                 createdResources.SecurityGroupRuleId,
+			},
+		},
+	}
+
+	outputs := plugins.SecurityGroupRuleDeleteOutputs{}
 	if err := doHttpRequest(path, inputs, &outputs); err != nil {
 		return err
 	}
