@@ -176,14 +176,14 @@ type ResourceFuncEntry struct {
 
 var resourceFuncTable = []ResourceFuncEntry{
 	//create funcs
-	/*	{"createVpc", "/huaweicloud/v1/vpc/create", createVpc},
-		{"createSubnet", "/huaweicloud/v1/subnet/create", createSubnet},
-		{"createSecurityGroup", "/huaweicloud/v1/security-group/create", createSecurityGroup},
-		{"addSecurityRule", "/huaweicloud/v1/security-group-rule/create", addSecurityGroupRule},
-		{"createPostPaidVm", "/huaweicloud/v1/vm/create", createPostPaidVm},
-		{"createPrePaidVm", "/huaweicloud/v1/vm/create", createPrePaidVm},
-		{"stopVm", "/huaweicloud/v1/vm/stop", stopVm},
-		{"startVm", "/huaweicloud/v1/vm/start", startVm},*/
+	{"createVpc", "/huaweicloud/v1/vpc/create", createVpc},
+	{"createSubnet", "/huaweicloud/v1/subnet/create", createSubnet},
+	{"createSecurityGroup", "/huaweicloud/v1/security-group/create", createSecurityGroup},
+	{"addSecurityRule", "/huaweicloud/v1/security-group-rule/create", addSecurityGroupRule},
+	{"createPostPaidVm", "/huaweicloud/v1/vm/create", createPostPaidVm},
+//	{"createPrePaidVm", "/huaweicloud/v1/vm/create", createPrePaidVm},
+	{"stopVm", "/huaweicloud/v1/vm/stop", stopVm},
+	{"startVm", "/huaweicloud/v1/vm/start", startVm},*/
 
 	/*{"createInternalLb","",createInternalLb},
 	{"createExternalLb","",createExternalLb},
@@ -207,7 +207,8 @@ var resourceFuncTable = []ResourceFuncEntry{
 	{"deletePublicIp","",deletePublicIp},
 	{"deletePeers","",deletePeers},*/
 
-	{"deleteVms", "/huaweicloud/v1/vm/terminate", deleteVms},
+	//{"deletePrePaidVm", "/huaweicloud/v1/vm/terminate", deletePrePaidVm},
+	{"deletePostPaidVm", "/huaweicloud/v1/vm/terminate", deletePostPaidVm},
 	{"deleteSecurityRule", "/huaweicloud/v1/security-group-rule/delete", deleteSecurityGroupRule},
 	{"deleteSecurityGroup", "/huaweicloud/v1/security-group/delete", deleteSecurityGroup},
 	{"deleteSubnet", "/huaweicloud/v1/subnet/delete", deleteSubnet},
@@ -512,7 +513,26 @@ func stopVm(path string, createdResources *CreatedResources) error {
 	return nil
 }
 
-func deleteVms(path string, createdResources *CreatedResources) error {
+func deletePrePaidVm(path string, createdResources *CreatedResources) error {
+	inputs := plugins.VmDeleteInputs{
+		Inputs: []plugins.VmDeleteInput{
+			{
+				CloudProviderParam: getCloudProviderParam(),
+				Guid:               "456",
+				Id:                 createdResources.VmIdPrePaid,
+			},
+		},
+	}
+
+	outputs := plugins.VmStopOutputs{}
+	if err := doHttpRequest(path, inputs, &outputs); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func deletePostPaidVm(path string, createdResources *CreatedResources) error {
 	inputs := plugins.VmDeleteInputs{
 		Inputs: []plugins.VmDeleteInput{
 			{
@@ -538,13 +558,6 @@ func deleteVms(path string, createdResources *CreatedResources) error {
 
 func TestApis(t *testing.T) {
 	createdResources := CreatedResources{
-		VpcId:               "2ac50ec3-da5b-40f5-b78e-144e22662a3e",
-		VpcIdForPeers:       "19813884-1607-42d7-a12d-64fdc967c9b4",
-		SubnetId:            "a5abe433-8d0b-4be2-9427-325ebadaf3f6",
-		VmIdPostPaid:        "75e04df5-54e7-4552-9f76-6805f0f7ecc4",
-		VmIdPrePaid:         "6b25a259-d623-40a9-86a4-d82707e91857",
-		SecurityGroupId:     "07df9743-b673-4f3d-aa47-9ebde00b2d77",
-		SecurityGroupRuleId: "ffdc6841-0145-4782-ae47-ac6bf30a0871",
 	}
 
 	if err := loadEnvironmentVars(); err != nil {
