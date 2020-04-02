@@ -99,7 +99,7 @@ func doHttpRequest(urlPath string, request interface{}, response interface{}) er
 	}
 
 	client := &http.Client{
-		Timeout: time.Second * 30,
+		Timeout: time.Second * 300,
 	}
 
 	httpResponse, err := client.Do(httpRequest)
@@ -176,14 +176,14 @@ type ResourceFuncEntry struct {
 
 var resourceFuncTable = []ResourceFuncEntry{
 	//create funcs
-	{"createVpc", "/huaweicloud/v1/vpc/create", createVpc},
-	{"createSubnet", "/huaweicloud/v1/subnet/create", createSubnet},
-	{"createSecurityGroup", "/huaweicloud/v1/security-group/create", createSecurityGroup},
-	{"addSecurityRule", "/huaweicloud/v1/security-group-rule/create", addSecurityGroupRule},
-	{"createPostPaidVm","/huaweicloud/v1/vm/create",createPostPaidVm},
-	{"createPrePaidVm","/huaweicloud/v1/vm/create",createPrePaidVm},
-	{"stopVm","/huaweicloud/v1/vm/stop",stopVm},
-	{"startVm","/huaweicloud/v1/vm/start",startVm},
+	/*	{"createVpc", "/huaweicloud/v1/vpc/create", createVpc},
+		{"createSubnet", "/huaweicloud/v1/subnet/create", createSubnet},
+		{"createSecurityGroup", "/huaweicloud/v1/security-group/create", createSecurityGroup},
+		{"addSecurityRule", "/huaweicloud/v1/security-group-rule/create", addSecurityGroupRule},
+		{"createPostPaidVm", "/huaweicloud/v1/vm/create", createPostPaidVm},
+		{"createPrePaidVm", "/huaweicloud/v1/vm/create", createPrePaidVm},
+		{"stopVm", "/huaweicloud/v1/vm/stop", stopVm},
+		{"startVm", "/huaweicloud/v1/vm/start", startVm},*/
 
 	/*{"createInternalLb","",createInternalLb},
 	{"createExternalLb","",createExternalLb},
@@ -207,7 +207,7 @@ var resourceFuncTable = []ResourceFuncEntry{
 	{"deletePublicIp","",deletePublicIp},
 	{"deletePeers","",deletePeers},*/
 
-	{"deleteVms","/huaweicloud/v1/vm/delete",deleteVms},
+	{"deleteVms", "/huaweicloud/v1/vm/terminate", deleteVms},
 	{"deleteSecurityRule", "/huaweicloud/v1/security-group-rule/delete", deleteSecurityGroupRule},
 	{"deleteSecurityGroup", "/huaweicloud/v1/security-group/delete", deleteSecurityGroup},
 	{"deleteSubnet", "/huaweicloud/v1/subnet/delete", deleteSubnet},
@@ -410,16 +410,16 @@ func createPostPaidVm(path string, createdResources *CreatedResources) error {
 			{
 				CloudProviderParam: getCloudProviderParam(),
 				Guid:               "123",
-				Seed："seed",
-				ImageId:"7077ec61-7553-4890-8b33-364005a590b9",
-				HostType:"1c1g",
-				SystemDiskSize:"50",
-				VpcId: createdResources.VpcId,
-				SubnetId: createdResources.SubnetId,
-				Name:"testApiCreatedPostPaid",
-				AvailabilityZone:"cn-south-1c",
-				SecurityGroups:reatedResources.SecurityGroupId,
-				ChargeType:"postPaid",
+				Seed:               "seed",
+				ImageId:            "7077ec61-7553-4890-8b33-364005a590b9",
+				HostType:           "1c1g",
+				SystemDiskSize:     "50",
+				VpcId:              createdResources.VpcId,
+				SubnetId:           createdResources.SubnetId,
+				Name:               "testApiCreatedPostPaid",
+				AvailabilityZone:   "cn-south-1c",
+				SecurityGroups:     createdResources.SecurityGroupId,
+				ChargeType:         "postPaid",
 			},
 		},
 	}
@@ -444,18 +444,18 @@ func createPrePaidVm(path string, createdResources *CreatedResources) error {
 			{
 				CloudProviderParam: getCloudProviderParam(),
 				Guid:               "123",
-				Seed："seed",
-				ImageId:"7077ec61-7553-4890-8b33-364005a590b9",
-				HostType:"1c1g",
-				SystemDiskSize:"50",
-				VpcId: createdResources.VpcId,
-				SubnetId: createdResources.SubnetId,
-				Name:"testApiCreatedPrePaid",
-				AvailabilityZone:"cn-south-1c",
-				SecurityGroups:reatedResources.SecurityGroupId,
-				ChargeType:"PrePaid",
-				PeriodType:"month" ,  //年或月
-	            PeriodNum:"1", //年有效值[1-9],月有效值[1-3]
+				Seed:               "seed",
+				ImageId:            "7077ec61-7553-4890-8b33-364005a590b9",
+				HostType:           "1c1g",
+				SystemDiskSize:     "50",
+				VpcId:              createdResources.VpcId,
+				SubnetId:           createdResources.SubnetId,
+				Name:               "testApiCreatedPrePaid",
+				AvailabilityZone:   "cn-south-1c",
+				SecurityGroups:     createdResources.SecurityGroupId,
+				ChargeType:         "prePaid",
+				PeriodType:         "month", //年或月
+				PeriodNum:          "1",     //年有效值[1-9],月有效值[1-3]
 			},
 		},
 	}
@@ -470,7 +470,7 @@ func createPrePaidVm(path string, createdResources *CreatedResources) error {
 
 	createdResources.VmIdPrePaid = outputs.Outputs[0].Id
 	createdResources.VmIpPrePaid = outputs.Outputs[0].PrivateIp
-	
+
 	return nil
 }
 
@@ -480,7 +480,7 @@ func startVm(path string, createdResources *CreatedResources) error {
 			{
 				CloudProviderParam: getCloudProviderParam(),
 				Guid:               "123",
-				Id:    createdResources.VmIdPostPaid ,
+				Id:                 createdResources.VmIdPostPaid,
 			},
 		},
 	}
@@ -489,7 +489,7 @@ func startVm(path string, createdResources *CreatedResources) error {
 	if err := doHttpRequest(path, inputs, &outputs); err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -499,7 +499,7 @@ func stopVm(path string, createdResources *CreatedResources) error {
 			{
 				CloudProviderParam: getCloudProviderParam(),
 				Guid:               "123",
-				Id:    createdResources.VmIdPostPaid ,
+				Id:                 createdResources.VmIdPostPaid,
 			},
 		},
 	}
@@ -508,7 +508,7 @@ func stopVm(path string, createdResources *CreatedResources) error {
 	if err := doHttpRequest(path, inputs, &outputs); err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -518,12 +518,12 @@ func deleteVms(path string, createdResources *CreatedResources) error {
 			{
 				CloudProviderParam: getCloudProviderParam(),
 				Guid:               "123",
-				Id:    createdResources.VmIdPostPaid ,
+				Id:                 createdResources.VmIdPostPaid,
 			},
 			{
 				CloudProviderParam: getCloudProviderParam(),
 				Guid:               "456",
-				Id:    createdResources.VmIdPrePaid ,
+				Id:                 createdResources.VmIdPrePaid,
 			},
 		},
 	}
@@ -532,12 +532,21 @@ func deleteVms(path string, createdResources *CreatedResources) error {
 	if err := doHttpRequest(path, inputs, &outputs); err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
 func TestApis(t *testing.T) {
-	var createdResources CreatedResources
+	createdResources := CreatedResources{
+		VpcId:               "2ac50ec3-da5b-40f5-b78e-144e22662a3e",
+		VpcIdForPeers:       "19813884-1607-42d7-a12d-64fdc967c9b4",
+		SubnetId:            "a5abe433-8d0b-4be2-9427-325ebadaf3f6",
+		VmIdPostPaid:        "75e04df5-54e7-4552-9f76-6805f0f7ecc4",
+		VmIdPrePaid:         "6b25a259-d623-40a9-86a4-d82707e91857",
+		SecurityGroupId:     "07df9743-b673-4f3d-aa47-9ebde00b2d77",
+		SecurityGroupRuleId: "ffdc6841-0145-4782-ae47-ac6bf30a0871",
+	}
+
 	if err := loadEnvironmentVars(); err != nil {
 		t.Errorf("loadEnvironmentVars meet err=%v", err)
 		return
