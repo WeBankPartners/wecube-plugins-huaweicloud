@@ -160,8 +160,8 @@ type CreatedResources struct {
 	RdsId       string
 	RdsBackupId string
 
-	SecurityGroupId string
-	SecurityGroupRuleId  string
+	SecurityGroupId     string
+	SecurityGroupRuleId string
 
 	RouteId string
 }
@@ -178,8 +178,8 @@ var resourceFuncTable = []ResourceFuncEntry{
 	//create funcs
 	{"createVpc", "/huaweicloud/v1/vpc/create", createVpc},
 	{"createSubnet", "/huaweicloud/v1/subnet/create", createSubnet},
-	{"createSecurityGroup","security-group",createSecurityGroup},
-	{"addSecurityRule","security-group-rule",addSecurityRule},
+	{"createSecurityGroup", "/huaweicloud/v1/security-group/create", createSecurityGroup},
+	{"addSecurityRule", "/huaweicloud/v1/security-group-rule/create", addSecurityGroupRule},
 	/*{"createPostPaidVm","/huaweicloud/v1/vm/create",createPostPaidVm},
 	{"createPrePaidVm","",createPrePaidVm},
 	{"stopVm","",stopVm},
@@ -207,8 +207,8 @@ var resourceFuncTable = []ResourceFuncEntry{
 	{"deletePostPaidVm","",deletePostPaidVm},
 	{"deletePrePaidVm","",deletePrePaidVm},
 	{"deletePeers","",deletePeers},,*/
-	{"deleteSecurityRule","security-group",deleteSecurityGroup},
-	{"deleteSecurityGroup","security-group-rule",deleteSecurityGroupRule}
+	{"deleteSecurityRule", "/huaweicloud/v1/security-group-rule/delete", deleteSecurityGroupRule},
+	{"deleteSecurityGroup", "/huaweicloud/v1/security-group/delete", deleteSecurityGroup},
 	{"deleteSubnet", "/huaweicloud/v1/subnet/delete", deleteSubnet},
 	{"deleteVpc", "/huaweicloud/v1/vpc/delete", deleteVpc},
 }
@@ -333,7 +333,7 @@ func createSecurityGroup(path string, createdResources *CreatedResources) error 
 		return fmt.Errorf("securityGroupId is invalid")
 	}
 
-	createdResources.SecurityGroupId  = outputs.Outputs[0].Id
+	createdResources.SecurityGroupId = outputs.Outputs[0].Id
 	return nil
 }
 
@@ -344,11 +344,11 @@ func addSecurityGroupRule(path string, createdResources *CreatedResources) error
 				CloudProviderParam: getCloudProviderParam(),
 				Guid:               "123",
 				SecurityGroupId:    createdResources.SecurityGroupId,
-				Direction:"egress",
-				Protocol:"tcp",
-				PortRangeMin:"8080",
-				PortRangeMax:"8080",
-				RemoteIpPrefix:"10.4.0.0/20",
+				Direction:          "egress",
+				Protocol:           "tcp",
+				PortRangeMin:       "8080",
+				PortRangeMax:       "8080",
+				RemoteIpPrefix:     "10.4.0.0/20",
 			},
 		},
 	}
@@ -365,7 +365,7 @@ func addSecurityGroupRule(path string, createdResources *CreatedResources) error
 	return nil
 }
 
-func deleteSecurityGroup(path string, createdResources *CreatedResources)error{
+func deleteSecurityGroup(path string, createdResources *CreatedResources) error {
 	inputs := plugins.SecurityGroupDeleteInputs{
 		Inputs: []plugins.SecurityGroupDeleteInput{
 			{
@@ -384,7 +384,7 @@ func deleteSecurityGroup(path string, createdResources *CreatedResources)error{
 	return nil
 }
 
-func deleteSecurityGroupRule(path string, createdResources *CreatedResources)error{
+func deleteSecurityGroupRule(path string, createdResources *CreatedResources) error {
 	inputs := plugins.SecurityGroupRuleDeleteInputs{
 		Inputs: []plugins.SecurityGroupRuleDeleteInput{
 			{
