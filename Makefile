@@ -45,5 +45,9 @@ upload: package
 	rm -rf $(project_name)-$(version).zip
 
 test:
-	   docker run --net host  --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_name) -e ACCESS_KEY=$(access_key) -e SECRET_KEY=$(secret_key) -e REGION=$(region) -e PROJECT_ID=$(project_id) -e DOMAIN_ID=$(domain_id)  --name build_$(project_name) golang:1.13.3-alpine3.10  /bin/sh /go/src/github.com/WeBankPartners/$(project_name)/build/test.sh
+	docker run --net host  --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_name) \
+               -e ACCESS_KEY=$(access_key) -e SECRET_KEY=$(secret_key) -e REGION=$(region) \ 
+			   -e PROJECT_ID=$(project_id) -e DOMAIN_ID=$(domain_id)  --name build_$(project_name)_test \ 
+			   golang:1.13.3-alpine3.10  /bin/sh \ 
+			   /go/src/github.com/WeBankPartners/$(project_name)/build/test.sh
 	
