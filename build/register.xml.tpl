@@ -101,6 +101,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">cidr</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">vpc_id</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">az</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>
@@ -142,7 +143,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">password</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">labels</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">az</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">security_groups</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">security_group</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">charge_type</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">period_type</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">period_num</parameter>
@@ -227,6 +228,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">identity_params</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">cloud_params</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">id</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>
@@ -279,6 +281,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">cloud_params</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">az</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">name</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">disk_type</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">disk_size</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance_id</parameter>
@@ -449,7 +452,9 @@
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="add-snat-rule" path="/huaweicloud/v1/nat-gateway/add-snat-rule">
+        </plugin>
+         <plugin name="nat-snat-rule" targetPackage="" targetEntity="">
+            <interface action="add" path="/huaweicloud/v1/nat-snat-rule/add">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">guid</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">identity_params</parameter>
@@ -466,7 +471,7 @@
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="delete-snat-rule" path="/huaweicloud/v1/nat-gateway/delete-snat-rule">
+            <interface action="delete" path="/huaweicloud/v1/nat-snat-rule/delete">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">guid</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">identity_params</parameter>

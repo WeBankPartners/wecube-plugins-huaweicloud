@@ -15,7 +15,7 @@ func createComputeV2Client(params CloudProviderParam) (*gophercloud.ServiceClien
 
 	client, err := openstack.NewComputeV2(provider, gophercloud.EndpointOpts{})
 	if err != nil {
-		logrus.Errorf("Failed to get the NewComputeV2 client: ", err)
+		logrus.Errorf("Failed to get the NewComputeV2 client: %v", err)
 		return nil, err
 	}
 	return client, nil

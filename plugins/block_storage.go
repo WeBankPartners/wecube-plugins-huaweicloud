@@ -502,7 +502,7 @@ func deleteVolume(input UmountAndTerminateDiskInput) error {
 	}
 
 	if err = volumes.Delete(sc, input.Id).ExtractErr(); err != nil {
-		logrus.Errorf("delete volume(%v) meet err=%v", input.Id)
+		logrus.Errorf("delete volume(%v) meet err=%v", input.Id, err)
 	}
 
 	return err
