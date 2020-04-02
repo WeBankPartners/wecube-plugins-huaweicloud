@@ -228,6 +228,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">identity_params</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">cloud_params</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">id</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>
@@ -452,8 +453,8 @@
                 </outputParameters>
             </interface>
         </plugin>
-         <plugin name="snat-rule" targetPackage="" targetEntity="">
-            <interface action="add" path="/huaweicloud/v1/snat-rule/add">
+         <plugin name="nat-snat-rule" targetPackage="" targetEntity="">
+            <interface action="add" path="/huaweicloud/v1/nat-snat-rule/add">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">guid</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">identity_params</parameter>
@@ -470,7 +471,7 @@
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="delete" path="/huaweicloud/v1/snat-rule/delete">
+            <interface action="delete" path="/huaweicloud/v1/nat-snat-rule/delete">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">guid</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">identity_params</parameter>
