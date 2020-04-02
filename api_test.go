@@ -181,9 +181,9 @@ var resourceFuncTable = []ResourceFuncEntry{
 	{"createSecurityGroup", "/huaweicloud/v1/security-group/create", createSecurityGroup},
 	{"addSecurityRule", "/huaweicloud/v1/security-group-rule/create", addSecurityGroupRule},
 	{"createPostPaidVm", "/huaweicloud/v1/vm/create", createPostPaidVm},
-//	{"createPrePaidVm", "/huaweicloud/v1/vm/create", createPrePaidVm},
+	//	{"createPrePaidVm", "/huaweicloud/v1/vm/create", createPrePaidVm},
 	{"stopVm", "/huaweicloud/v1/vm/stop", stopVm},
-	{"startVm", "/huaweicloud/v1/vm/start", startVm},*/
+	{"startVm", "/huaweicloud/v1/vm/start", startVm},
 
 	/*{"createInternalLb","",createInternalLb},
 	{"createExternalLb","",createExternalLb},
@@ -540,11 +540,6 @@ func deletePostPaidVm(path string, createdResources *CreatedResources) error {
 				Guid:               "123",
 				Id:                 createdResources.VmIdPostPaid,
 			},
-			{
-				CloudProviderParam: getCloudProviderParam(),
-				Guid:               "456",
-				Id:                 createdResources.VmIdPrePaid,
-			},
 		},
 	}
 
@@ -557,8 +552,7 @@ func deletePostPaidVm(path string, createdResources *CreatedResources) error {
 }
 
 func TestApis(t *testing.T) {
-	createdResources := CreatedResources{
-	}
+	createdResources := CreatedResources{}
 
 	if err := loadEnvironmentVars(); err != nil {
 		t.Errorf("loadEnvironmentVars meet err=%v", err)
