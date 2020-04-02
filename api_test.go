@@ -138,9 +138,9 @@ func doHttpRequest(urlPath string, request interface{}, response interface{}) er
 }
 
 type CreatedResources struct {
-	VpcId    string
+	VpcId         string
 	VpcIdForPeers string
-	SubnetId string
+	SubnetId      string
 
 	VmIdPostPaid string
 	VmIpPostPaid string
@@ -177,7 +177,7 @@ type ResourceFuncEntry struct {
 var resourceFuncTable = []ResourceFuncEntry{
 	//create funcs
 	{"createVpc", "/huaweicloud/v1/vpc/create", createVpc},
-	{"createSubnet","/huaweicloud/v1/subnet/create",createSubnet},
+	{"createSubnet", "/huaweicloud/v1/subnet/create", createSubnet},
 	/*{"createSecurityGroup","",createSecurityGroup},
 	{"addSecurityRule","",addSecurityRule},
 	{"createPostPaidVm","/huaweicloud/v1/vm/create",createPostPaidVm},
@@ -194,7 +194,7 @@ var resourceFuncTable = []ResourceFuncEntry{
 	{"addRoute","",addRoute},
 	{"createRds","",createRds},
 	{"createRdsBackup","",createRdsBackup},*/
-	
+
 	//delete funcs
 	/*{"deleteRdsBackup","",deleteRdsBackup},
 	{"deleteRds","",deleteRds},
@@ -209,7 +209,7 @@ var resourceFuncTable = []ResourceFuncEntry{
 	{"deletePeers","",deletePeers},
 	{"deleteSecurityRule","",deleteSecurityRule},
 	{"deleteSecurityGroup","",deleteSecurityGroup},*/
-	{"deleteSubnet","/huaweicloud/v1/subnet/delete",deleteSubnet},
+	{"deleteSubnet", "/huaweicloud/v1/subnet/delete", deleteSubnet},
 	{"deleteVpc", "/huaweicloud/v1/vpc/delete", deleteVpc},
 }
 
@@ -227,7 +227,7 @@ func createVpc(path string, createdResources *CreatedResources) error {
 				Guid:               "234",
 				Name:               "apiTestCreatedForPeerings",
 				Cidr:               "10.0.0.0/16",
-			}
+			},
 		},
 	}
 	outputs := plugins.VpcCreateOutputs{}
@@ -240,7 +240,7 @@ func createVpc(path string, createdResources *CreatedResources) error {
 	}
 
 	createdResources.VpcId = outputs.Outputs[0].Id
-	createdResources.VpcIdForPeers =outputs.Outputs[1].Id
+	createdResources.VpcIdForPeers = outputs.Outputs[1].Id
 	return nil
 }
 
@@ -273,10 +273,10 @@ func createSubnet(path string, createdResources *CreatedResources) error {
 		Inputs: []plugins.SubnetCreateInput{
 			{
 				CloudProviderParam: getCloudProviderParam(),
-				Guid:               "123",	
-				VpcId:	createdResources.VpcId ,
-				Name:   "testApiCreated",
-				Cidr:   "192.168.0.1/24",
+				Guid:               "123",
+				VpcId:              createdResources.VpcId,
+				Name:               "testApiCreated",
+				Cidr:               "192.168.1.0/24",
 			},
 		},
 	}
@@ -290,7 +290,7 @@ func createSubnet(path string, createdResources *CreatedResources) error {
 	}
 
 	createdResources.SubnetId = outputs.Outputs[0].Id
-	return nil 
+	return nil
 }
 
 func deleteSubnet(path string, createdResources *CreatedResources) error {
@@ -299,6 +299,7 @@ func deleteSubnet(path string, createdResources *CreatedResources) error {
 			{
 				CloudProviderParam: getCloudProviderParam(),
 				Guid:               "123",
+				VpcId:              createdResources.VpcId,
 				Id:                 createdResources.SubnetId,
 			},
 		},
@@ -311,7 +312,6 @@ func deleteSubnet(path string, createdResources *CreatedResources) error {
 
 	return nil
 }
-
 
 func TestApis(t *testing.T) {
 	var createdResources CreatedResources
