@@ -14,6 +14,13 @@ import (
 	"time"
 )
 
+const (
+	//是否创建包年包月资源
+	CREATE_PREPREPAID_RESOUCE = false
+	VM_IMAGE_ID= "7077ec61-7553-4890-8b33-364005a590b9"
+	AVAILABLE_ZONE="cn-south-1c"
+)
+
 type EnvironmentVars struct {
 	PluginServerAddr string
 	AccessKey        string
@@ -152,10 +159,11 @@ type CreatedResources struct {
 	ExternalLbId string
 
 	NatGatewayId string
+	SnatRuleId   string
 
 	PeeringsId string
 
-	PublicicIp string
+	PublicicIpId string
 
 	RdsId       string
 	RdsBackupId string
@@ -172,47 +180,43 @@ type ResourceFuncEntry struct {
 	TestApiName  string
 	ResourcePath string
 	Func         ResourceFunc
+	IsPrePaidResource bool
 }
 
 var resourceFuncTable = []ResourceFuncEntry{
 	//create funcs
-	{"createVpc", "/huaweicloud/v1/vpc/create", createVpc},
-	{"createSubnet", "/huaweicloud/v1/subnet/create", createSubnet},
-	{"createSecurityGroup", "/huaweicloud/v1/security-group/create", createSecurityGroup},
-	{"addSecurityRule", "/huaweicloud/v1/security-group-rule/create", addSecurityGroupRule},
-	{"createPostPaidVm", "/huaweicloud/v1/vm/create", createPostPaidVm},
-	//	{"createPrePaidVm", "/huaweicloud/v1/vm/create", createPrePaidVm},
-	{"stopVm", "/huaweicloud/v1/vm/stop", stopVm},
-	{"startVm", "/huaweicloud/v1/vm/start", startVm},
-
-	/*{"createInternalLb","",createInternalLb},
-	{"createExternalLb","",createExternalLb},
-	{"addTargetToLb","",addTargetToLb},
-	{"createNatGateway","",createNatGateway},
-	{"createPublicIp","",createPublicIp},
-	{"addSnatRule","",addSnatRule},
-	{"createPeers","",createPeers},
-	{"addRoute","",addRoute},
-	{"createRds","",createRds},
-	{"createRdsBackup","",createRdsBackup},*/
+	{"createVpc", "/huaweicloud/v1/vpc/create", createVpc,false},
+	{"createSubnet", "/huaweicloud/v1/subnet/create", createSubnet,false},
+	{"createSecurityGroup", "/huaweicloud/v1/security-group/create", createSecurityGroup,false},
+	{"addSecurityRule", "/huaweicloud/v1/security-group-rule/create", addSecurityGroupRule,false},
+	{"createPostPaidVm", "/huaweicloud/v1/vm/create", createPostPaidVm,false},,
+	{"createPrePaidVm", "/huaweicloud/v1/vm/create", createPrePaidVm,true},
+	{"stopVm", "/huaweicloud/v1/vm/stop", stopVm,false},
+	{"startVm", "/huaweicloud/v1/vm/start", startVm,false},
+	{"createPeerings","/huaweicloud/v1/peerings/create",createPeerings,false}，
+	{"createPublicIp","/huaweicloud/v1/public-ip/create",createPublicIp,false},
+    {"createNatGateway","/huaweicloud/v1/nat-gateway/create",createNatGateway,true},
+	{"addSnatRule","/huaweicloud/v1/nat-snat-rule/add",addSnatRule,true},
+	{"addRoute","/huaweicloud/v1/route/create",addRoute,false},
+	{"createInternalLb","/huaweicloud/v1/lb/create",createInternalLb,false},
+	{"createExternalLb","/huaweicloud/v1/lb/create",createExternalLb,false},
+	{"addTargetToLb","/huaweicloud/v1/lb-target/add-backtarget",addTargetToLb,false},
 
 	//delete funcs
-	/*{"deleteRdsBackup","",deleteRdsBackup},
-	{"deleteRds","",deleteRds},
-	{"deleteRoute","",deleteRoute},
-	{"deleteTargetFromLb","",deleteTargetFromLb},
-	{"deleteInternalLb","",deleteInternalLb},
-	{"deleteExternalLb","",deleteExternalLb},
-	{"deleteSnatRule","",deleteSnatRule}
-	{"deletePublicIp","",deletePublicIp},
-	{"deletePeers","",deletePeers},*/
-
-	//{"deletePrePaidVm", "/huaweicloud/v1/vm/terminate", deletePrePaidVm},
-	{"deletePostPaidVm", "/huaweicloud/v1/vm/terminate", deletePostPaidVm},
-	{"deleteSecurityRule", "/huaweicloud/v1/security-group-rule/delete", deleteSecurityGroupRule},
-	{"deleteSecurityGroup", "/huaweicloud/v1/security-group/delete", deleteSecurityGroup},
-	{"deleteSubnet", "/huaweicloud/v1/subnet/delete", deleteSubnet},
-	{"deleteVpc", "/huaweicloud/v1/vpc/delete", deleteVpc},
+	{"deletePrePaidVm", "/huaweicloud/v1/vm/terminate", deletePrePaidVm,true},
+	{"deleteTargetFromLb","/huaweicloud/v1/lb-target/del-backtarget",deleteTargetFromLb,false},
+	{"deleteInternalLb","/huaweicloud/v1/lb/delete",deleteInternalLb,false},
+	{"deleteExternalLb","/huaweicloud/v1/lb/delete",deleteExternalLb,false},
+	{"deleteSnatRule","/huaweicloud/v1/nat-snat-rule/delete",deleteSnatRule,true}
+	{"deleteNatGateway","/huaweicloud/v1/nat-gateway/delete",deleteNatGateway,true},
+	{"deleteSecurityGroup", "/huaweicloud/v1/security-group/delete", deleteSecurityGroup,false},
+	{"deleteRoute","/huaweicloud/v1/route/delete",deleteRoute,false},
+	{"deletePeerings","/huaweicloud/v1/peerings/delete",deletePeerings,false},
+	{"deletePublicIp","/huaweicloud/v1/public-ip/delete",deletePublicIp,false},
+	{"deletePostPaidVm", "/huaweicloud/v1/vm/terminate", deletePostPaidVm,false},
+	{"deleteSecurityRule", "/huaweicloud/v1/security-group-rule/delete", deleteSecurityGroupRule,false},
+	{"deleteSubnet", "/huaweicloud/v1/subnet/delete", deleteSubnet,false},
+	{"deleteVpc", "/huaweicloud/v1/vpc/delete", deleteVpc,false},
 }
 
 func createVpc(path string, createdResources *CreatedResources) error {
@@ -412,13 +416,13 @@ func createPostPaidVm(path string, createdResources *CreatedResources) error {
 				CloudProviderParam: getCloudProviderParam(),
 				Guid:               "123",
 				Seed:               "seed",
-				ImageId:            "7077ec61-7553-4890-8b33-364005a590b9",
+				ImageId:            VM_IMAGE_ID,
 				HostType:           "1c1g",
 				SystemDiskSize:     "50",
 				VpcId:              createdResources.VpcId,
 				SubnetId:           createdResources.SubnetId,
 				Name:               "testApiCreatedPostPaid",
-				AvailabilityZone:   "cn-south-1c",
+				AvailabilityZone:   AVAILABLE_ZONE,
 				SecurityGroups:     createdResources.SecurityGroupId,
 				ChargeType:         "postPaid",
 			},
@@ -440,19 +444,19 @@ func createPostPaidVm(path string, createdResources *CreatedResources) error {
 }
 
 func createPrePaidVm(path string, createdResources *CreatedResources) error {
-	inputs := plugins.VmCreateInputs{
+  	inputs := plugins.VmCreateInputs{
 		Inputs: []plugins.VmCreateInput{
 			{
 				CloudProviderParam: getCloudProviderParam(),
 				Guid:               "123",
 				Seed:               "seed",
-				ImageId:            "7077ec61-7553-4890-8b33-364005a590b9",
+				ImageId:            VM_IMAGE_ID,
 				HostType:           "1c1g",
 				SystemDiskSize:     "50",
 				VpcId:              createdResources.VpcId,
 				SubnetId:           createdResources.SubnetId,
 				Name:               "testApiCreatedPrePaid",
-				AvailabilityZone:   "cn-south-1c",
+				AvailabilityZone:   AVAILABLE_ZONE,
 				SecurityGroups:     createdResources.SecurityGroupId,
 				ChargeType:         "prePaid",
 				PeriodType:         "month", //年或月
@@ -551,6 +555,336 @@ func deletePostPaidVm(path string, createdResources *CreatedResources) error {
 	return nil
 }
 
+func createPeerings(path string, createdResources *CreatedResources) error {
+	inputs := plugins.PeeringsCreateInputs{
+		Inputs: []plugins.PeeringsCreateInput{
+			{
+				CloudProviderParam: getCloudProviderParam(),
+				Guid:               "123",
+				Name: "testApiCreated",
+                LocalVpcId:createdResources.VpcId,
+	            PeerVpcId:createdResources.PeerVpcId,
+			},
+		},
+	}
+
+	outputs := plugins.PeeringsCreateOutputs{}
+	if err := doHttpRequest(path, inputs, &outputs); err != nil {
+		return err
+	}
+	
+	createdResources.PeeringsId = outputs.Outputs[0].Id
+	return nil
+}
+
+func deletePeerings(path string, createdResources *CreatedResources) error {
+	inputs := plugins.PeeringsDeleteInputs{
+		Inputs: []plugins.PeeringsDeleteInput{
+			{
+				CloudProviderParam: getCloudProviderParam(),
+				Guid:               "123",
+				Id:                 createdResources.PeeringsId,
+			},
+		},
+	}
+
+	outputs := plugins.PeeringsDeleteOutputs{}
+	if err := doHttpRequest(path, inputs, &outputs); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func createPublicIp(path string, createdResources *CreatedResources) error {
+	inputs := plugins.PublicIpCreateInputs{
+		Inputs: []plugins.PublicIpCreateInput{
+			{
+				CloudProviderParam: getCloudProviderParam(),
+				Guid:               "123",
+				BandWidth:          "1",
+			},
+		},
+	}
+
+	outputs := plugins.PublicIpCreateOutputs{}
+	if err := doHttpRequest(path, inputs, &outputs); err != nil {
+		return err
+	}
+	
+	createdResources.PublicIpId = outputs.Outputs[0].Id
+	return nil
+}
+
+func deletePublicIp(path string, createdResources *CreatedResources) error {
+	inputs := plugins.PublicIpDeleteInputs{
+		Inputs: []plugins.PublicIpDeleteInput {
+			{
+				CloudProviderParam: getCloudProviderParam(),
+				Guid:               "123",
+				Id:                 createdResources.PublicIpId,
+			},
+		},
+	}
+
+	outputs := plugins.PublicIpDeleteOutputs{}
+	if err := doHttpRequest(path, inputs, &outputs); err != nil {
+		return err
+	}
+	
+	return nil
+}
+
+func createNatGateway(path string, createdResources *CreatedResources) error {
+	inputs := plugins.NatCreateInputs{
+		Inputs: []plugins.NatCreateInput{
+			{
+				CloudProviderParam: getCloudProviderParam(),
+				Guid:               "123",
+				Name:"testApiCreated",
+				VpcId: createdResources.VpcId,
+				SubnetId:createdResources.SubnetId,
+			},
+		},
+	}
+
+	outputs := plugins.NatCreateOutputs{}
+	if err := doHttpRequest(path, inputs, &outputs); err != nil {
+		return err
+	}
+	
+	createdResources.NatGatewayId = outputs.Outputs[0].Id
+	return nil
+}
+
+func deleteNatGateway(path string, createdResources *CreatedResources) error {
+	inputs := plugins.NatDeleteInputs{
+		Inputs: []plugins.NatDeleteInput {
+			{
+				CloudProviderParam: getCloudProviderParam(),
+				Guid:               "123",
+				Id:                 createdResources.NatGatewayId,
+			},
+		},
+	}
+
+	outputs := plugins.NatDeleteOutputs{}
+	if err := doHttpRequest(path, inputs, &outputs); err != nil {
+		return err
+	}
+	
+	return nil
+}
+
+func addSnatRule(path string, createdResources *CreatedResources) error {
+	inputs := plugins.AddSnatRuleInputs{
+		Inputs: []plugins.AddSnatRuleInput{
+			{
+				CloudProviderParam: getCloudProviderParam(),
+				Guid:               "123",
+				GatewayId:createdResources.NatGatewayId,
+				SubnetId:createdResources.SubnetId,
+				PublicIpId:createdResources.PublicIpId,
+			},
+		},
+	}
+
+	outputs := plugins.AddSnatRuleOutputs{}
+	if err := doHttpRequest(path, inputs, &outputs); err != nil {
+		return err
+	}
+	
+	createdResources.SnatRuleId = outputs.Outputs[0].Id
+	return nil
+}
+
+func deleteSnatRule(path string, createdResources *CreatedResources) error {
+	inputs := plugins.DeleteSnatRuleInputs{
+		Inputs: []plugins.DeleteSnatRuleInput{
+			{
+				CloudProviderParam: getCloudProviderParam(),
+				Guid:               "123",
+				Id:createdResources.SnatRuleId,
+			},
+		},
+	}
+
+	outputs := plugins.DeleteSnatRuleOutputs{}
+	if err := doHttpRequest(path, inputs, &outputs); err != nil {
+		return err
+	}
+	
+	return nil
+}
+
+func addRoute(path string, createdResources *CreatedResources) error {
+	inputs := plugins.RouteCreateInputs{
+		Inputs: []plugins.RouteCreateInput{
+			{
+				CloudProviderParam: getCloudProviderParam(),
+				Guid:               "123",
+				Destination:        "10.0.0.0/16",
+				Nexthop:             createdResources.PeeringsId,
+				Type:                "peering",
+				VpcId:               createdResources.VpcId,
+		},
+	}
+
+	outputs := plugins.RouteCreateOutputs{}
+	if err := doHttpRequest(path, inputs, &outputs); err != nil {
+		return err
+	}
+	
+	createdResources.RouteId = outputs.Outputs[0].Id
+	return nil
+}
+
+func deleteRoute(path string, createdResources *CreatedResources) error {
+	inputs := plugins.RouteDeleteInputs{
+		Inputs: []plugins.RouteDeleteInput{
+			{
+				CloudProviderParam: getCloudProviderParam(),
+				Guid:               "123",
+				Id:createdResources.RouteId,
+			},
+		},
+	}
+
+	outputs := plugins.RouteDeleteOutputs{}
+	if err := doHttpRequest(path, inputs, &outputs); err != nil {
+		return err
+	}
+	
+	return nil
+}
+
+func createInternalLb(path string, createdResources *CreatedResources) error {
+	inputs := plugins.CreateLbInputs{
+		Inputs: []plugins.CreateLbInput{
+			{
+				CloudProviderParam: getCloudProviderParam(),
+				Guid:               "123",
+				Name:"apiCreatedInternalLb",
+				Type:"Internal",
+				SubnetId:createdResources.SubnetId,
+	}
+
+	outputs := plugins.RouteCreateOutputs{}
+	if err := doHttpRequest(path, inputs, &outputs); err != nil {
+		return err
+	}
+	
+	createdResources.InternalLbId = outputs.Outputs[0].Id
+	return nil
+}
+
+func deleteInternalLb(path string, createdResources *CreatedResources) error {
+	inputs := plugins.DeleteLbInputs {
+		Inputs: []plugins.DeleteLbInput{
+			{
+				CloudProviderParam: getCloudProviderParam(),
+				Guid:               "123",
+				Id:createdResources.InternalLbId,
+				Type:"Internal",
+			},
+		},
+	}
+
+	outputs := plugins.DeleteLbOutputs{}
+	if err := doHttpRequest(path, inputs, &outputs); err != nil {
+		return err
+	}
+	
+	return nil
+}
+
+func createExternalLb(path string, createdResources *CreatedResources) error {
+	inputs := plugins.CreateLbInputs{
+		Inputs: []plugins.CreateLbInput{
+			{
+				CloudProviderParam: getCloudProviderParam(),
+				Guid:               "123",
+				Name:"apiCreatedExternalLb",
+				Type:"External",
+				SubnetId:createdResources.SubnetId,
+				BandwidthSize:"1",
+	}
+
+	outputs := plugins.RouteCreateOutputs{}
+	if err := doHttpRequest(path, inputs, &outputs); err != nil {
+		return err
+	}
+	
+	createdResources.ExternalLbId = outputs.Outputs[0].Id
+	return nil
+}
+
+func deleteExternalLb(path string, createdResources *CreatedResources) error {
+	inputs := plugins.DeleteLbInputs {
+		Inputs: []plugins.DeleteLbInput{
+			{
+				CloudProviderParam: getCloudProviderParam(),
+				Guid:               "123",
+				Id:createdResources.ExternalLbId,
+				Type:"External",
+			},
+		},
+	}
+
+	outputs := plugins.DeleteLbOutputs{}
+	if err := doHttpRequest(path, inputs, &outputs); err != nil {
+		return err
+	}
+	
+	return nil
+}
+
+func addTargetToLb(path string, createdResources *CreatedResources) error {
+	inputs := plugins.LbHostInputs {
+		Inputs: []plugins.LbHostInput{
+			{
+				CloudProviderParam: getCloudProviderParam(),
+				Guid:               "123",
+				LbId:createdResources.InternalLbId,
+				Port:"9090"
+				Protocol:"tcp",
+				HostIds:createdResources.VmIdPostPaid,
+				HostPorts:"8090",
+			},
+		},
+	}
+
+	outputs := plugins.LbHostOutputs{}
+	if err := doHttpRequest(path, inputs, &outputs); err != nil {
+		return err
+	}
+	
+	return nil
+}
+
+func deleteTargetFromLb(path string, createdResources *CreatedResources) error {
+	inputs := plugins.LbHostInputs {
+		Inputs: []plugins.LbHostInput{
+			{
+				CloudProviderParam: getCloudProviderParam(),
+				Guid:               "123",
+				LbId:createdResources.InternalLbId,
+				Port:"9090"
+				Protocol:"tcp",
+				HostIds:createdResources.VmIdPostPaid,
+				HostPorts:"8090",
+			},
+		},
+	}
+
+	outputs := plugins.LbHostOutputs{}
+	if err := doHttpRequest(path, inputs, &outputs); err != nil {
+		return err
+	}
+	
+	return nil
+}
+
 func TestApis(t *testing.T) {
 	createdResources := CreatedResources{}
 
@@ -561,6 +895,9 @@ func TestApis(t *testing.T) {
 
 	failedCase := 0
 	for i, entry := range resourceFuncTable {
+		if entry.IsPrePaidResource  &&	!CREATE_PREPREPAID_RESOUCE {
+			continue
+		}
 		err := entry.Func(entry.ResourcePath, &createdResources)
 		if err == nil {
 			t.Logf("Test case%3d:%v run ok", i, entry.TestApiName)
