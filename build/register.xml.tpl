@@ -537,7 +537,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">vpc_id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">subnet_id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">az</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">volume_type</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">volume_type</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">volume_size</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">charge_type</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">period_type</parameter>

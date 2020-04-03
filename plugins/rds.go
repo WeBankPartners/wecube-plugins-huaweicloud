@@ -208,7 +208,7 @@ func (action *RdsCreateAction) checkCreateRdsParams(input RdsCreateInput) error 
 		if strings.ToLower(input.SupportHa) != "true" && strings.ToLower(input.SupportHa) != "false" {
 			return fmt.Errorf("supportHa is wrong")
 		}
-		if strings.ToLower(input.SupportHa) != "true" && input.HaReplicationMode == "" {
+		if strings.ToLower(input.SupportHa) == "true" && input.HaReplicationMode == "" {
 			return fmt.Errorf("haReplicationMode is empty")
 		}
 	}
