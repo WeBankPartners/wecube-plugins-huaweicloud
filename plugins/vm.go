@@ -173,20 +173,20 @@ func checkVmCreateParams(input VmCreateInput) error {
 	return nil
 }
 
-func isVmExist(cloudProviderParam CloudProviderParam, id string) (bool, error) {
+func isVmExist(cloudProviderParam CloudProviderParam, id string) (*v1.CloudServer, bool, error) {
 	vmInfo, err := getVmInfoById(cloudProviderParam, id)
 	if err != nil {
 		if ue, ok := err.(*gophercloud.UnifiedError); ok {
 			if strings.Contains(ue.Message(), "could not be found") {
-				return false, nil
+				return nil, false, nil
 			}
 		}
-		return false, err
+		return nil, false, err
 	}
 	if vmInfo.Status == "DELETED" {
-		return false, nil
+		return vmInfo, false, nil
 	}
-	return true, nil
+	return vmInfo, true, nil
 }
 
 func getVmInfoById(cloudProviderParam CloudProviderParam, id string) (*v1.CloudServer, error) {
@@ -340,6 +340,13 @@ func getFlavorByHostType(input VmCreateInput) (string, error) {
 	var minScore int64 = 1000000
 	matchCpuItems := []flavor.Flavor{}
 	for _, item := range flavors {
+		if item.FlvDisabled == true || item.AccessIsPublic == false {
+			continue
+		}
+		// status := item.OsExtraSpecs.CondOperationStatus
+		// if status != "normal" && status != "promotion" {
+		// 	continue
+		// }
 		vcpus, err := strconv.ParseInt(item.Vcpus, 10, 64)
 		if err != nil {
 			logrus.Errorf("vpus(%v) is invald", item.Vcpus)
@@ -428,7 +435,7 @@ func createVm(input VmCreateInput) (output VmCreateOutput, err error) {
 
 	if input.Id != "" {
 		exist := false
-		exist, err = isVmExist(input.CloudProviderParam, input.Id)
+		_, exist, err = isVmExist(input.CloudProviderParam, input.Id)
 		if err == nil && exist {
 			output.Id = input.Id
 			output.PrivateIp, _ = getVmIpAddress(input.CloudProviderParam, input.Id)
@@ -569,7 +576,7 @@ func deleteVm(input VmDeleteInput) (output VmDeleteOutput, err error) {
 		return
 	}
 
-	exist, err := isVmExist(input.CloudProviderParam, input.Id)
+	vmInfo, exist, err := isVmExist(input.CloudProviderParam, input.Id)
 	if err != nil || !exist {
 		return
 	}
@@ -583,6 +590,12 @@ func deleteVm(input VmDeleteInput) (output VmDeleteOutput, err error) {
 	client, err := openstack.NewComputeV2(provider, gophercloud.EndpointOpts{})
 	if err != nil {
 		return
+	}
+
+	// check whether the type of vm is prePaid
+	// TODO:
+	if vmInfo.Metadata.ChargingMode == PRE_PAID {
+
 	}
 
 	if err = servers.Delete(client, input.Id).ExtractErr(); err != nil {

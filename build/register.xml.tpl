@@ -530,7 +530,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">password</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">port</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">machine_spec</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">engine_type</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">support_ha</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">ha_replication_mode</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">engine_version</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">security_group_id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">vpc_id</parameter>

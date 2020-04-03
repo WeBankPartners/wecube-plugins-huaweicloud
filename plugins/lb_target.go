@@ -20,8 +20,8 @@ import (
 var lbTargetActions = make(map[string]Action)
 
 func init() {
-	lbTargetActions["add-backtarget"] = new(AddLbHostAction)
-	lbTargetActions["del-backtarget"] = new(DelLbHostAction)
+	lbTargetActions["create"] = new(AddLbHostAction)
+	lbTargetActions["delete"] = new(DelLbHostAction)
 }
 
 type LbTargetPlugin struct {
