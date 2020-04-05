@@ -171,7 +171,7 @@ func getLbIpAddress(input CreateLbInput, id string) (string, error) {
 	}
 
 	//https://support.huaweicloud.com/api-elb/zh-cn_topic_0096561535.html
-	publicIpInfo, err := createPublicIp(input.CloudProviderParam, input.BandwidthSize, input.EnterpriseProjectId)
+	publicIpInfo, err := createPublicIp(input.CloudProviderParam, input.BandwidthSize, input.EnterpriseProjectId, "createdForLb")
 	if err != nil {
 		return "", err
 	}

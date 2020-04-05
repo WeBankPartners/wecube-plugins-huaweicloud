@@ -49,9 +49,9 @@ type PublicIpCreateInputs struct {
 type PublicIpCreateInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid string `json:"guid,omitempty"`
-	Id   string `json:"id,omitempty"`
-	Name string `json:"name,omitempty"`
+	Guid      string `json:"guid,omitempty"`
+	Id        string `json:"id,omitempty"`
+	Name      string `json:"name,omitempty"`
 	BandWidth string `json:"band_width,omitempty"`
 }
 
@@ -103,7 +103,7 @@ func createPluginPublicIp(input PublicIpCreateInput) (output PublicIpCreateOutpu
 		}
 	}
 
-	resp, err := createPublicIp(input.CloudProviderParam, input.BandWidth, "",input.Name)
+	resp, err := createPublicIp(input.CloudProviderParam, input.BandWidth, "", input.Name)
 	if err != nil {
 		logrus.Errorf("create public ip meet error=%v", err)
 		return
@@ -248,7 +248,7 @@ func getPublicIpInfo(params CloudProviderParam, id string) (*publicips.PublicIP,
 	return publicIp, err
 }
 
-func createPublicIp(params CloudProviderParam, bandwidthSize string, enterpriseProjectId string,name string) (*publicips.PublicIPCreateResp, error) {
+func createPublicIp(params CloudProviderParam, bandwidthSize string, enterpriseProjectId string, name string) (*publicips.PublicIPCreateResp, error) {
 	sc, err := CreateVpcServiceClientV1(params)
 	if err != nil {
 		return nil, err
