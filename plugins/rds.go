@@ -630,13 +630,19 @@ func (action *RdsDeleteAction) deleteRds(input *RdsDeleteInput) (output RdsDelet
 	}
 
 	// check whether rds is exist.
-	_, ok, err := isRdsExist(sc, input.Id)
+	rdsinfo, ok, err := isRdsExist(sc, input.Id)
 	if err != nil {
 		logrus.Errorf("check whether rds[Id=%v] is exist, meet error=%v", input.Id, err)
 		return
 	}
 	if !ok {
 		logrus.Infof("rds[Id=%v] is not exist", input.Id)
+		return
+	}
+
+	// TODO: the prePaid need to do it specially
+	if rdsinfo.ChargeInfo.ChargeMode == PRE_PAID {
+		err = fmt.Errorf("can not support to delete rds instacne now")
 		return
 	}
 

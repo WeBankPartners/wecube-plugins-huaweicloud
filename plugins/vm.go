@@ -593,9 +593,10 @@ func deleteVm(input VmDeleteInput) (output VmDeleteOutput, err error) {
 	}
 
 	// check whether the type of vm is prePaid
-	// TODO:
+	// TODO: the prePaid need to do it specially
 	if vmInfo.Metadata.ChargingMode == PRE_PAID {
-
+		err = fmt.Errorf("can not support to delete prePaid vm now")
+		return
 	}
 
 	if err = servers.Delete(client, input.Id).ExtractErr(); err != nil {
