@@ -51,7 +51,7 @@ type PublicIpCreateInput struct {
 	CloudProviderParam
 	Guid string `json:"guid,omitempty"`
 	Id   string `json:"id,omitempty"`
-
+	Name string `json:"name,omitempty"`
 	BandWidth string `json:"band_width,omitempty"`
 }
 
@@ -103,7 +103,7 @@ func createPluginPublicIp(input PublicIpCreateInput) (output PublicIpCreateOutpu
 		}
 	}
 
-	resp, err := createPublicIp(input.CloudProviderParam, input.BandWidth, "")
+	resp, err := createPublicIp(input.CloudProviderParam, input.BandWidth, "",input.Name)
 	if err != nil {
 		logrus.Errorf("create public ip meet error=%v", err)
 		return
@@ -248,10 +248,14 @@ func getPublicIpInfo(params CloudProviderParam, id string) (*publicips.PublicIP,
 	return publicIp, err
 }
 
-func createPublicIp(params CloudProviderParam, bandwidthSize string, enterpriseProjectId string) (*publicips.PublicIPCreateResp, error) {
+func createPublicIp(params CloudProviderParam, bandwidthSize string, enterpriseProjectId string,name string) (*publicips.PublicIPCreateResp, error) {
 	sc, err := CreateVpcServiceClientV1(params)
 	if err != nil {
 		return nil, err
+	}
+
+	if name == "" {
+		name = "wecubeCreated"
 	}
 
 	size, _ := strconv.Atoi(bandwidthSize)
@@ -261,7 +265,7 @@ func createPublicIp(params CloudProviderParam, bandwidthSize string, enterpriseP
 			IPVersion: 4,
 		},
 		Bandwidth: publicips.BandWidth{
-			Name:      "wecubeCreated",
+			Name:      name,
 			ShareType: BANDWIDTH_SHARE_TYPE_PER,
 			Size:      size,
 		},
