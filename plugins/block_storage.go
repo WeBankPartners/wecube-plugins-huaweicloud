@@ -459,9 +459,7 @@ func checkUmountAndTerminateDiskParam(input UmountAndTerminateDiskInput) error {
 	if input.MountDir == "" {
 		return fmt.Errorf(" mountDir is empty")
 	}
-	if input.AttachId == "" {
-		return fmt.Errorf("attachId is empty")
-	}
+
 	if input.VolumeName == "" {
 		return fmt.Errorf("volumeName is empty")
 	}
@@ -488,14 +486,14 @@ func detachVolumeFromVm(input UmountAndTerminateDiskInput) error {
 	err = volumeattach.Delete(sc, input.InstanceId, input.AttachId).ExtractErr()
 	if err != nil {
 		logrus.Errorf("volumeattach delete meet err=%v", err)
-		return 
+		return err
 	}
 
-    blockStorageSc, err := createBlockStorageServiceClient(input.CloudProviderParam)
+	blockStorageSc, err := createBlockStorageServiceClient(input.CloudProviderParam)
 	if err != nil {
-		return 
+		return err
 	}
-	err	 = waitVolumeInAvailableState(blockStorageSc, input.Id)
+	err = waitVolumeInAvailableState(blockStorageSc, input.Id)
 
 	return err
 }
@@ -527,6 +525,9 @@ func umountAndTerminateDisk(input UmountAndTerminateDiskInput) (output UmountAnd
 
 	if err = checkUmountAndTerminateDiskParam(input); err != nil {
 		return
+	}
+	if input.AttachId == "" {
+		input.AttachId = input.Id
 	}
 
 	exist, err := isBlockStorageExist(input.CloudProviderParam, input.Id)
