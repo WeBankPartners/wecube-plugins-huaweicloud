@@ -459,9 +459,7 @@ func checkUmountAndTerminateDiskParam(input UmountAndTerminateDiskInput) error {
 	if input.MountDir == "" {
 		return fmt.Errorf(" mountDir is empty")
 	}
-	if input.AttachId == "" {
-		return fmt.Errorf("attachId is empty")
-	}
+
 	if input.VolumeName == "" {
 		return fmt.Errorf("volumeName is empty")
 	}
@@ -527,6 +525,9 @@ func umountAndTerminateDisk(input UmountAndTerminateDiskInput) (output UmountAnd
 
 	if err = checkUmountAndTerminateDiskParam(input); err != nil {
 		return
+	}
+	if input.AttachId == "" {
+		input.AttachId= input.Id
 	}
 
 	exist, err := isBlockStorageExist(input.CloudProviderParam, input.Id)

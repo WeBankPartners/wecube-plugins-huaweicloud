@@ -243,14 +243,16 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">guid</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">identity_params</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">cloud_params</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">lb_id</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">lb_id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">lb_port</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">listener_name</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">protocol</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">host_ids</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">host_ports</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">listener_id</parameter>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
@@ -295,7 +297,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">volume_name</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">id</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">attach_id</parameter>
+                    <!--<parameter datatype="string" mappingType="entity" mappingEntityExpression="">attach_id</parameter> -->
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
@@ -307,7 +309,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">cloud_params</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">az</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">id</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">attach_id</parameter>
+                    <!--   <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">attach_id</parameter> -->
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance_id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance_guid</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">seed</parameter>
