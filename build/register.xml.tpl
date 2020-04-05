@@ -533,13 +533,14 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">password</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">port</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">machine_spec</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">engine_type</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">support_ha</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">ha_replication_mode</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">engine_version</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">security_group_id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">vpc_id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">subnet_id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">az</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">volume_type</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">volume_type</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">volume_size</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">charge_type</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">period_type</parameter>
@@ -554,6 +555,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">private_port</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">user_name</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">password</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">cpu</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">memory</parameter>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>

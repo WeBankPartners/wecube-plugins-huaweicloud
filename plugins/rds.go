@@ -28,8 +28,9 @@ const (
 	RDS_INSTANCE_STATUS_OK  = "ACTIVE"
 	RDS_INSTANCE_STATUS_BAD = "FAILED"
 
-	RDS_BACKUP_STATUS_OK  = "COMPLETED"
-	RDS_BACKUP_STATUS_BAD = "FAILED"
+	RDS_BACKUP_STATUS_OK       = "COMPLETED"
+	RDS_BACKUP_STATUS_BAD      = "FAILED"
+	RDS_FLAVORREF_AZ_STATUS_OK = "normal"
 )
 
 var rdsActions = make(map[string]Action)
@@ -82,22 +83,24 @@ type RdsCreateInputs struct {
 type RdsCreateInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid             string `json:"guid,omitempty"`
-	Id               string `json:"id,omitempty"`
-	Seed             string `json:"seed,omitempty"`
-	Name             string `json:"name,omitempty"`
-	Password         string `json:"password,omitempty"`
-	Port             string `json:"port,omitempty"`
-	HostType         string `json:"machine_spec,omitempty"` //4c8g
-	EngineType       string `json:"engine_type,omitempty"`
-	EngineVersion    string `json:"engine_version,omitempty"`
-	SecurityGroupId  string `json:"security_group_id,omitempty"`
-	VpcId            string `json:"vpc_id,omitempty"`
-	SubnetId         string `json:"subnet_id,omitempty"`
-	AvailabilityZone string `json:"az,omitempty"`
-	VolumeType       string `json:"volume_type,omitempty"`
-	VolumeSize       string `json:"volume_size,omitempty"`
-	ChargeType       string `json:"charge_type,omitempty"`
+	Guid     string `json:"guid,omitempty"`
+	Id       string `json:"id,omitempty"`
+	Seed     string `json:"seed,omitempty"`
+	Name     string `json:"name,omitempty"`
+	Password string `json:"password,omitempty"`
+	Port     string `json:"port,omitempty"`
+	HostType string `json:"machine_spec,omitempty"` //4c8g
+	// EngineType       string `json:"engine_type,omitempty"`
+	EngineVersion     string `json:"engine_version,omitempty"`
+	SecurityGroupId   string `json:"security_group_id,omitempty"`
+	VpcId             string `json:"vpc_id,omitempty"`
+	SubnetId          string `json:"subnet_id,omitempty"`
+	AvailabilityZone  string `json:"az,omitempty"`
+	SupportHa         string `json:"support_ha,omitempty"`
+	HaReplicationMode string `json:"ha_replication_mode,omitempty"`
+	VolumeType        string `json:"volume_type,omitempty"`
+	VolumeSize        string `json:"volume_size,omitempty"`
+	ChargeType        string `json:"charge_type,omitempty"`
 
 	//包年包月
 	PeriodType  string `json:"period_type,omitempty"`   //年或月
@@ -122,6 +125,8 @@ type RdsCreateOutput struct {
 	Port     string `json:"private_port,omitempty"`
 	UserName string `json:"user_name,omitempty"`
 	Password string `json:"password,omitempty"`
+	Cpu      string `json:"cpu,omitementy"`
+	Memory   string `json:"memory,omitempty"`
 }
 
 type RdsCreateAction struct {
@@ -165,14 +170,14 @@ func (action *RdsCreateAction) checkCreateRdsParams(input RdsCreateInput) error 
 		return fmt.Errorf("volumeSize is empty")
 	}
 
-	if input.VolumeType == "" {
-		return fmt.Errorf("volumeType is empty")
-	}
+	// if input.VolumeType == "" {
+	// 	return fmt.Errorf("volumeType is empty")
+	// }
 	if input.VolumeType != RDS_VOLUME_TYPE_ULTRAHIGH && input.VolumeType != RDS_VOLUME_TYPE_ULTRAHIGHPRO {
 		return fmt.Errorf("volumeType is wrong")
 	}
 
-	if err := checkEngineParams(input.CloudProviderParam, input.EngineType, input.EngineVersion); err != nil {
+	if err := checkEngineParams(input.CloudProviderParam, engineTypeMap["MYSQL"], input.EngineVersion); err != nil {
 		return err
 	}
 	if input.AvailabilityZone == "" {
@@ -198,6 +203,15 @@ func (action *RdsCreateAction) checkCreateRdsParams(input RdsCreateInput) error 
 		}
 		if input.IsAutoRenew != "" && strings.ToLower(input.IsAutoRenew) != "true" && strings.ToLower(input.IsAutoRenew) != "false" {
 			return fmt.Errorf("isAutoRenew is wrong")
+		}
+	}
+
+	if input.SupportHa != "" {
+		if strings.ToLower(input.SupportHa) != "true" && strings.ToLower(input.SupportHa) != "false" {
+			return fmt.Errorf("supportHa is wrong")
+		}
+		if strings.ToLower(input.SupportHa) == "true" && input.HaReplicationMode == "" {
+			return fmt.Errorf("haReplicationMode is empty")
 		}
 	}
 
@@ -246,35 +260,51 @@ func queryEngineVersionInfo(params CloudProviderParam, engineType string) (map[s
 	return versions, nil
 }
 
-func getRdsFlavorByHostType(input RdsCreateInput) (string, error) {
+// return flavor name, cpu, ram
+func getRdsFlavorByHostType(input *RdsCreateInput) (string, string, string, error) {
 	cpu, memory, err := getCpuAndMemoryFromHostType(input.HostType)
 	if err != nil {
-		return "", err
+		return "", "", "", err
 	}
 
 	sc, err := createRdsServiceClientV3(input.CloudProviderParam)
 	if err != nil {
-		return "", err
+		return "", "", "", err
 	}
 	allPages, err := flavors.List(sc, flavors.DbFlavorsOpts{
 		Versionname: input.EngineVersion,
-	}, input.EngineType).AllPages()
+	}, engineTypeMap["MYSQL"]).AllPages()
 	if err != nil {
-		return "", err
+		return "", "", "", err
 	}
 
 	allFlavorsResp, err := flavors.ExtractDbFlavors(allPages)
 	if err != nil {
-		return "", err
+		return "", "", "", err
 	}
 
 	var minScore int64 = 1000000
 	matchCpuItems := []flavors.Flavors{}
 	for _, item := range allFlavorsResp.Flavorslist {
+		if _, ok := item.Azstatus[input.AvailabilityZone]; !ok {
+			continue
+		}
+		if item.Azstatus[input.AvailabilityZone] != RDS_FLAVORREF_AZ_STATUS_OK {
+			continue
+		}
+
+		if strings.ToLower(input.SupportHa) == "true" && item.Instancemode != "ha" {
+			continue
+		}
+
+		if (strings.ToLower(input.SupportHa) == "false" || input.SupportHa == "") && item.Instancemode != "single" {
+			continue
+		}
+
 		vcpus, err := strconv.ParseInt(item.Vcpus, 10, 64)
 		if err != nil {
 			logrus.Errorf("vpus(%v) is invald", item.Vcpus)
-			return "", err
+			return "", "", "", err
 		}
 
 		score := vcpus - cpu
@@ -287,7 +317,7 @@ func getRdsFlavorByHostType(input RdsCreateInput) (string, error) {
 		}
 	}
 
-	flavorRef := ""
+	var flavorRef, newCpu, ram string
 	minScore = 1000000
 	for _, item := range matchCpuItems {
 		score := int64(item.Ram) - memory
@@ -297,17 +327,22 @@ func getRdsFlavorByHostType(input RdsCreateInput) (string, error) {
 		if score < minScore {
 			minScore = score
 			flavorRef = item.Speccode
+			newCpu = item.Vcpus
+			ram = strconv.Itoa(item.Ram)
 		}
 	}
 	if flavorRef == "" {
-		return "", fmt.Errorf("could not get suitable rds flavor")
+		return "", "", "", fmt.Errorf("could not get suitable rds flavor")
 	}
 
 	logrus.Infof("get rds flavorRef=%v", flavorRef)
-	return flavorRef, nil
+	return flavorRef, newCpu, ram, nil
 }
 
 func buildRdsVolumeStruct(input *RdsCreateInput) (*instances.Volume, error) {
+	if input.VolumeType == "" {
+		input.VolumeType = "ULTRAHIGH"
+	}
 	volume := instances.Volume{
 		Type: input.VolumeType,
 	}
@@ -320,9 +355,23 @@ func buildRdsVolumeStruct(input *RdsCreateInput) (*instances.Volume, error) {
 	return &volume, nil
 }
 
+func buildRdsHaStruct(input *RdsCreateInput) (*instances.Ha, error) {
+	ha := instances.Ha{}
+	if input.SupportHa == "" {
+		return nil, nil
+	}
+	if strings.ToLower(input.SupportHa) == "true" {
+		ha.Mode = "Ha"
+		ha.ReplicationMode = input.HaReplicationMode
+	}
+
+	return &ha, nil
+}
+
 func buildChargeInfoStruct(input *RdsCreateInput) *instances.ChargeInfo {
 	chargeInfo := instances.ChargeInfo{
 		ChargeMode: input.ChargeType,
+		IsAutoPay:  "true",
 	}
 	if input.ChargeType == PRE_PAID {
 		chargeInfo.PeriodType = input.PeriodType
@@ -379,7 +428,7 @@ func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreat
 	if input.Password == "" {
 		input.Password = utils.CreateRandomPassword()
 	}
-	flavor, err := getRdsFlavorByHostType(*input)
+	flavor, cpu, memory, err := getRdsFlavorByHostType(input)
 	if err != nil {
 		return
 	}
@@ -389,8 +438,13 @@ func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreat
 	}
 
 	datastore := instances.Datastore{
-		Type:    input.EngineType,
+		Type:    engineTypeMap["MYSQL"],
 		Version: input.EngineVersion,
+	}
+
+	ha, err := buildRdsHaStruct(input)
+	if err != nil {
+		return
 	}
 
 	request := instances.CreateRdsOpts{
@@ -405,6 +459,7 @@ func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreat
 		Region:           cloudMap[CLOUD_PARAM_REGION],
 		Volume:           volume,
 		ChargeInfo:       buildChargeInfoStruct(input),
+		Ha:               ha,
 	}
 	if input.Port != "" {
 		request.Port = input.Port
@@ -425,6 +480,8 @@ func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreat
 	output.Port = strconv.Itoa(instance.Port)
 	output.PrivateIp = instance.PrivateIps[0]
 	output.UserName = instance.DbUserName
+	output.Memory = memory
+	output.Cpu = cpu
 
 	password, err := utils.AesEnPassword(input.Guid, input.Seed, input.Password, utils.DEFALT_CIPHER)
 	if err != nil {
@@ -580,13 +637,19 @@ func (action *RdsDeleteAction) deleteRds(input *RdsDeleteInput) (output RdsDelet
 	}
 
 	// check whether rds is exist.
-	_, ok, err := isRdsExist(sc, input.Id)
+	rdsinfo, ok, err := isRdsExist(sc, input.Id)
 	if err != nil {
 		logrus.Errorf("check whether rds[Id=%v] is exist, meet error=%v", input.Id, err)
 		return
 	}
 	if !ok {
 		logrus.Infof("rds[Id=%v] is not exist", input.Id)
+		return
+	}
+
+	// TODO: the prePaid need to do it specially
+	if rdsinfo.ChargeInfo.ChargeMode == PRE_PAID {
+		err = fmt.Errorf("can not support to delete rds instacne now")
 		return
 	}
 
