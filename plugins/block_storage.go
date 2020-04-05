@@ -486,14 +486,14 @@ func detachVolumeFromVm(input UmountAndTerminateDiskInput) error {
 	err = volumeattach.Delete(sc, input.InstanceId, input.AttachId).ExtractErr()
 	if err != nil {
 		logrus.Errorf("volumeattach delete meet err=%v", err)
-		return 
+		return err
 	}
 
-    blockStorageSc, err := createBlockStorageServiceClient(input.CloudProviderParam)
+	blockStorageSc, err := createBlockStorageServiceClient(input.CloudProviderParam)
 	if err != nil {
-		return 
+		return err
 	}
-	err	 = waitVolumeInAvailableState(blockStorageSc, input.Id)
+	err = waitVolumeInAvailableState(blockStorageSc, input.Id)
 
 	return err
 }
@@ -527,7 +527,7 @@ func umountAndTerminateDisk(input UmountAndTerminateDiskInput) (output UmountAnd
 		return
 	}
 	if input.AttachId == "" {
-		input.AttachId= input.Id
+		input.AttachId = input.Id
 	}
 
 	exist, err := isBlockStorageExist(input.CloudProviderParam, input.Id)

@@ -47,13 +47,13 @@ type LbHostInputs struct {
 type LbHostInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid      string `json:"guid,omitempty"`
-	LbId      string `json:"lb_id,omitempty"`
+	Guid         string `json:"guid,omitempty"`
+	LbId         string `json:"lb_id,omitempty"`
 	ListenerName string `json:"listener_name,omitempty"`
-	Port      string `json:"lb_port"`
-	Protocol  string `json:"protocol"`
-	HostIds   string `json:"host_ids"`
-	HostPorts string `json:"host_ports"`
+	Port         string `json:"lb_port"`
+	Protocol     string `json:"protocol"`
+	HostIds      string `json:"host_ids"`
+	HostPorts    string `json:"host_ports"`
 }
 
 type LbHostOutputs struct {
@@ -63,7 +63,7 @@ type LbHostOutputs struct {
 type LbHostOutput struct {
 	CallBackParameter
 	Result
-	Guid string `json:"guid,omitempty"`
+	Guid       string `json:"guid,omitempty"`
 	ListenerId string `json:"listener_id,omitempty"`
 }
 
@@ -145,7 +145,7 @@ func getLbListener(sc *gophercloud.ServiceClient, lbId string, protocol string, 
 	return nil, nil
 }
 
-func createLbPool(sc *gophercloud.ServiceClient, lbId string, protocol string,name string) (*pools.Pool, error) {
+func createLbPool(sc *gophercloud.ServiceClient, lbId string, protocol string, name string) (*pools.Pool, error) {
 	opts := pools.CreateOpts{
 		Name:           "wecube_created",
 		LBMethod:       "ROUND_ROBIN",
@@ -163,7 +163,7 @@ func createLbPool(sc *gophercloud.ServiceClient, lbId string, protocol string,na
 	return pool, err
 }
 
-func createLbListener(sc *gophercloud.ServiceClient, lbId, protocol, port, poolId,name string) (*listeners.Listener, error) {
+func createLbListener(sc *gophercloud.ServiceClient, lbId, protocol, port, poolId, name string) (*listeners.Listener, error) {
 	portInt, err := strconv.Atoi(port)
 	opts := listeners.CreateOpts{
 		Name:           "wecubeCreated",
@@ -195,12 +195,12 @@ func ensureLbListenerAndPoolCreated(input LbHostInput) (string, string, error) {
 	}
 
 	if listener == nil {
-		pool, err := createLbPool(sc, input.LbId, input.Protocol,input.ListenerName)
+		pool, err := createLbPool(sc, input.LbId, input.Protocol, input.ListenerName)
 		if err != nil {
 			return "", "", err
 		}
 
-		listener, err := createLbListener(sc, input.LbId, input.Protocol, input.Port, pool.ID,input.ListenerName)
+		listener, err := createLbListener(sc, input.LbId, input.Protocol, input.Port, pool.ID, input.ListenerName)
 		if err != nil {
 			return "", "", err
 		}
@@ -274,7 +274,7 @@ func addHostToLb(input LbHostInput) (output LbHostOutput, err error) {
 	if err != nil {
 		return
 	}
-	output.ListernId = listenerId
+	output.ListenerId = listenerId
 
 	hostIds, err := GetArrayFromString(input.HostIds, ARRAY_SIZE_REAL, 0)
 	if err != nil {
