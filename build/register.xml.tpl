@@ -555,6 +555,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">private_port</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">user_name</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">password</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">cpu</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">memory</parameter>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>

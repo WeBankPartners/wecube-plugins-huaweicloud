@@ -125,6 +125,8 @@ type RdsCreateOutput struct {
 	Port     string `json:"private_port,omitempty"`
 	UserName string `json:"user_name,omitempty"`
 	Password string `json:"password,omitempty"`
+	Cpu      string `json:"cpu,omitementy"`
+	Memory   string `json:"memory,omitempty"`
 }
 
 type RdsCreateAction struct {
@@ -258,26 +260,27 @@ func queryEngineVersionInfo(params CloudProviderParam, engineType string) (map[s
 	return versions, nil
 }
 
-func getRdsFlavorByHostType(input *RdsCreateInput) (string, error) {
+// return flavor name, cpu, ram
+func getRdsFlavorByHostType(input *RdsCreateInput) (string, string, string, error) {
 	cpu, memory, err := getCpuAndMemoryFromHostType(input.HostType)
 	if err != nil {
-		return "", err
+		return "", "", "", err
 	}
 
 	sc, err := createRdsServiceClientV3(input.CloudProviderParam)
 	if err != nil {
-		return "", err
+		return "", "", "", err
 	}
 	allPages, err := flavors.List(sc, flavors.DbFlavorsOpts{
 		Versionname: input.EngineVersion,
 	}, engineTypeMap["MYSQL"]).AllPages()
 	if err != nil {
-		return "", err
+		return "", "", "", err
 	}
 
 	allFlavorsResp, err := flavors.ExtractDbFlavors(allPages)
 	if err != nil {
-		return "", err
+		return "", "", "", err
 	}
 
 	var minScore int64 = 1000000
@@ -301,7 +304,7 @@ func getRdsFlavorByHostType(input *RdsCreateInput) (string, error) {
 		vcpus, err := strconv.ParseInt(item.Vcpus, 10, 64)
 		if err != nil {
 			logrus.Errorf("vpus(%v) is invald", item.Vcpus)
-			return "", err
+			return "", "", "", err
 		}
 
 		score := vcpus - cpu
@@ -314,7 +317,7 @@ func getRdsFlavorByHostType(input *RdsCreateInput) (string, error) {
 		}
 	}
 
-	flavorRef := ""
+	var flavorRef, newCpu, ram string
 	minScore = 1000000
 	for _, item := range matchCpuItems {
 		score := int64(item.Ram) - memory
@@ -324,14 +327,16 @@ func getRdsFlavorByHostType(input *RdsCreateInput) (string, error) {
 		if score < minScore {
 			minScore = score
 			flavorRef = item.Speccode
+			newCpu = item.Vcpus
+			ram = strconv.Itoa(item.Ram)
 		}
 	}
 	if flavorRef == "" {
-		return "", fmt.Errorf("could not get suitable rds flavor")
+		return "", "", "", fmt.Errorf("could not get suitable rds flavor")
 	}
 
 	logrus.Infof("get rds flavorRef=%v", flavorRef)
-	return flavorRef, nil
+	return flavorRef, newCpu, ram, nil
 }
 
 func buildRdsVolumeStruct(input *RdsCreateInput) (*instances.Volume, error) {
@@ -353,7 +358,7 @@ func buildRdsVolumeStruct(input *RdsCreateInput) (*instances.Volume, error) {
 func buildRdsHaStruct(input *RdsCreateInput) (*instances.Ha, error) {
 	ha := instances.Ha{}
 	if input.SupportHa == "" {
-		return &ha, nil
+		return nil, nil
 	}
 	if strings.ToLower(input.SupportHa) == "true" {
 		ha.Mode = "Ha"
@@ -423,7 +428,7 @@ func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreat
 	if input.Password == "" {
 		input.Password = utils.CreateRandomPassword()
 	}
-	flavor, err := getRdsFlavorByHostType(input)
+	flavor, cpu, memory, err := getRdsFlavorByHostType(input)
 	if err != nil {
 		return
 	}
@@ -475,6 +480,8 @@ func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreat
 	output.Port = strconv.Itoa(instance.Port)
 	output.PrivateIp = instance.PrivateIps[0]
 	output.UserName = instance.DbUserName
+	output.Memory = memory
+	output.Cpu = cpu
 
 	password, err := utils.AesEnPassword(input.Guid, input.Seed, input.Password, utils.DEFALT_CIPHER)
 	if err != nil {
