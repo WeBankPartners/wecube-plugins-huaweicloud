@@ -47,13 +47,15 @@ type LbHostInputs struct {
 type LbHostInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid         string `json:"guid,omitempty"`
-	LbId         string `json:"lb_id,omitempty"`
-	ListenerName string `json:"listener_name,omitempty"`
-	Port         string `json:"lb_port"`
-	Protocol     string `json:"protocol"`
-	HostIds      string `json:"host_ids"`
-	HostPorts    string `json:"host_ports"`
+	Guid           string `json:"guid,omitempty"`
+	LbId           string `json:"lb_id,omitempty"`
+	ListenerName   string `json:"listener_name,omitempty"`
+	ListenerId     string `json:"listener_id,omitempty"`
+	Port           string `json:"lb_port"`
+	Protocol       string `json:"protocol"`
+	HostIds        string `json:"host_ids"`
+	HostPorts      string `json:"host_ports"`
+	DeleteListener string `json:"delete_listener,omitempty"`
 }
 
 type LbHostOutputs struct {
@@ -391,6 +393,11 @@ func delHostFromLb(input LbHostInput) (output LbHostOutput, err error) {
 		return
 	}
 
+	if input.ListenerId == "" {
+		err = errors.New("empty listener id")
+		return
+	}
+
 	sc, err := createLbServiceClient(input.CloudProviderParam)
 	if err != nil {
 		return
@@ -400,8 +407,25 @@ func delHostFromLb(input LbHostInput) (output LbHostOutput, err error) {
 	if err != nil {
 		return
 	}
+
+	//监听器不存在，正确返回
 	if listener == nil {
-		err = fmt.Errorf("can't found lbListener,lbId(%v),protocol(%v),port(%v)", input.LbId, input.Protocol, input.Port)
+		return
+	}
+
+	if input.ListenerId != listener.ID {
+		err = fmt.Errorf("input listnerId(%v) is not match with protocol(%v) and port(%v)", input.ListenerId, input.Protocol, input.Port)
+		return
+	}
+
+	if input.DeleteListener == "Y" || input.DeleteListener == "y" {
+		if listener.DefaultPoolID != nil {
+			err = deleteLbPools(input.CloudProviderParam, *listener.DefaultPoolID)
+			if err != nil {
+				return
+			}
+		}
+		err = deleteLbListener(input.CloudProviderParam, input.ListenerId)
 		return
 	}
 
