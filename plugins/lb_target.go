@@ -47,14 +47,14 @@ type LbHostInputs struct {
 type LbHostInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid         string `json:"guid,omitempty"`
-	LbId         string `json:"lb_id,omitempty"`
-	ListenerName string `json:"listener_name,omitempty"`
-	ListenerId   string `json:"listener_id,omitempty"`
-	Port         string `json:"lb_port"`
-	Protocol     string `json:"protocol"`
-	HostIds      string `json:"host_ids"`
-	HostPorts    string `json:"host_ports"`
+	Guid           string `json:"guid,omitempty"`
+	LbId           string `json:"lb_id,omitempty"`
+	ListenerName   string `json:"listener_name,omitempty"`
+	ListenerId     string `json:"listener_id,omitempty"`
+	Port           string `json:"lb_port"`
+	Protocol       string `json:"protocol"`
+	HostIds        string `json:"host_ids"`
+	HostPorts      string `json:"host_ports"`
 	DeleteListener string `json:"delete_listener,omitempty"`
 }
 
@@ -394,8 +394,8 @@ func delHostFromLb(input LbHostInput) (output LbHostOutput, err error) {
 	}
 
 	if input.ListenerId == "" {
-		err=errors.New("empty listener id")
-		return 
+		err = errors.New("empty listener id")
+		return
 	}
 
 	sc, err := createLbServiceClient(input.CloudProviderParam)
@@ -414,18 +414,18 @@ func delHostFromLb(input LbHostInput) (output LbHostOutput, err error) {
 	}
 
 	if input.ListenerId != listener.ID {
-		err =fmt.Errorf("input listnerId(%v) is not match with protocol(%v) and port(%v)",input.ListenerId,input.Protocol, input.Port)
-		return 
+		err = fmt.Errorf("input listnerId(%v) is not match with protocol(%v) and port(%v)", input.ListenerId, input.Protocol, input.Port)
+		return
 	}
 
-	if input.delete_listener == "Y" || input.delete_listener == "y" {
+	if input.DeleteListener == "Y" || input.DeleteListener == "y" {
 		if listener.DefaultPoolID != nil {
-			err =  deleteLbPools(input.CloudProviderParam,*listener.DefaultPoolID)
+			err = deleteLbPools(input.CloudProviderParam, *listener.DefaultPoolID)
 			if err != nil {
-				return 
+				return
 			}
 		}
-		err = deleteLbListener(input.CloudProviderParam,input.ListenerId)
+		err = deleteLbListener(input.CloudProviderParam, input.ListenerId)
 		return
 	}
 
