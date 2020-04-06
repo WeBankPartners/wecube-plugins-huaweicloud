@@ -246,6 +246,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">lb_id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">lb_port</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">listener_name</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">listener_id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">protocol</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">host_ids</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">host_ports</parameter>
@@ -263,8 +264,10 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">identity_params</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">cloud_params</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">lb_id</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">listener_id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">lb_port</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">protocol</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">delete_listener</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">host_ids</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">host_ports</parameter>
                 </inputParameters>
