@@ -425,6 +425,7 @@ func createPostPaidVm(path string, createdResources *CreatedResources) error {
 				ImageId:            VM_IMAGE_ID,
 				HostType:           "1c1g",
 				SystemDiskSize:     "50",
+                                SystemDiskType:     "SAS",
 				VpcId:              createdResources.VpcId,
 				SubnetId:           createdResources.SubnetId,
 				Name:               "testApiCreatedPostPaid",
