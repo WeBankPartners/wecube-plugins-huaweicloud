@@ -10,6 +10,7 @@ import (
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/images"
 	v1 "github.com/gophercloud/gophercloud/openstack/ecs/v1/cloudservers"
 	flavor "github.com/gophercloud/gophercloud/openstack/ecs/v1/flavor"
 	v1_1 "github.com/gophercloud/gophercloud/openstack/ecs/v1_1/cloudservers"
@@ -784,4 +785,47 @@ func (action *VmStopAction) Do(inputs interface{}) (interface{}, error) {
 
 	logrus.Infof("all vms= %v are stop", vms)
 	return &outputs, finalErr
+}
+
+func PrintImages(params CloudProviderParam){
+	provider, err := createGopherCloudProviderClient(params)
+	if err != nil {
+	    fmt.Printf("print Image create provider failed,err=%v\n",err)
+		return 
+	}
+
+	client, err := openstack.NewComputeV2(provider, gophercloud.EndpointOpts{})
+	if err != nil {
+		fmt.Printf("print image new computeV2 failed,err=%v\n",err)
+		return 
+	}
+
+	listOpts := images.ListOpts{
+		Status: "active",
+	}
+	// Query all images list information
+	allPages, allPagesErr := images.ListDetail(client, listOpts).AllPages()
+	if allPagesErr != nil {
+		fmt.Println("allPagesErr:", allPagesErr)
+		if ue, ok := allPagesErr.(*gophercloud.UnifiedError); ok {
+			fmt.Println("ErrCode:", ue.ErrorCode())
+			fmt.Println("Message:", ue.Message())
+		}
+		return
+	}
+	// Transform images structure
+	allImages, allImagesErr := images.ExtractImages(allPages)
+	if allImagesErr != nil {
+		fmt.Println("allImagesErr:", allImagesErr)
+		if ue, ok := allImagesErr.(*gophercloud.UnifiedError); ok {
+			fmt.Println("ErrCode:", ue.ErrorCode())
+			fmt.Println("Message:", ue.Message())
+		}
+		return
+	}
+
+	for _, image := range allImages {
+		fmt.Printf("imageName=%v,imageId=%v\n",image.Name,image.ID)
+	}
+
 }
