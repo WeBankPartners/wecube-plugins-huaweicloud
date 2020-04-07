@@ -34,7 +34,7 @@ const (
 )
 
 var rdsActions = make(map[string]Action)
-var engineTypeMap = map[string]string{
+var rdsEngineTypeMap = map[string]string{
 	"MYSQL":      "MySQL",
 	"POSTGRESQL": "PostgreSQL",
 	"SQLSERVER":  "SQLServer",
@@ -83,14 +83,13 @@ type RdsCreateInputs struct {
 type RdsCreateInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid     string `json:"guid,omitempty"`
-	Id       string `json:"id,omitempty"`
-	Seed     string `json:"seed,omitempty"`
-	Name     string `json:"name,omitempty"`
-	Password string `json:"password,omitempty"`
-	Port     string `json:"port,omitempty"`
-	HostType string `json:"machine_spec,omitempty"` //4c8g
-	// EngineType       string `json:"engine_type,omitempty"`
+	Guid              string `json:"guid,omitempty"`
+	Id                string `json:"id,omitempty"`
+	Seed              string `json:"seed,omitempty"`
+	Name              string `json:"name,omitempty"`
+	Password          string `json:"password,omitempty"`
+	Port              string `json:"port,omitempty"`
+	HostType          string `json:"machine_spec,omitempty"` //4c8g
 	EngineVersion     string `json:"engine_version,omitempty"`
 	SecurityGroupId   string `json:"security_group_id,omitempty"`
 	VpcId             string `json:"vpc_id,omitempty"`
@@ -108,6 +107,8 @@ type RdsCreateInput struct {
 	IsAutoRenew string `json:"is_auto_renew,omitempty"` //是否自动续费
 
 	EnterpriseProjectId string `json:"enterprise_project_id,omitempty"`
+	// EngineType       string `json:"engine_type,omitempty"`
+
 }
 
 type RdsCreateOutputs struct {
@@ -177,7 +178,7 @@ func (action *RdsCreateAction) checkCreateRdsParams(input RdsCreateInput) error 
 		return fmt.Errorf("volumeType is wrong")
 	}
 
-	if err := checkEngineParams(input.CloudProviderParam, engineTypeMap["MYSQL"], input.EngineVersion); err != nil {
+	if err := checkEngineParams(input.CloudProviderParam, rdsEngineTypeMap["MYSQL"], input.EngineVersion); err != nil {
 		return err
 	}
 	if input.AvailabilityZone == "" {
@@ -225,7 +226,7 @@ func checkEngineParams(params CloudProviderParam, engineType, engineVersion stri
 	if engineVersion == "" {
 		return fmt.Errorf("engineVersion is empty")
 	}
-	if _, ok := engineTypeMap[strings.ToUpper(engineType)]; !ok {
+	if _, ok := rdsEngineTypeMap[strings.ToUpper(engineType)]; !ok {
 		return fmt.Errorf("engineType is wrong")
 	}
 	versionMap, err := queryEngineVersionInfo(params, engineType)
@@ -273,7 +274,7 @@ func getRdsFlavorByHostType(input *RdsCreateInput) (string, string, string, erro
 	}
 	allPages, err := flavors.List(sc, flavors.DbFlavorsOpts{
 		Versionname: input.EngineVersion,
-	}, engineTypeMap["MYSQL"]).AllPages()
+	}, rdsEngineTypeMap["MYSQL"]).AllPages()
 	if err != nil {
 		return "", "", "", err
 	}
@@ -438,7 +439,7 @@ func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreat
 	}
 
 	datastore := instances.Datastore{
-		Type:    engineTypeMap["MYSQL"],
+		Type:    rdsEngineTypeMap["MYSQL"],
 		Version: input.EngineVersion,
 	}
 
