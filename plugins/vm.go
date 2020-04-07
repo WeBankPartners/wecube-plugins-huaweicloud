@@ -9,8 +9,8 @@ import (
 	"github.com/WeBankPartners/wecube-plugins-huaweicloud/plugins/utils"
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/images"
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 	v1 "github.com/gophercloud/gophercloud/openstack/ecs/v1/cloudservers"
 	flavor "github.com/gophercloud/gophercloud/openstack/ecs/v1/flavor"
 	v1_1 "github.com/gophercloud/gophercloud/openstack/ecs/v1_1/cloudservers"
@@ -556,6 +556,22 @@ func (action *VmDeleteAction) ReadParam(param interface{}) (interface{}, error) 
 	return inputs, nil
 }
 
+func waitVmDeleteOk(cloudProviderParam CloudProviderParam, id string) {
+	count := 0
+	for {
+		time.Sleep(time.Second * 5)
+		_, exist, err := isVmExist(cloudProviderParam, id)
+		if err != nil || !exist {
+			break
+		}
+
+		count++
+		if count > 10 {
+			break
+		}
+	}
+}
+
 func deleteVm(input VmDeleteInput) (output VmDeleteOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
@@ -603,6 +619,9 @@ func deleteVm(input VmDeleteInput) (output VmDeleteOutput, err error) {
 	if err = servers.Delete(client, input.Id).ExtractErr(); err != nil {
 		logrus.Errorf("delete vm(%v) failed ,err=%v", input.Id, err)
 	}
+
+	waitVmDeleteOk(input.CloudProviderParam, input.Id)
+
 	return
 }
 
@@ -787,17 +806,17 @@ func (action *VmStopAction) Do(inputs interface{}) (interface{}, error) {
 	return &outputs, finalErr
 }
 
-func PrintImages(params CloudProviderParam){
+func PrintImages(params CloudProviderParam) {
 	provider, err := createGopherCloudProviderClient(params)
 	if err != nil {
-	    fmt.Printf("print Image create provider failed,err=%v\n",err)
-		return 
+		fmt.Printf("print Image create provider failed,err=%v\n", err)
+		return
 	}
 
 	client, err := openstack.NewComputeV2(provider, gophercloud.EndpointOpts{})
 	if err != nil {
-		fmt.Printf("print image new computeV2 failed,err=%v\n",err)
-		return 
+		fmt.Printf("print image new computeV2 failed,err=%v\n", err)
+		return
 	}
 
 	listOpts := images.ListOpts{
@@ -825,7 +844,9 @@ func PrintImages(params CloudProviderParam){
 	}
 
 	for _, image := range allImages {
-		fmt.Printf("imageName=%v,imageId=%v\n",image.Name,image.ID)
+		if strings.Contains(strings.ToUpper(image.Name), "CENTOS") {
+			fmt.Printf("imageName=%v,imageId=%v\n", image.Name, image.ID)
+		}
 	}
 
 }

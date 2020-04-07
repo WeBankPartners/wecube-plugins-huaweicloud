@@ -261,20 +261,21 @@ func checkDeleteSubnetInput(input SubnetDeleteInput) error {
 	return nil
 }
 
-func waitSubnetDeleteOk(sc *gophercloud.ServiceClient, subnetId string){
-	count:=0
-	for (
+func waitSubnetDeleteOk(sc *gophercloud.ServiceClient, subnetId string) {
+	count := 0
+	for {
+		time.Sleep(time.Second * 5)
+
 		exist, err := isSubnetExist(sc, subnetId)
 		if err != nil || !exist {
 			break
 		}
-		time.Sleep(time.Second * 5)
-		
+
 		count++
-		if count >10 {
+		if count > 10 {
 			break
 		}
-	)
+	}
 }
 
 func deleteSubnet(input SubnetDeleteInput) (output SubnetDeleteOutput, err error) {

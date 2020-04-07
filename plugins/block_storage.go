@@ -82,7 +82,7 @@ type CreateAndMountDiskInput struct {
 	FileSystemType string `json:"file_system_type,omitempty"`
 	MountDir       string `json:"mount_dir,omitempty"`
 
-	SkipMount      string `json:"skip_mount,omitempty"`
+	SkipMount string
 }
 
 type CreateAndMountDiskOutputs struct {
@@ -355,8 +355,8 @@ func createAndMountDisk(input CreateAndMountDiskInput) (output CreateAndMountDis
 		}
 	}
 
-	oldUnformatDisks:=[]string{}
-	if input.SkipMount != "TRUE"{
+	oldUnformatDisks := []string{}
+	if input.SkipMount != "TRUE" {
 		oldUnformatDisks, err = getUnformatDisks(privateIp, password)
 		if err != nil {
 			return
@@ -369,9 +369,9 @@ func createAndMountDisk(input CreateAndMountDiskInput) (output CreateAndMountDis
 	}
 
 	if input.SkipMount == "TRUE" {
-		return 
+		return
 	}
-	
+
 	output.VolumeName, err = getNewCreateDiskVolumeName(privateIp, password, oldUnformatDisks)
 	if err != nil {
 		return
@@ -423,7 +423,7 @@ type UmountAndTerminateDiskInput struct {
 	MountDir   string `json:"mount_dir,omitempty"`
 	VolumeName string `json:"volume_name,omitempty"`
 
-	SkipUnmount      string `json:"skip_unmount,omitempty"`
+	SkipUnmount string
 }
 
 type UmountAndTerminateDiskOutputs struct {
@@ -557,12 +557,12 @@ func umountAndTerminateDisk(input UmountAndTerminateDiskInput) (output UmountAnd
 	}
 
 	//umount
-	if input.SkipUnmount == "TRUE" {
+	if input.SkipUnmount != "TRUE" {
 		if err = umountDisk(privateIp, password, input.VolumeName, input.MountDir); err != nil {
 			return
 		}
 	}
-	
+
 	//detach
 	if err = detachVolumeFromVm(input); err != nil {
 		return

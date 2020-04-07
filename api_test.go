@@ -15,11 +15,11 @@ import (
 )
 
 const (
-	ONLY_PRINT_IMAGES          = false
-	CREATE_EXPENSIVE_RESOUCE  = false
-	VM_IMAGE_ID               = "7077ec61-7553-4890-8b33-364005a590b9"
-	AVAILABLE_ZONE            = "cn-south-1c"
-	REQUEST_TIMEOUT           = 900 //900s
+	ONLY_PRINT_IMAGES        = false
+	CREATE_EXPENSIVE_RESOUCE = false
+	VM_IMAGE_ID              = "30b2f97a-be67-45df-8bc3-16bb39452cc2"
+	AVAILABLE_ZONE           = "ap-southeast-3b"
+	REQUEST_TIMEOUT          = 900 //900s
 )
 
 type EnvironmentVars struct {
@@ -172,7 +172,7 @@ type CreatedResources struct {
 	SecurityGroupId     string
 	SecurityGroupRuleId string
 
-	DiskId  string
+	DiskId   string
 	AttachId string
 
 	RouteId string
@@ -181,9 +181,9 @@ type CreatedResources struct {
 type ResourceFunc func(string, *CreatedResources) error
 
 type ResourceFuncEntry struct {
-	TestApiName       string
-	ResourcePath      string
-	Func              ResourceFunc
+	TestApiName         string
+	ResourcePath        string
+	Func                ResourceFunc
 	IsExpensiveResource bool
 }
 
@@ -204,13 +204,13 @@ var resourceFuncTable = []ResourceFuncEntry{
 	{"addRoute", "/huaweicloud/v1/route/create", addRoute, false},
 	{"createInternalLb", "/huaweicloud/v1/lb/create", createInternalLb, false},
 	{"createExternalLb", "/huaweicloud/v1/lb/create", createExternalLb, false},
-	{"addTargetToLb", "/huaweicloud/v1/lb-target/add-backtarget", addTargetToLb, false},
-	{"buyAndAttachDisk","/huaweicloud/v1/block-storage/create-mount",buyAndAttachDisk,false},
-	
+	{"addTargetToLb", "/huaweicloud/v1/lb-target/create", addTargetToLb, false},
+	{"buyAndAttachDisk", "/huaweicloud/v1/block-storage/create-mount", buyAndAttachDisk, false},
+
 	//delete funcs
-	{"unAttachAndDestoryDisk","/huaweicloud/v1/block-storage/umount-delete",unAttachAndDestoryDisk,false},
+	{"unAttachAndDestoryDisk", "/huaweicloud/v1/block-storage/umount-delete", unAttachAndDestoryDisk, false},
 	{"deletePrePaidVm", "/huaweicloud/v1/vm/terminate", deletePrePaidVm, true},
-	{"deleteTargetFromLb", "/huaweicloud/v1/lb-target/del-backtarget", deleteTargetFromLb, false},
+	{"deleteTargetFromLb", "/huaweicloud/v1/lb-target/delete", deleteTargetFromLb, false},
 	{"deleteInternalLb", "/huaweicloud/v1/lb/delete", deleteInternalLb, false},
 	{"deleteExternalLb", "/huaweicloud/v1/lb/delete", deleteExternalLb, false},
 	{"deleteSnatRule", "/huaweicloud/v1/nat-snat-rule/delete", deleteSnatRule, true},
@@ -902,18 +902,17 @@ func buyAndAttachDisk(path string, createdResources *CreatedResources) error {
 			{
 				CloudProviderParam: getCloudProviderParam(),
 				Guid:               "123",
-				AvailabilityZone:    AVAILABLE_ZONE,
-				DiskType:"SATA",
-				DiskSize:"30",
-				Name:"testApiCreated",
-			
-				InstanceId:createdResources.VmIdPostPaid,
-				InstanceGuid:"1234"
-				InstanceSeed:"seed123",
-				InstancePassword:"{cipher_a}dfdeb58d0076eafc565ba685beeb072f",
-				FileSystemType:"ext3",
-				MountDir:"/data/aa",
-				SkipMount:"TRUE",
+				AvailabilityZone:   AVAILABLE_ZONE,
+				DiskType:           "SATA",
+				DiskSize:           "30",
+				Name:               "testApiCreated",
+				InstanceId:         createdResources.VmIdPostPaid,
+				InstanceGuid:       "1234",
+				InstanceSeed:       "seed123",
+				InstancePassword:   "{cipher_a}dfdeb58d0076eafc565ba685beeb072f",
+				FileSystemType:     "ext3",
+				MountDir:           "/data/aa",
+				SkipMount:          "TRUE",
 			},
 		},
 	}
@@ -923,7 +922,7 @@ func buyAndAttachDisk(path string, createdResources *CreatedResources) error {
 		return err
 	}
 
-	createdResources.DiskId =outputs.Outputs[0].Id
+	createdResources.DiskId = outputs.Outputs[0].Id
 	createdResources.AttachId = outputs.Outputs[0].AttachId
 
 	return nil
@@ -935,16 +934,16 @@ func unAttachAndDestoryDisk(path string, createdResources *CreatedResources) err
 			{
 				CloudProviderParam: getCloudProviderParam(),
 				Guid:               "123",
-				AvailabilityZone:    AVAILABLE_ZONE,
-				Id:createdResources.DiskId,
-				AttachId:createdResources.AttachId,
-				InstanceId:createdResources.VmIdPostPaid,
-				InstanceGuid:"1234"
-				InstanceSeed:"seed123",
-				InstancePassword:"{cipher_a}dfdeb58d0076eafc565ba685beeb072f",
-				MountDir:"/data/test"
-				VolumeName:"/dev/vdc"
-				SkipUnmount:"TRUE",
+				AvailabilityZone:   AVAILABLE_ZONE,
+				Id:                 createdResources.DiskId,
+				AttachId:           createdResources.AttachId,
+				InstanceId:         createdResources.VmIdPostPaid,
+				InstanceGuid:       "1234",
+				InstanceSeed:       "seed123",
+				InstancePassword:   "{cipher_a}dfdeb58d0076eafc565ba685beeb072f",
+				MountDir:           "/data/test",
+				VolumeName:         "/dev/vdc",
+				SkipUnmount:        "TRUE",
 			},
 		},
 	}
@@ -957,7 +956,6 @@ func unAttachAndDestoryDisk(path string, createdResources *CreatedResources) err
 	return nil
 }
 
-
 func TestApis(t *testing.T) {
 	createdResources := CreatedResources{}
 
@@ -966,15 +964,14 @@ func TestApis(t *testing.T) {
 		return
 	}
 
-	if ONLY_PRINT_IMAGES  {
+	if ONLY_PRINT_IMAGES {
 		plugins.PrintImages(getCloudProviderParam())
-		return 	
+		return
 	}
-
 
 	totalCase, failedCase := 0, 0
 	for _, entry := range resourceFuncTable {
-		if entry.IsPrePaidResource && !CREATE_EXPENSIVE_RESOUCE {
+		if entry.IsExpensiveResource && !CREATE_EXPENSIVE_RESOUCE {
 			continue
 		}
 		totalCase++
