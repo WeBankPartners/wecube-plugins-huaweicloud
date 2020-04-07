@@ -2,11 +2,10 @@ package plugins
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/vpc/v1/securitygroups"
 	"github.com/sirupsen/logrus"
+	"strings"
 )
 
 var securityGroupActions = make(map[string]Action)

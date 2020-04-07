@@ -15,11 +15,11 @@ clean:
 	rm -rf  ./*.tar
 	rm -rf ./*.zip
 fmt:
-	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_name) --name build_$(project_name) -w /go/src/github.com/WeBankPartners/$(project_name)/  golang:1.13.3-alpine3.10   go fmt ./...
+	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_name) --name build_$(project_name)  -w /go/src/github.com/WeBankPartners/$(project_name)/  golang:1.13.3-alpine3.10   go fmt ./...
 
 build: clean
 	chmod +x ./build/*.sh
-	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_name) --name build_$(project_name) golang:1.13.3-alpine3.10  /bin/sh /go/src/github.com/WeBankPartners/$(project_name)/build/build.sh 
+	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_name) --name build_$(project_name) golang:1.13.3-alpine3.10 /bin/sh /go/src/github.com/WeBankPartners/$(project_name)/build/build.sh 
 
 image: build
 	docker build -t $(project_name):$(version) .
@@ -43,3 +43,7 @@ upload: package
 	docker stop $(container_id)
 	docker rm -f $(container_id)
 	rm -rf $(project_name)-$(version).zip
+
+test:
+	docker run --net host  --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_name)  -e ACCESS_KEY=$(access_key) -e SECRET_KEY=$(secret_key) -e REGION=$(region) -e PROJECT_ID=$(project_id) -e DOMAIN_ID=$(domain_id)  --name build_$(project_name)_test golang:1.13.3-alpine3.10 /bin/sh /go/src/github.com/WeBankPartners/$(project_name)/build/test.sh
+	

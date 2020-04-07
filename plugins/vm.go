@@ -9,6 +9,7 @@ import (
 	"github.com/WeBankPartners/wecube-plugins-huaweicloud/plugins/utils"
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/images"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 	v1 "github.com/gophercloud/gophercloud/openstack/ecs/v1/cloudservers"
 	flavor "github.com/gophercloud/gophercloud/openstack/ecs/v1/flavor"
@@ -83,6 +84,7 @@ type VmCreateInput struct {
 	ImageId          string `json:"image_id,omitempty"`
 	HostType         string `json:"machine_spec,omitempty"` //4c8g
 	SystemDiskSize   string `json:"system_disk_size,omitempty"`
+	SystemDiskType   string `json:"system_disk_type,omitempty"`
 	VpcId            string `json:"vpc_id,omitempty"`
 	SubnetId         string `json:"subnet_id,omitempty"`
 	PrivateIp        string `json:"private_ip,omitempty"`
@@ -129,6 +131,18 @@ func (action *VmCreateAction) ReadParam(param interface{}) (interface{}, error) 
 	return inputs, nil
 }
 
+func isValidSystemDiskType(systemDiskType string) error{
+	validDisks:=[]string{
+		"SATA",   //普通IO磁盘类型。
+		"SAS",    //高IO磁盘类型。
+		"SSD",    //超高IO磁盘类型。
+		"co-p1",  //高IO (性能优化Ⅰ型)
+		"uh-l1",  //超高IO (时延优化)
+	}
+
+	return  isValidStringValue("systemDiskType", systemDiskType, validDisks)
+}
+
 func checkVmCreateParams(input VmCreateInput) error {
 	if err := isCloudProviderParamValid(input.CloudProviderParam); err != nil {
 		return err
@@ -159,6 +173,12 @@ func checkVmCreateParams(input VmCreateInput) error {
 	}
 	if err := isValidStringValue("chargeType", input.ChargeType, []string{PRE_PAID, POST_PAID}); err != nil {
 		return err
+	}
+
+	if input.SystemDiskType != "" {
+		if err:=isValidSystemDiskType(input.SystemDiskType);err!=nil {
+			return err
+		}
 	}
 
 	if input.ChargeType == PRE_PAID {
@@ -278,6 +298,10 @@ func buildServerTags(labels string) []v1_1.ServerTags {
 func buildRootVolumeStruct(input VmCreateInput) (v1_1.RootVolume, error) {
 	volume := v1_1.RootVolume{
 		VolumeType: "SATA",
+	}
+
+	if input.SystemDiskType != "" {
+		volume.VolumeType = input.SystemDiskType
 	}
 
 	rootSize, err := strconv.Atoi(input.SystemDiskSize)
@@ -555,6 +579,22 @@ func (action *VmDeleteAction) ReadParam(param interface{}) (interface{}, error) 
 	return inputs, nil
 }
 
+func waitVmDeleteOk(cloudProviderParam CloudProviderParam, id string) {
+	count := 0
+	for {
+		time.Sleep(time.Second * 5)
+		_, exist, err := isVmExist(cloudProviderParam, id)
+		if err != nil || !exist {
+			break
+		}
+
+		count++
+		if count > 10 {
+			break
+		}
+	}
+}
+
 func deleteVm(input VmDeleteInput) (output VmDeleteOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
@@ -602,6 +642,9 @@ func deleteVm(input VmDeleteInput) (output VmDeleteOutput, err error) {
 	if err = servers.Delete(client, input.Id).ExtractErr(); err != nil {
 		logrus.Errorf("delete vm(%v) failed ,err=%v", input.Id, err)
 	}
+
+	waitVmDeleteOk(input.CloudProviderParam, input.Id)
+
 	return
 }
 
@@ -784,4 +827,49 @@ func (action *VmStopAction) Do(inputs interface{}) (interface{}, error) {
 
 	logrus.Infof("all vms= %v are stop", vms)
 	return &outputs, finalErr
+}
+
+func PrintImages(params CloudProviderParam) {
+	provider, err := createGopherCloudProviderClient(params)
+	if err != nil {
+		fmt.Printf("print Image create provider failed,err=%v\n", err)
+		return
+	}
+
+	client, err := openstack.NewComputeV2(provider, gophercloud.EndpointOpts{})
+	if err != nil {
+		fmt.Printf("print image new computeV2 failed,err=%v\n", err)
+		return
+	}
+
+	listOpts := images.ListOpts{
+		Status: "active",
+	}
+	// Query all images list information
+	allPages, allPagesErr := images.ListDetail(client, listOpts).AllPages()
+	if allPagesErr != nil {
+		fmt.Println("allPagesErr:", allPagesErr)
+		if ue, ok := allPagesErr.(*gophercloud.UnifiedError); ok {
+			fmt.Println("ErrCode:", ue.ErrorCode())
+			fmt.Println("Message:", ue.Message())
+		}
+		return
+	}
+	// Transform images structure
+	allImages, allImagesErr := images.ExtractImages(allPages)
+	if allImagesErr != nil {
+		fmt.Println("allImagesErr:", allImagesErr)
+		if ue, ok := allImagesErr.(*gophercloud.UnifiedError); ok {
+			fmt.Println("ErrCode:", ue.ErrorCode())
+			fmt.Println("Message:", ue.Message())
+		}
+		return
+	}
+
+	for _, image := range allImages {
+		if strings.Contains(strings.ToUpper(image.Name), "CENTOS") {
+			fmt.Printf("imageName=%v,imageId=%v\n", image.Name, image.ID)
+		}
+	}
+
 }

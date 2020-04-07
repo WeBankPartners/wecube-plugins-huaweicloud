@@ -261,6 +261,23 @@ func checkDeleteSubnetInput(input SubnetDeleteInput) error {
 	return nil
 }
 
+func waitSubnetDeleteOk(sc *gophercloud.ServiceClient, subnetId string) {
+	count := 0
+	for {
+		time.Sleep(time.Second * 5)
+
+		exist, err := isSubnetExist(sc, subnetId)
+		if err != nil || !exist {
+			break
+		}
+
+		count++
+		if count > 10 {
+			break
+		}
+	}
+}
+
 func deleteSubnet(input SubnetDeleteInput) (output SubnetDeleteOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
@@ -294,6 +311,9 @@ func deleteSubnet(input SubnetDeleteInput) (output SubnetDeleteOutput, err error
 		logrus.Errorf("Delete subnet[subnetId=%v] failed, error=%v", input.Id, err)
 		return
 	}
+
+	waitSubnetDeleteOk(sc, input.Id)
+
 	return
 }
 

@@ -2,11 +2,11 @@ package plugins
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
-
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/vpc/v1/securitygrouprules"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -127,7 +127,7 @@ func (action *SecurityGroupRuleCreateAction) createRule(input *SecurityGroupRule
 		return
 	}
 
-	// check whether rule is exist.
+	// check whether rule is sc,input.Idexist.
 	if input.Id != "" {
 		var ruleInfo *securitygrouprules.SecurityGroupRule
 		if ruleInfo, _, err = isRuleExist(sc, input.Id); err != nil {
@@ -198,6 +198,23 @@ func checkPortRangeParams(portRangeMin, portRangeMax string) error {
 		return fmt.Errorf("portRangeMin should be <= portRangeMax")
 	}
 	return nil
+}
+
+func waitSecurityRuleDeleteOk(sc *gophercloud.ServiceClient, ruleId string) {
+	count := 0
+	for {
+		time.Sleep(time.Second * 5)
+		_, exist, err := isRuleExist(sc, ruleId)
+		if err != nil || !exist {
+			break
+		}
+
+		count++
+		if count > 10 {
+			break
+		}
+	}
+
 }
 
 func isRuleExist(sc *gophercloud.ServiceClient, ruleId string) (*securitygrouprules.SecurityGroupRule, bool, error) {
@@ -310,6 +327,8 @@ func (action *SecurityGroupRuleDeleteAction) deleteRule(input *SecurityGroupRule
 		err = response.Err
 		logrus.Errorf("Delete securitygroup rule[securitygrouprule=%v] failed, error=%v", input.Id, err)
 	}
+
+	waitSecurityRuleDeleteOk(sc, input.Id)
 
 	return
 }

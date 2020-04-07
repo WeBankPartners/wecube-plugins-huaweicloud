@@ -376,7 +376,25 @@ func deleteLb(input DeleteLbInput) (output DeleteLbOutput, err error) {
 		logrus.Errorf("delete lb failed ,err=%v", err)
 	}
 
+	waitLbDeleteOk(input.CloudProviderParam, input.Id)
+
 	return
+}
+
+func waitLbDeleteOk(cloudProviderParam CloudProviderParam, id string) {
+	count := 0
+	for {
+		time.Sleep(time.Second * 5)
+		exist, err := isLbExist(cloudProviderParam, id)
+		if err != nil || !exist {
+			break
+		}
+
+		count++
+		if count > 10 {
+			break
+		}
+	}
 }
 
 func (action *DeleteLbAction) Do(inputs interface{}) (interface{}, error) {
