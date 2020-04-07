@@ -84,6 +84,7 @@ type VmCreateInput struct {
 	ImageId          string `json:"image_id,omitempty"`
 	HostType         string `json:"machine_spec,omitempty"` //4c8g
 	SystemDiskSize   string `json:"system_disk_size,omitempty"`
+	SystemDiskType   string `json:"system_disk_type,omitempty"`
 	VpcId            string `json:"vpc_id,omitempty"`
 	SubnetId         string `json:"subnet_id,omitempty"`
 	PrivateIp        string `json:"private_ip,omitempty"`
@@ -130,6 +131,18 @@ func (action *VmCreateAction) ReadParam(param interface{}) (interface{}, error) 
 	return inputs, nil
 }
 
+func isValidSystemDiskType(systemDiskType string) error{
+	validDisks:=[]string{
+		"SATA",   //普通IO磁盘类型。
+		"SAS",    //高IO磁盘类型。
+		"SSD",    //超高IO磁盘类型。
+		"co-p1",  //高IO (性能优化Ⅰ型)
+		"uh-l1",  //超高IO (时延优化)
+	}
+
+	return  isValidStringValue("systemDiskType", systemDiskType, validDisks)
+}
+
 func checkVmCreateParams(input VmCreateInput) error {
 	if err := isCloudProviderParamValid(input.CloudProviderParam); err != nil {
 		return err
@@ -160,6 +173,12 @@ func checkVmCreateParams(input VmCreateInput) error {
 	}
 	if err := isValidStringValue("chargeType", input.ChargeType, []string{PRE_PAID, POST_PAID}); err != nil {
 		return err
+	}
+
+	if input.SystemDiskType != "" {
+		if err:=isValidSystemDiskType(input.SystemDiskType);err!=nil {
+			return err
+		}
 	}
 
 	if input.ChargeType == PRE_PAID {
@@ -279,6 +298,10 @@ func buildServerTags(labels string) []v1_1.ServerTags {
 func buildRootVolumeStruct(input VmCreateInput) (v1_1.RootVolume, error) {
 	volume := v1_1.RootVolume{
 		VolumeType: "SATA",
+	}
+
+	if input.SystemDiskType != "" {
+		volume.VolumeType = input.SystemDiskType
 	}
 
 	rootSize, err := strconv.Atoi(input.SystemDiskSize)

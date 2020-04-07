@@ -135,6 +135,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">image_id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">machine_spec</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">system_disk_type</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">system_disk_size</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">vpc_id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">subnet_id</parameter>
