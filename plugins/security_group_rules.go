@@ -109,41 +109,6 @@ func (action *SecurityGroupRuleCreateAction) checkCreateRuleParams(input Securit
 	return nil
 }
 
-func isValidPort(port string) (int, error) {
-	portInt, err := strconv.Atoi(port)
-	if err != nil || portInt >= 65535 {
-		return 0, fmt.Errorf("port(%s) is invalid", port)
-	}
-
-	return portInt, nil
-}
-
-func getPortMinAndMax(port string)(int,int,error){
-	port = strings.TrimSpace(port)
-	if strings.EqualFold(port, "ALL") {
-		return 0,0,nil
-	}
-
-	//single port
-	portInt, err := strconv.Atoi(port)
-	if err == nil && portInt <= 65535 {
-		return portInt,portInt,nil 
-			
-	}
-
-	//range port
-	portRange := strings.Split(port, "-")
-	if len(portRange) == 2 {
-	   firstPort, firstErr := isValidPort(portRange[0])
-	   lastPort, lastErr := isValidPort(portRange[1])
-	    if firstErr == nil && lastErr == nil && firstPort < lastPort {
-			return firstPort,lastPort ,nil
-		}
-	}
-
-	return 0,0,fmt.Errorf("port(%v) is unsupported port format",port)
-}
-
 func (action *SecurityGroupRuleCreateAction) createRule(input *SecurityGroupRuleCreateInput) (output SecurityGroupRuleCreateOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
@@ -186,15 +151,9 @@ func (action *SecurityGroupRuleCreateAction) createRule(input *SecurityGroupRule
 		SecurityGroupId: input.SecurityGroupId,
 		Direction:       strings.ToLower(input.Direction),
 	}
-
-	portMin,portMax,err := getPortMinAndMax(input.Port)
-	if err != nil {
-		return 
+	if input.Protocol != "" {
+		request.Protocol = strings.ToLower(input.Protocol)
 	}
-
-	request.PortRangeMin = &portMin
-	request.PortRangeMax = &portMax
-	request.Protocol = strings.ToLower(input.Protocol)
 	request.RemoteIpPrefix = input.RemoteIpPrefix
 	response, err := securitygrouprules.Create(sc, request).Extract()
 	if err != nil {
