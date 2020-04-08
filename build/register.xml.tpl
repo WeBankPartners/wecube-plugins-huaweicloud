@@ -337,10 +337,9 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">security_group_id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">direction</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">protocol</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">port_range_min</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">port_range_max</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">remote_ip_prefix</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">protocol</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">port</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">remote_ip_prefix</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">enterprise_project_id</parameter>
                 </inputParameters>
                 <outputParameters>
