@@ -256,3 +256,18 @@ func ExtractSlowLog(r pagination.Page) (SlowLogResp, error) {
 	err := (r.(SlowLogPage)).ExtractInto(&s)
 	return s, err
 }
+
+// Add functions to  update instance configuration
+type UpdateInstanceConfigResult struct {
+	commonResult
+}
+
+func (r UpdateInstanceConfigResult) Extract() (*UpdateInstanceConfigResponse, error) {
+	var response UpdateInstanceConfigResponse
+	err := r.ExtractInto(&response)
+	return &response, err
+}
+
+type UpdateInstanceConfigResponse struct {
+	NeedRestartInstance bool `json:"restart_required"`
+}

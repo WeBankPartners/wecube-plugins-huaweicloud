@@ -394,3 +394,28 @@ func ListSlowLog(client *golangsdk.ServiceClient, opts DbSlowLogBuilder, instanc
 	pageRdsList.Headers = rdsheader
 	return pageRdsList
 }
+
+// add functions to  update instance configuration
+type UpdateInstanceConfigBuilder interface {
+	ToConfigUpdateMap() (map[string]interface{}, error)
+}
+
+func (opts UpdateInstanceConfigOpts) ToConfigUpdateMap() (map[string]interface{}, error) {
+	return golangsdk.BuildRequestBody(&opts, "")
+}
+
+type UpdateInstanceConfigOpts struct {
+	Values map[string]string `json:"values,omitempty"`
+}
+
+func UpdateInstanceConfig(client *golangsdk.ServiceClient, instanceId string, opts UpdateInstanceConfigOpts) (r UpdateInstanceConfigResult) {
+	b, err := opts.ToConfigUpdateMap()
+	if err != nil {
+		r.Err = err
+		return
+	}
+	_, r.Err = client.Put(updateInstanceConfigURL(client, instanceId), b, &r.Body, &golangsdk.RequestOpts{
+		OkCodes: []int{202},
+	})
+	return
+}
