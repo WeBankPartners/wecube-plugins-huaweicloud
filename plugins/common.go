@@ -8,11 +8,14 @@ import (
 	"net"
 	"strings"
 
+	"strconv"
+
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/auth/aksk"
 	"github.com/gophercloud/gophercloud/openstack"
+	"github.com/huaweicloud/golangsdk"
+	goOpenstack "github.com/huaweicloud/golangsdk/openstack"
 	"github.com/sirupsen/logrus"
-	"strconv"
 )
 
 const (
@@ -130,6 +133,38 @@ func createGopherCloudProviderClient(param CloudProviderParam) (*gophercloud.Pro
 		return nil, err
 	}
 	return provider, nil
+}
+
+func createGolangSdkProviderClient(params CloudProviderParam) (*golangsdk.ProviderClient, error) {
+	if err := isCloudProviderParamValid(params); err != nil {
+		return nil, err
+	}
+
+	identifyMap, _ := GetMapFromString(params.IdentityParams)
+	cloudMap, _ := GetMapFromString(params.CloudParams)
+	identityURL := "https://iam." + cloudMap[CLOUD_PARAM_REGION] + "." + cloudMap[CLOUD_PARAM_CLOUD_DOAMIN_NAME] + "/v3"
+
+	opts := golangsdk.AKSKAuthOptions{
+		IdentityEndpoint: identityURL,
+		AccessKey:        identifyMap[IDENTITY_ACCESS_KEY],
+		SecretKey:        identifyMap[IDENTITY_SECRET_KEY],
+		//DomainID:         identifyMap[IDENTITY_DOMAIN_ID],
+		ProjectId: cloudMap[CLOUD_PARAM_PROJECT_ID],
+		Domain:    cloudMap[CLOUD_PARAM_CLOUD_DOAMIN_NAME],
+		Region:    cloudMap[CLOUD_PARAM_REGION],
+	}
+	client, err := goOpenstack.NewClient(identityURL)
+	if err != nil {
+		logrus.Errorf("new client failed err=%v", err)
+		return nil, err
+	}
+	err = goOpenstack.Authenticate(client, opts)
+	if err != nil {
+		logrus.Errorf("createNatServiceClient auth failed err=%v", err)
+		return nil, err
+	}
+
+	return client, nil
 }
 
 func GetMapFromString(providerParams string) (map[string]string, error) {

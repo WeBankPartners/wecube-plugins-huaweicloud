@@ -547,6 +547,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">period_num</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">is_auto_renew</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">enterprise_project_id</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="" required="Y">character_set</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="" required="Y">lower_case_table_names</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>

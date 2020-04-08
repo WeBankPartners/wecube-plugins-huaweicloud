@@ -13,6 +13,9 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/rds/v3/datastores"
 	"github.com/gophercloud/gophercloud/openstack/rds/v3/flavors"
 	"github.com/gophercloud/gophercloud/openstack/rds/v3/instances"
+	"github.com/huaweicloud/golangsdk"
+	goOpenstack "github.com/huaweicloud/golangsdk/openstack"
+	goConf "github.com/huaweicloud/golangsdk/openstack/rds/v3/configurations"
 	"github.com/sirupsen/logrus"
 )
 
@@ -63,6 +66,24 @@ func createRdsServiceClientV3(params CloudProviderParam) (*gophercloud.ServiceCl
 	return sc, nil
 }
 
+func createGolangSdkRdsServiceClientV3(params CloudProviderParam) (*golangsdk.ServiceClient, error) {
+	client, err := createGolangSdkProviderClient(params)
+	if err != nil {
+		logrus.Errorf("get golangsdk provider client failed, error=%v", err)
+		return nil, err
+	}
+
+	cloudMap, _ := GetMapFromString(params.CloudParams)
+	sc, err := goOpenstack.NewRDSV3(client, golangsdk.EndpointOpts{
+		Region: cloudMap[CLOUD_PARAM_REGION],
+	})
+	if err != nil {
+		logrus.Errorf("createGolangSdkRdsServiceClient meet err=%v", err)
+		return nil, err
+	}
+	return sc, err
+}
+
 type RdsPlugin struct {
 }
 
@@ -107,6 +128,8 @@ type RdsCreateInput struct {
 	IsAutoRenew string `json:"is_auto_renew,omitempty"` //是否自动续费
 
 	EnterpriseProjectId string `json:"enterprise_project_id,omitempty"`
+	CharacterSet        string `json:"character_set,omitempty"`
+	LowerCaseTableNames string `json:"lower_case_table_names,omitempty"`
 	// EngineType       string `json:"engine_type,omitempty"`
 
 }
@@ -216,7 +239,35 @@ func (action *RdsCreateAction) checkCreateRdsParams(input RdsCreateInput) error 
 		}
 	}
 
+	if err := isVaildCharset(input.CharacterSet); err != nil {
+		return err
+	}
+
+	if err := isValidLowerCaseTableNames(input.LowerCaseTableNames); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func isValidLowerCaseTableNames(value string) error {
+	if value != "1" && value != "0" {
+		return fmt.Errorf("lowerCaseTableNames(%v) is invalid", value)
+	}
+	return nil
+}
+
+func isVaildCharset(charset string) error {
+	validCharsets := []string{
+		"utf8", "latin1", "gbk", "utf8mb4",
+	}
+	for _, valid := range validCharsets {
+		lowerCharset := strings.ToLower(charset)
+		if lowerCharset == valid {
+			return nil
+		}
+	}
+	return fmt.Errorf("charset(%v) is invalid", charset)
 }
 
 func checkEngineParams(params CloudProviderParam, engineType, engineVersion string) error {
@@ -384,6 +435,37 @@ func buildChargeInfoStruct(input *RdsCreateInput) *instances.ChargeInfo {
 	return &chargeInfo
 }
 
+func updateRdsConfiguration(input *RdsCreateInput, instanceId string) error {
+	sc, err := createGolangSdkRdsServiceClientV3(input.CloudProviderParam)
+	if err != nil {
+		return err
+	}
+
+	value := map[string]string{}
+	if input.CharacterSet != "" {
+		value["character_set_server"] = input.CharacterSet
+	} else {
+		value["character_set_server"] = "utf8"
+	}
+
+	if input.LowerCaseTableNames == "0" {
+		value["lower_case_table_names"] = "0"
+	} else {
+		value["lower_case_table_names"] = "1"
+	}
+
+	updateOpts := goConf.UpdateOpts{
+		Name:        input.Name + "_configuration",
+		Description: "the configuration of " + input.Name,
+		Values:      value,
+	}
+	if err = goConf.Update(sc, instanceId, updateOpts).ExtractErr(); err != nil {
+		logrus.Errorf("udpate configuration of rds instance[%v] meet error =%v", instanceId, err)
+	}
+
+	return err
+}
+
 func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreateOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
@@ -478,11 +560,17 @@ func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreat
 	if err != nil {
 		return
 	}
+
 	output.Port = strconv.Itoa(instance.Port)
 	output.PrivateIp = instance.PrivateIps[0]
 	output.UserName = instance.DbUserName
 	output.Memory = memory
 	output.Cpu = cpu
+
+	err = updateRdsConfiguration(input, output.Id)
+	if err != nil {
+		return
+	}
 
 	password, err := utils.AesEnPassword(input.Guid, input.Seed, input.Password, utils.DEFALT_CIPHER)
 	if err != nil {
@@ -665,6 +753,7 @@ func (action *RdsDeleteAction) deleteRds(input *RdsDeleteInput) (output RdsDelet
 		logrus.Errorf("waitRdsInstanceJobOk meet error=%v", err)
 		return
 	}
+
 	return
 }
 
