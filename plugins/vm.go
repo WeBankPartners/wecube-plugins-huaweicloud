@@ -337,13 +337,13 @@ func getCpuAndMemoryFromHostType(hostType string) (int64, int64, error) {
 	return cpu, mem, nil
 }
 
-func getFlavorByHostType(input VmCreateInput) (string, int64,int64, error) {
+func getFlavorByHostType(input VmCreateInput) (string, int64, int64, error) {
 	var matchedCpu int64
 	var matchedMem int64
 
 	cpu, memory, err := getCpuAndMemoryFromHostType(input.HostType)
 	if err != nil {
-		return "", matchedCpu,matchedMem,err
+		return "", matchedCpu, matchedMem, err
 	}
 	listOpts := flavor.ListOpts{
 		AvailabilityZone: input.AvailabilityZone,
@@ -351,17 +351,17 @@ func getFlavorByHostType(input VmCreateInput) (string, int64,int64, error) {
 
 	sc, err := createVmServiceClient(input.CloudProviderParam, CLOUD_SERVER_V1)
 	if err != nil {
-		return "",matchedCpu,matchedMem, err
+		return "", matchedCpu, matchedMem, err
 	}
 
 	allPages, err := flavor.List(sc, listOpts).AllPages()
 	if err != nil {
-		return "",matchedCpu,matchedMem, err
+		return "", matchedCpu, matchedMem, err
 	}
 
 	flavors, err := flavor.ExtractFlavors(allPages)
 	if err != nil {
-		return "",matchedCpu,matchedMem, err
+		return "", matchedCpu, matchedMem, err
 	}
 
 	var minScore int64 = 1000000
@@ -377,7 +377,7 @@ func getFlavorByHostType(input VmCreateInput) (string, int64,int64, error) {
 		vcpus, err := strconv.ParseInt(item.Vcpus, 10, 64)
 		if err != nil {
 			logrus.Errorf("vpus(%v) is invald", item.Vcpus)
-			return "",matchedCpu,matchedMem, err
+			return "", matchedCpu, matchedMem, err
 		}
 
 		score := vcpus - cpu
@@ -394,22 +394,22 @@ func getFlavorByHostType(input VmCreateInput) (string, int64,int64, error) {
 	instanceType := ""
 	minScore = 1000000
 	for _, item := range matchCpuItems {
-		score := int64(item.Ram) - memory
+		score := int64(item.Ram)/1024 - memory
 		if score < 0 {
 			continue
 		}
 		if score < minScore {
 			minScore = score
-			matchedMem = item.Ram
+			matchedMem = item.Ram / 1024
 			instanceType = item.ID
 		}
 	}
 	if instanceType == "" {
-		return "", matchedCpu,matchedMem,fmt.Errorf("could not get suitable instancetype")
+		return "", matchedCpu, matchedMem, fmt.Errorf("could not get suitable instancetype")
 	}
 
 	logrus.Infof("get instancetype=%v", instanceType)
-	return instanceType,matchedCpu,matchedMem,nil
+	return instanceType, matchedCpu, matchedMem, nil
 }
 
 func waitVmJobOk(sc *gophercloud.ServiceClient, jobId string) (string, error) {
@@ -478,11 +478,11 @@ func createVm(input VmCreateInput) (output VmCreateOutput, err error) {
 		return
 	}
 
-	flavor, matchedCpu,matchedMem,err := getFlavorByHostType(input)
+	flavor, matchedCpu, matchedMem, err := getFlavorByHostType(input)
 	if err != nil {
 		return
 	}
-	output.Cpu = fmt.Sprintf("%v",matchedCpu)
+	output.Cpu = fmt.Sprintf("%v", matchedCpu)
 	output.Memory = fmt.Sprintf("%v", matchedMem)
 
 	opts := v1_1.CreateOpts{
