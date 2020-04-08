@@ -48,9 +48,8 @@ type SecurityGroupRuleCreateInput struct {
 	SecurityGroupId     string `json:"security_group_id,omitempty"`
 	Direction           string `json:"direction,omitempty"`
 	Protocol            string `json:"protocol,omitempty"`
-	PortRangeMin        string `json:"port_range_min,omitempty"`
+	Port                string `json:"port,omitempty"`
 	RemoteIpPrefix      string `json:"remote_ip_prefix,omitempty"`
-	PortRangeMax        string `json:"port_range_max,omitempty"`
 	EnterpriseProjectId string `json:"enterprise_project_id,omitempty"`
 }
 
@@ -95,13 +94,54 @@ func (action *SecurityGroupRuleCreateAction) checkCreateRuleParams(input Securit
 		}
 	}
 
-	if strings.ToLower(input.Protocol) != "icmp" {
-		if err := checkPortRangeParams(input.PortRangeMin, input.PortRangeMax); err != nil {
-			return err
-		}
+	if input.RemoteIpPrefix == "" {
+		return fmt.Errorf("RemoteIpPrefix is empty")
+	}
+
+	if input.Port == "" {
+		return fmt.Errorf("Port is empty")
+	}
+
+	if input.Protocol == "" {
+		return fmt.Errorf("Protocol is empty")
 	}
 
 	return nil
+}
+
+func isValidPort(port string) (int, error) {
+	portInt, err := strconv.Atoi(port)
+	if err != nil || portInt >= 65535 {
+		return 0, fmt.Errorf("port(%s) is invalid", port)
+	}
+
+	return portInt, nil
+}
+
+func getPortMinAndMax(port string)(int,int,error){
+	port = strings.TrimSpace(port)
+	if strings.EqualFold(port, "ALL") {
+		return 0,0,nil
+	}
+
+	//single port
+	portInt, err := strconv.Atoi(port)
+	if err == nil && portInt <= 65535 {
+		return portInt,portInt,nil 
+			
+	}
+
+	//range port
+	portRange := strings.Split(port, "-")
+	if len(portRange) == 2 {
+	   firstPort, firstErr := isValidPort(portRange[0])
+	   lastPort, lastErr := isValidPort(portRange[1])
+	    if firstErr == nil && lastErr == nil && firstPort < lastPort {
+			return firstPort,lastPort ,nil
+		}
+	}
+
+	return 0,0,fmt.Errorf("port(%v) is unsupported port format",port)
 }
 
 func (action *SecurityGroupRuleCreateAction) createRule(input *SecurityGroupRuleCreateInput) (output SecurityGroupRuleCreateOutput, err error) {
@@ -146,23 +186,16 @@ func (action *SecurityGroupRuleCreateAction) createRule(input *SecurityGroupRule
 		SecurityGroupId: input.SecurityGroupId,
 		Direction:       strings.ToLower(input.Direction),
 	}
-	if input.Protocol != "" {
-		request.Protocol = strings.ToLower(input.Protocol)
+
+	portMin,portMax,err := getPortMinAndMax(input.Port)
+	if err != nil {
+		return 
 	}
 
-	if input.PortRangeMin != "" {
-		portMin, _ := strconv.Atoi(input.PortRangeMin)
-		request.PortRangeMin = &portMin
-	}
-	if input.PortRangeMax != "" {
-		portMax, _ := strconv.Atoi(input.PortRangeMax)
-		request.PortRangeMax = &portMax
-	}
-
-	if input.RemoteIpPrefix != "" {
-		request.RemoteIpPrefix = input.RemoteIpPrefix
-	}
-
+	request.PortRangeMin = &portMin
+	request.PortRangeMax = &portMax
+	request.Protocol = strings.ToLower(input.Protocol)
+	request.RemoteIpPrefix = input.RemoteIpPrefix
 	response, err := securitygrouprules.Create(sc, request).Extract()
 	if err != nil {
 		logrus.Errorf("create security group rule meet error=%v", err)
