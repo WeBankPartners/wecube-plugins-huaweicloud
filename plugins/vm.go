@@ -131,16 +131,16 @@ func (action *VmCreateAction) ReadParam(param interface{}) (interface{}, error) 
 	return inputs, nil
 }
 
-func isValidSystemDiskType(systemDiskType string) error{
-	validDisks:=[]string{
-		"SATA",   //普通IO磁盘类型。
-		"SAS",    //高IO磁盘类型。
-		"SSD",    //超高IO磁盘类型。
-		"co-p1",  //高IO (性能优化Ⅰ型)
-		"uh-l1",  //超高IO (时延优化)
+func isValidSystemDiskType(systemDiskType string) error {
+	validDisks := []string{
+		"SATA",  //普通IO磁盘类型。
+		"SAS",   //高IO磁盘类型。
+		"SSD",   //超高IO磁盘类型。
+		"co-p1", //高IO (性能优化Ⅰ型)
+		"uh-l1", //超高IO (时延优化)
 	}
 
-	return  isValidStringValue("systemDiskType", systemDiskType, validDisks)
+	return isValidStringValue("systemDiskType", systemDiskType, validDisks)
 }
 
 func checkVmCreateParams(input VmCreateInput) error {
@@ -176,7 +176,7 @@ func checkVmCreateParams(input VmCreateInput) error {
 	}
 
 	if input.SystemDiskType != "" {
-		if err:=isValidSystemDiskType(input.SystemDiskType);err!=nil {
+		if err := isValidSystemDiskType(input.SystemDiskType); err != nil {
 			return err
 		}
 	}

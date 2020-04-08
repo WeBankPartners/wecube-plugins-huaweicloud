@@ -5,5 +5,5 @@ apk -U add gcc musl-dev
 
 cd $(dirname $0)/..
 
-go test -v 
+go test  -count=1  -v
 
