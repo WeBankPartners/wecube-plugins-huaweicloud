@@ -11,33 +11,13 @@ import (
 )
 
 func createNatServiceClient(params CloudProviderParam) (*golangsdk.ServiceClient, error) {
-	if err := isCloudProviderParamValid(params); err != nil {
+	client, err := createGolangSdkProviderClient(params)
+	if err != nil {
+		logrus.Errorf("get golangsdk provider client failed, error=%v", err)
 		return nil, err
 	}
 
-	identifyMap, _ := GetMapFromString(params.IdentityParams)
 	cloudMap, _ := GetMapFromString(params.CloudParams)
-	identityURL := "https://iam." + cloudMap[CLOUD_PARAM_REGION] + "." + cloudMap[CLOUD_PARAM_CLOUD_DOAMIN_NAME] + "/v3"
-
-	opts := golangsdk.AKSKAuthOptions{
-		IdentityEndpoint: identityURL,
-		AccessKey:        identifyMap[IDENTITY_ACCESS_KEY],
-		SecretKey:        identifyMap[IDENTITY_SECRET_KEY],
-		//DomainID:         identifyMap[IDENTITY_DOMAIN_ID],
-		ProjectId: cloudMap[CLOUD_PARAM_PROJECT_ID],
-		Domain:    cloudMap[CLOUD_PARAM_CLOUD_DOAMIN_NAME],
-		Region:    cloudMap[CLOUD_PARAM_REGION],
-	}
-	client, err := openstack.NewClient(identityURL)
-	if err != nil {
-		logrus.Errorf("new client failed err=%v", err)
-		return nil, err
-	}
-	err = openstack.Authenticate(client, opts)
-	if err != nil {
-		logrus.Errorf("createNatServiceClient auth failed err=%v", err)
-		return nil, err
-	}
 	sc, err := openstack.NewNatV2(client, golangsdk.EndpointOpts{
 		Region: cloudMap[CLOUD_PARAM_REGION],
 	})

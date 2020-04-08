@@ -10,9 +10,13 @@ import (
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/rds/v3/backups"
+	"github.com/gophercloud/gophercloud/openstack/rds/v3/configurations"
 	"github.com/gophercloud/gophercloud/openstack/rds/v3/datastores"
 	"github.com/gophercloud/gophercloud/openstack/rds/v3/flavors"
 	"github.com/gophercloud/gophercloud/openstack/rds/v3/instances"
+	"github.com/huaweicloud/golangsdk"
+	goOpenstack "github.com/huaweicloud/golangsdk/openstack"
+	goInstances "github.com/huaweicloud/golangsdk/openstack/rds/v3/instances"
 	"github.com/sirupsen/logrus"
 )
 
@@ -34,7 +38,7 @@ const (
 )
 
 var rdsActions = make(map[string]Action)
-var engineTypeMap = map[string]string{
+var rdsEngineTypeMap = map[string]string{
 	"MYSQL":      "MySQL",
 	"POSTGRESQL": "PostgreSQL",
 	"SQLSERVER":  "SQLServer",
@@ -63,6 +67,24 @@ func createRdsServiceClientV3(params CloudProviderParam) (*gophercloud.ServiceCl
 	return sc, nil
 }
 
+func createGolangSdkRdsServiceClientV3(params CloudProviderParam) (*golangsdk.ServiceClient, error) {
+	client, err := createGolangSdkProviderClient(params)
+	if err != nil {
+		logrus.Errorf("get golangsdk provider client failed, error=%v", err)
+		return nil, err
+	}
+
+	cloudMap, _ := GetMapFromString(params.CloudParams)
+	sc, err := goOpenstack.NewRDSV3(client, golangsdk.EndpointOpts{
+		Region: cloudMap[CLOUD_PARAM_REGION],
+	})
+	if err != nil {
+		logrus.Errorf("createGolangSdkRdsServiceClient meet err=%v", err)
+		return nil, err
+	}
+	return sc, err
+}
+
 type RdsPlugin struct {
 }
 
@@ -83,14 +105,13 @@ type RdsCreateInputs struct {
 type RdsCreateInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid     string `json:"guid,omitempty"`
-	Id       string `json:"id,omitempty"`
-	Seed     string `json:"seed,omitempty"`
-	Name     string `json:"name,omitempty"`
-	Password string `json:"password,omitempty"`
-	Port     string `json:"port,omitempty"`
-	HostType string `json:"machine_spec,omitempty"` //4c8g
-	// EngineType       string `json:"engine_type,omitempty"`
+	Guid              string `json:"guid,omitempty"`
+	Id                string `json:"id,omitempty"`
+	Seed              string `json:"seed,omitempty"`
+	Name              string `json:"name,omitempty"`
+	Password          string `json:"password,omitempty"`
+	Port              string `json:"port,omitempty"`
+	HostType          string `json:"machine_spec,omitempty"` //4c8g
 	EngineVersion     string `json:"engine_version,omitempty"`
 	SecurityGroupId   string `json:"security_group_id,omitempty"`
 	VpcId             string `json:"vpc_id,omitempty"`
@@ -108,6 +129,10 @@ type RdsCreateInput struct {
 	IsAutoRenew string `json:"is_auto_renew,omitempty"` //是否自动续费
 
 	EnterpriseProjectId string `json:"enterprise_project_id,omitempty"`
+	CharacterSet        string `json:"character_set,omitempty"`
+	LowerCaseTableNames string `json:"lower_case_table_names,omitempty"`
+	// EngineType       string `json:"engine_type,omitempty"`
+
 }
 
 type RdsCreateOutputs struct {
@@ -177,7 +202,7 @@ func (action *RdsCreateAction) checkCreateRdsParams(input RdsCreateInput) error 
 		return fmt.Errorf("volumeType is wrong")
 	}
 
-	if err := checkEngineParams(input.CloudProviderParam, engineTypeMap["MYSQL"], input.EngineVersion); err != nil {
+	if err := checkEngineParams(input.CloudProviderParam, rdsEngineTypeMap["MYSQL"], input.EngineVersion); err != nil {
 		return err
 	}
 	if input.AvailabilityZone == "" {
@@ -215,7 +240,35 @@ func (action *RdsCreateAction) checkCreateRdsParams(input RdsCreateInput) error 
 		}
 	}
 
+	if err := isVaildCharset(input.CharacterSet); err != nil {
+		return err
+	}
+
+	if err := isValidLowerCaseTableNames(input.LowerCaseTableNames); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func isValidLowerCaseTableNames(value string) error {
+	if value != "1" && value != "0" {
+		return fmt.Errorf("lowerCaseTableNames(%v) is invalid", value)
+	}
+	return nil
+}
+
+func isVaildCharset(charset string) error {
+	validCharsets := []string{
+		"utf8", "latin1", "gbk", "utf8mb4",
+	}
+	for _, valid := range validCharsets {
+		lowerCharset := strings.ToLower(charset)
+		if lowerCharset == valid {
+			return nil
+		}
+	}
+	return fmt.Errorf("charset(%v) is invalid", charset)
 }
 
 func checkEngineParams(params CloudProviderParam, engineType, engineVersion string) error {
@@ -225,7 +278,7 @@ func checkEngineParams(params CloudProviderParam, engineType, engineVersion stri
 	if engineVersion == "" {
 		return fmt.Errorf("engineVersion is empty")
 	}
-	if _, ok := engineTypeMap[strings.ToUpper(engineType)]; !ok {
+	if _, ok := rdsEngineTypeMap[strings.ToUpper(engineType)]; !ok {
 		return fmt.Errorf("engineType is wrong")
 	}
 	versionMap, err := queryEngineVersionInfo(params, engineType)
@@ -260,8 +313,22 @@ func queryEngineVersionInfo(params CloudProviderParam, engineType string) (map[s
 	return versions, nil
 }
 
+func getAzs(input *RdsCreateInput) ([]string, error) {
+	azs, err := GetArrayFromString(input.AvailabilityZone, ARRAY_SIZE_REAL, 0)
+	if err != nil {
+		return []string{}, err
+	}
+	if strings.ToLower(input.SupportHa) != "true" {
+		return azs[0:1], nil
+	}
+	if len(azs) > 2 {
+		return azs[0:2], nil
+	}
+	return azs, nil
+}
+
 // return flavor name, cpu, ram
-func getRdsFlavorByHostType(input *RdsCreateInput) (string, string, string, error) {
+func getRdsFlavorByHostType(input *RdsCreateInput, azs []string) (string, string, string, error) {
 	cpu, memory, err := getCpuAndMemoryFromHostType(input.HostType)
 	if err != nil {
 		return "", "", "", err
@@ -273,7 +340,7 @@ func getRdsFlavorByHostType(input *RdsCreateInput) (string, string, string, erro
 	}
 	allPages, err := flavors.List(sc, flavors.DbFlavorsOpts{
 		Versionname: input.EngineVersion,
-	}, engineTypeMap["MYSQL"]).AllPages()
+	}, rdsEngineTypeMap["MYSQL"]).AllPages()
 	if err != nil {
 		return "", "", "", err
 	}
@@ -286,10 +353,18 @@ func getRdsFlavorByHostType(input *RdsCreateInput) (string, string, string, erro
 	var minScore int64 = 1000000
 	matchCpuItems := []flavors.Flavors{}
 	for _, item := range allFlavorsResp.Flavorslist {
-		if _, ok := item.Azstatus[input.AvailabilityZone]; !ok {
-			continue
+		flag := 0
+		for _, az := range azs {
+			if _, ok := item.Azstatus[az]; !ok {
+				flag = 1
+				break
+			}
+			if item.Azstatus[az] != RDS_FLAVORREF_AZ_STATUS_OK {
+				flag = 1
+				break
+			}
 		}
-		if item.Azstatus[input.AvailabilityZone] != RDS_FLAVORREF_AZ_STATUS_OK {
+		if flag == 1 {
 			continue
 		}
 
@@ -357,13 +432,12 @@ func buildRdsVolumeStruct(input *RdsCreateInput) (*instances.Volume, error) {
 
 func buildRdsHaStruct(input *RdsCreateInput) (*instances.Ha, error) {
 	ha := instances.Ha{}
-	if input.SupportHa == "" {
+	if strings.ToLower(input.SupportHa) != "true" {
 		return nil, nil
 	}
-	if strings.ToLower(input.SupportHa) == "true" {
-		ha.Mode = "Ha"
-		ha.ReplicationMode = input.HaReplicationMode
-	}
+
+	ha.Mode = "Ha"
+	ha.ReplicationMode = input.HaReplicationMode
 
 	return &ha, nil
 }
@@ -381,6 +455,68 @@ func buildChargeInfoStruct(input *RdsCreateInput) *instances.ChargeInfo {
 		chargeInfo.PeriodNum, _ = strconv.Atoi(input.PeriodNum)
 	}
 	return &chargeInfo
+}
+
+func updateRdsConfiguration(input *RdsCreateInput, rdsId string) error {
+	sc, err := createGolangSdkRdsServiceClientV3(input.CloudProviderParam)
+	if err != nil {
+		return nil
+	}
+
+	value := map[string]string{}
+	if input.CharacterSet != "" {
+		value["character_set_server"] = input.CharacterSet
+	} else {
+		value["character_set_server"] = "latin1"
+	}
+
+	if input.LowerCaseTableNames == "0" {
+		value["lower_case_table_names"] = "0"
+	} else {
+		value["lower_case_table_names"] = "1"
+	}
+
+	updateOpts := goInstances.UpdateInstanceConfigOpts{
+		Values: value,
+	}
+	logrus.Infof("updateOpts:%++v", updateOpts)
+	_, err = goInstances.UpdateInstanceConfig(sc, rdsId, updateOpts).Extract()
+	return err
+}
+
+func createRdsConfiguration(input *RdsCreateInput) (string, error) {
+	sc, err := createRdsServiceClientV3(input.CloudProviderParam)
+	if err != nil {
+		return "", err
+	}
+
+	value := map[string]string{}
+	if input.CharacterSet != "" {
+		value["character_set_server"] = input.CharacterSet
+	} else {
+		value["character_set_server"] = "utf8"
+	}
+
+	if input.LowerCaseTableNames == "0" {
+		value["lower_case_table_names"] = "0"
+	} else {
+		value["lower_case_table_names"] = "1"
+	}
+
+	createOpts := configurations.CreateConfigurationsOpts{
+		Name:        input.Name + "_configuration",
+		Description: "the configuration of " + input.Name,
+		Values:      value,
+		Datastore: &configurations.Datastore{
+			Type:    rdsEngineTypeMap["MYSQL"],
+			Version: input.EngineVersion,
+		},
+	}
+	resp, err := configurations.Create(sc, createOpts).Extract()
+	if err != nil {
+		return "", err
+	}
+	return resp.Id, nil
 }
 
 func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreateOutput, err error) {
@@ -425,10 +561,16 @@ func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreat
 
 	cloudMap, _ := GetMapFromString(input.CloudProviderParam.CloudParams)
 
+	// do az
+	azs, err := getAzs(input)
+	if err != nil {
+		return
+	}
+
 	if input.Password == "" {
 		input.Password = utils.CreateRandomPassword()
 	}
-	flavor, cpu, memory, err := getRdsFlavorByHostType(input)
+	flavor, cpu, memory, err := getRdsFlavorByHostType(input, azs)
 	if err != nil {
 		return
 	}
@@ -438,11 +580,16 @@ func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreat
 	}
 
 	datastore := instances.Datastore{
-		Type:    engineTypeMap["MYSQL"],
+		Type:    rdsEngineTypeMap["MYSQL"],
 		Version: input.EngineVersion,
 	}
 
 	ha, err := buildRdsHaStruct(input)
+	if err != nil {
+		return
+	}
+
+	configurationId, err := createRdsConfiguration(input)
 	if err != nil {
 		return
 	}
@@ -455,11 +602,12 @@ func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreat
 		SecurityGroupId:  input.SecurityGroupId,
 		Password:         input.Password,
 		FlavorRef:        flavor,
-		AvailabilityZone: input.AvailabilityZone,
+		AvailabilityZone: strings.Join(azs, ","),
 		Region:           cloudMap[CLOUD_PARAM_REGION],
 		Volume:           volume,
 		ChargeInfo:       buildChargeInfoStruct(input),
 		Ha:               ha,
+		ConfigurationId:  configurationId,
 	}
 	if input.Port != "" {
 		request.Port = input.Port
@@ -468,6 +616,7 @@ func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreat
 		request.EnterpriseProjectId = input.EnterpriseProjectId
 	}
 
+	logrus.Infof("request=%++v", request)
 	response, err := instances.Create(sc, request).Extract()
 	if err != nil {
 		return
@@ -477,11 +626,17 @@ func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreat
 	if err != nil {
 		return
 	}
+
 	output.Port = strconv.Itoa(instance.Port)
 	output.PrivateIp = instance.PrivateIps[0]
 	output.UserName = instance.DbUserName
 	output.Memory = memory
 	output.Cpu = cpu
+
+	// err = updateRdsConfiguration(input, output.Id)
+	// if err != nil {
+	// 	return
+	// }
 
 	password, err := utils.AesEnPassword(input.Guid, input.Seed, input.Password, utils.DEFALT_CIPHER)
 	if err != nil {
@@ -612,6 +767,28 @@ func (action *RdsDeleteAction) checkDeleteRdsParams(input RdsDeleteInput) error 
 	return nil
 }
 
+// func getConfigurationByRds(input *RdsDeleteInput) (string, error) {
+// 	sc, err := createRdsServiceClientV3(input.CloudProviderParam)
+// 	if err != nil {
+// 		return "", err
+// 	}
+
+// 	allPages, err := configurations.List(sc).AllPages()
+// 	if err != nil {
+// 		return "", err
+// 	}
+
+// 	allConfigurations, err := configurations.ExtractGetConfigurations(allPages)
+// 	if err != nil {
+// 		return "", err
+// 	}
+
+// 	// for _, c := range allConfigurations.ConfigurationsList {
+// 	// 	if c.Name ==
+// 	// }
+// 	return "", nil
+// }
+
 func (action *RdsDeleteAction) deleteRds(input *RdsDeleteInput) (output RdsDeleteOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
@@ -664,6 +841,7 @@ func (action *RdsDeleteAction) deleteRds(input *RdsDeleteInput) (output RdsDelet
 		logrus.Errorf("waitRdsInstanceJobOk meet error=%v", err)
 		return
 	}
+
 	return
 }
 

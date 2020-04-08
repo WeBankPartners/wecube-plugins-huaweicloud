@@ -1,6 +1,8 @@
 package instances
 
-import "github.com/huaweicloud/golangsdk"
+import (
+	"github.com/huaweicloud/golangsdk"
+)
 
 func createURL(c *golangsdk.ServiceClient) string {
 	return c.ServiceURL("instances")
@@ -36,4 +38,9 @@ func listerrorlogURL(c *golangsdk.ServiceClient, instanceID string) string {
 
 func listslowlogURL(c *golangsdk.ServiceClient, instanceID string) string {
 	return c.ServiceURL("instances", instanceID, "slowlog")
+}
+
+// add functions to  update instance configuration
+func updateInstanceConfigURL(sc *golangsdk.ServiceClient, instanceID string) string {
+	return sc.ServiceURL("instances", instanceID, "configurations")
 }
