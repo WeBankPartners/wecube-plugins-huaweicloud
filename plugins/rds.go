@@ -313,10 +313,13 @@ func queryEngineVersionInfo(params CloudProviderParam, engineType string) (map[s
 	return versions, nil
 }
 
-func getAzs(az string) ([]string, error) {
-	azs, err := GetArrayFromString(az, ARRAY_SIZE_REAL, 0)
+func getAzs(input *RdsCreateInput) ([]string, error) {
+	azs, err := GetArrayFromString(input.AvailabilityZone, ARRAY_SIZE_REAL, 0)
 	if err != nil {
 		return []string{}, err
+	}
+	if strings.ToLower(input.SupportHa) != "true" {
+		return azs[0:1], nil
 	}
 	if len(azs) > 2 {
 		return azs[0:2], nil
@@ -559,7 +562,7 @@ func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreat
 	cloudMap, _ := GetMapFromString(input.CloudProviderParam.CloudParams)
 
 	// do az
-	azs, err := getAzs(input.AvailabilityZone)
+	azs, err := getAzs(input)
 	if err != nil {
 		return
 	}
@@ -613,6 +616,7 @@ func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreat
 		request.EnterpriseProjectId = input.EnterpriseProjectId
 	}
 
+	logrus.Infof("request=%++v", request)
 	response, err := instances.Create(sc, request).Extract()
 	if err != nil {
 		return
