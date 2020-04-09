@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
-        "fmt"
+//        "fmt"
 )
 
 // DefaultUserAgent is the default User-Agent string set in the request header.
@@ -245,7 +245,7 @@ func (client *ProviderClient) Request(method, url string, options *RequestOpts) 
 			req.Header.Set("X-Domain-Id", client.AKSKAuthOptions.DomainID)
 		}
 	}
-	fmt.Printf("request=%++v\n",req)
+	//fmt.Printf("request=%++v\n",req)
 	// Issue the request.
 	resp, err := client.HTTPClient.Do(req)
 	if err != nil {

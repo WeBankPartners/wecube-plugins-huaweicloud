@@ -368,7 +368,7 @@ func ensureDeleteHostFromPool(params CloudProviderParam, hostIds []string, hostP
 		return err
 	}
 
-	alreadyDeletedHost:=make(map[string]bool)	
+	alreadyDeletedHost := make(map[string]bool)
 
 	for i, hostId := range hostIds {
 		vm, err := getVmInfoById(params, hostId)
@@ -380,7 +380,7 @@ func ensureDeleteHostFromPool(params CloudProviderParam, hostIds []string, hostP
 		if err != nil {
 			continue
 		}
-		if _,ok:=alreadyDeletedHost[memberId];ok{
+		if _, ok := alreadyDeletedHost[memberId]; ok {
 			continue
 		}
 
@@ -388,7 +388,7 @@ func ensureDeleteHostFromPool(params CloudProviderParam, hostIds []string, hostP
 			logrus.Errorf("lb pools deleteMember meet err=%v", err)
 			return err
 		}
-		alreadyDeletedHost[memberId]=true
+		alreadyDeletedHost[memberId] = true
 	}
 
 	return nil
