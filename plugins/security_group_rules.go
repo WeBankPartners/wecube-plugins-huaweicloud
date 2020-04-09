@@ -111,7 +111,7 @@ func (action *SecurityGroupRuleCreateAction) checkCreateRuleParams(input Securit
 
 func getPort(port string) (int, error) {
 	portInt, err := strconv.Atoi(port)
-	if err != nil || portInt >= 65535 {
+	if err != nil || portInt > 65535 {
 		return 0, fmt.Errorf("port(%s) is invalid", port)
 	}
 
