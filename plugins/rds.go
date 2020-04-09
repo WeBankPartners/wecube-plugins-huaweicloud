@@ -16,6 +16,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/rds/v3/instances"
 	"github.com/huaweicloud/golangsdk"
 	goOpenstack "github.com/huaweicloud/golangsdk/openstack"
+	goConfi "github.com/huaweicloud/golangsdk/openstack/rds/v3/configurations"
 	goInstances "github.com/huaweicloud/golangsdk/openstack/rds/v3/instances"
 	"github.com/sirupsen/logrus"
 )
@@ -150,7 +151,7 @@ type RdsCreateOutput struct {
 	Port     string `json:"private_port,omitempty"`
 	UserName string `json:"user_name,omitempty"`
 	Password string `json:"password,omitempty"`
-	Cpu      string `json:"cpu,omitementy"`
+	Cpu      string `json:"cpu,omitempty"`
 	Memory   string `json:"memory,omitempty"`
 }
 
@@ -240,7 +241,7 @@ func (action *RdsCreateAction) checkCreateRdsParams(input RdsCreateInput) error 
 		}
 	}
 
-	if err := isVaildCharset(input.CharacterSet); err != nil {
+	if err := isVaildCharset(strings.ToLower(input.CharacterSet)); err != nil {
 		return err
 	}
 
@@ -465,7 +466,7 @@ func updateRdsConfiguration(input *RdsCreateInput, rdsId string) error {
 
 	value := map[string]string{}
 	if input.CharacterSet != "" {
-		value["character_set_server"] = input.CharacterSet
+		value["character_set_server"] = strings.ToLower(input.CharacterSet)
 	} else {
 		value["character_set_server"] = "latin1"
 	}
@@ -492,7 +493,7 @@ func createRdsConfiguration(input *RdsCreateInput) (string, error) {
 
 	value := map[string]string{}
 	if input.CharacterSet != "" {
-		value["character_set_server"] = input.CharacterSet
+		value["character_set_server"] = strings.ToLower(input.CharacterSet)
 	} else {
 		value["character_set_server"] = "utf8"
 	}
@@ -519,7 +520,22 @@ func createRdsConfiguration(input *RdsCreateInput) (string, error) {
 	return resp.Id, nil
 }
 
+func deleteConfiguration(params CloudProviderParam, id string) error {
+	if id == "" {
+		return nil
+	}
+
+	sc, err := createGolangSdkRdsServiceClientV3(params)
+	if err != nil {
+		return err
+	}
+
+	err = goConfi.Delete(sc, id).ExtractErr()
+	return err
+}
+
 func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreateOutput, err error) {
+	var configurationId string
 	defer func() {
 		output.Guid = input.Guid
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
@@ -589,7 +605,7 @@ func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreat
 		return
 	}
 
-	configurationId, err := createRdsConfiguration(input)
+	configurationId, err = createRdsConfiguration(input)
 	if err != nil {
 		return
 	}
@@ -619,11 +635,13 @@ func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreat
 	logrus.Infof("request=%++v", request)
 	response, err := instances.Create(sc, request).Extract()
 	if err != nil {
+		_ = deleteConfiguration(input.CloudProviderParam, configurationId)
 		return
 	}
 	output.Id = response.Instance.Id
 	instance, err := waitRdsInstanceJobOk(sc, response.Instance.Id, "create", 20)
 	if err != nil {
+		_ = deleteConfiguration(input.CloudProviderParam, configurationId)
 		return
 	}
 
@@ -640,9 +658,12 @@ func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreat
 
 	password, err := utils.AesEnPassword(input.Guid, input.Seed, input.Password, utils.DEFALT_CIPHER)
 	if err != nil {
+		_ = deleteConfiguration(input.CloudProviderParam, configurationId)
 		return
 	}
 	output.Password = password
+
+	err = deleteConfiguration(input.CloudProviderParam, configurationId)
 	return
 
 }
@@ -766,28 +787,6 @@ func (action *RdsDeleteAction) checkDeleteRdsParams(input RdsDeleteInput) error 
 
 	return nil
 }
-
-// func getConfigurationByRds(input *RdsDeleteInput) (string, error) {
-// 	sc, err := createRdsServiceClientV3(input.CloudProviderParam)
-// 	if err != nil {
-// 		return "", err
-// 	}
-
-// 	allPages, err := configurations.List(sc).AllPages()
-// 	if err != nil {
-// 		return "", err
-// 	}
-
-// 	allConfigurations, err := configurations.ExtractGetConfigurations(allPages)
-// 	if err != nil {
-// 		return "", err
-// 	}
-
-// 	// for _, c := range allConfigurations.ConfigurationsList {
-// 	// 	if c.Name ==
-// 	// }
-// 	return "", nil
-// }
 
 func (action *RdsDeleteAction) deleteRds(input *RdsDeleteInput) (output RdsDeleteOutput, err error) {
 	defer func() {
