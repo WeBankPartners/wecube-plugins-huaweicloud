@@ -141,7 +141,7 @@ func getPortMinAndMax(port string) (int, int, error) {
 		}
 	}
 
-	return 0, 0, fmt.Errorf("port(%v) is unsupported port format")
+	return 0, 0, fmt.Errorf("port(%v) is unsupported port format", port)
 }
 
 func (action *SecurityGroupRuleCreateAction) createRule(input *SecurityGroupRuleCreateInput) (output SecurityGroupRuleCreateOutput, err error) {
