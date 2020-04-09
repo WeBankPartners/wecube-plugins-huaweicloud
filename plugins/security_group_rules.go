@@ -136,7 +136,7 @@ func getPortMinAndMax(port string) (int, int, error) {
 	if len(portRange) == 2 {
 		firstPort, firstErr := getPort(portRange[0])
 		lastPort, lastErr := getPort(portRange[1])
-		if firstErr == nil && lastErr == nil && firstPort < lastPort {
+		if firstErr == nil && lastErr == nil && firstPort <= lastPort {
 			return firstPort, lastPort, nil
 		}
 	}
