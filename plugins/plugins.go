@@ -62,6 +62,7 @@ func init() {
 	RegisterPlugin("nat-snat-rule", new(SnatRulePlugin))
 	RegisterPlugin("route", new(RoutePlugin))
 	RegisterPlugin("rds", new(RdsPlugin))
+	RegisterPlugin("dcs", new(DcsPlugin))
 }
 
 type PluginRequest struct {

@@ -121,7 +121,7 @@ func getPort(port string) (int, error) {
 func getPortMinAndMax(port string) (int, int, error) {
 	port = strings.TrimSpace(port)
 	if strings.EqualFold(port, "ALL") {
-		return 0, 0, nil
+		return 1, 65535, nil
 	}
 
 	//single port
