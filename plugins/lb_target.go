@@ -222,6 +222,11 @@ func ensureHostAddToLbPool(params CloudProviderParam, hostIds []string, hostPort
 		return err
 	}
 
+	allMembers, err := getAllPoolMembers(sc, poolId)
+	if err != nil {
+		return err
+	}
+
 	for i, hostId := range hostIds {
 		vm, err := getVmInfoById(params, hostId)
 		if err != nil {
@@ -235,6 +240,12 @@ func ensureHostAddToLbPool(params CloudProviderParam, hostIds []string, hostPort
 		}
 
 		address, _ := getIpFromVmInfo(vm)
+
+		//check if already exist
+		if _, err = getMemberIdByIpAndPort(allMembers, address, hostPorts[i]);err==nil{
+			continue
+		}
+
 		subnetId, err := getSubnetIdByIpAddress(subnets, address)
 		if err != nil {
 			return err
