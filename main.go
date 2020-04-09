@@ -22,7 +22,6 @@ func init() {
 
 func main() {
 	logrus.Infof("Start WeCube-Plungins-HaweiCloud Service ... ")
-
 	if err := http.ListenAndServe(":"+LISTEN_PORT, nil); err != nil {
 		logrus.Fatalf("ListenAndServe meet err = %v", err)
 	}
