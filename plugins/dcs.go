@@ -72,14 +72,14 @@ type DcsCreateInput struct {
 	Capacity      string `json:"capacity,omitempty"`
 	Password      string `json:"password,omitempty"`
 
-	VpcId               string `json:"vpc_id,omitempty"`
-	SubnetId            string `json:"subnet_id,omitempty"`
-	SecurityGroupId     string `json:"security_group_id,omitempty"`
-	AvailableZones      string `json:"az,omitempty"`
-	PrivateIp           string `json:"private_ip,omitempty"`
-//	Labels              string `json:"labels,omitempty"`
-//	EnterpriseProjectId string `json:"enterprise_project_id,omitempty"`
-	ChargeType          string `json:"charge_type,omitempty"`
+	VpcId           string `json:"vpc_id,omitempty"`
+	SubnetId        string `json:"subnet_id,omitempty"`
+	SecurityGroupId string `json:"security_group_id,omitempty"`
+	AvailableZones  string `json:"az,omitempty"`
+	PrivateIp       string `json:"private_ip,omitempty"`
+	//	Labels              string `json:"labels,omitempty"`
+	//	EnterpriseProjectId string `json:"enterprise_project_id,omitempty"`
+	ChargeType string `json:"charge_type,omitempty"`
 
 	//包年包月
 	PeriodType  string `json:"period_type,omitempty"`   //年或月
@@ -260,32 +260,32 @@ func isAzsAllInAzMaps(azs []string, azMap map[string]string) error {
 	return nil
 }
 
-func getRedisProductId(input DcsCreateInput, azs []string) (string, error) {
+func getRedisProductId(input DcsCreateInput, azs []string) (string, []string, error) {
 	sc, err := createDcsServiceClient(input.CloudProviderParam)
 	if err != nil {
-		return "", err
+		return "", azs, err
 	}
 
 	payMode, err := getPayMode(input.ChargeType, input.PeriodType)
 	if err != nil {
-		return "", err
+		return "", azs, err
 	}
 
 	azMap, err := getAvailableAzMap(sc)
 	if err != nil {
-		return "", err
+		return "", azs, err
 	}
 
 	//check az have resource
 	for _, az := range azs {
 		if _, ok := azMap[az]; !ok {
-			return "", fmt.Errorf("az(%v) is unavailable,please use %++v", az,azMap)
+			return "", azs, fmt.Errorf("az(%v) is unavailable,please use %++v", az, azMap)
 		}
 	}
 
 	response, err := products.Get(sc).Extract()
 	if err != nil {
-		return "", err
+		return "", azs, err
 	}
 	for _, product := range response.Products {
 		if product.Engine != "redis" || product.CpuType != "x86_64" || product.CacheMode != input.InstanceType {
@@ -309,12 +309,17 @@ func getRedisProductId(input DcsCreateInput, azs []string) (string, error) {
 				continue
 			}
 			if err := isAzsAllInAzMaps(azs, azMap); err == nil {
-				return product.ProductID, nil
+				azCodes := []string{}
+				for _, az := range azs {
+					azCodes = append(azCodes, azMap[az])
+				}
+
+				return product.ProductID, azCodes, nil
 			}
 		}
 	}
 
-	return "", fmt.Errorf("can't find the desire redis productId")
+	return "", azs, fmt.Errorf("can't find the desire redis productId")
 }
 
 func createDcs(input DcsCreateInput) (output DcsCreateOutput, err error) {
@@ -348,7 +353,7 @@ func createDcs(input DcsCreateInput) (output DcsCreateOutput, err error) {
 		return
 	}
 
-	productId, err := getRedisProductId(input, azs)
+	productId, azCodes, err := getRedisProductId(input, azs)
 	if err != nil {
 		return
 	}
@@ -362,7 +367,7 @@ func createDcs(input DcsCreateInput) (output DcsCreateOutput, err error) {
 		VPCID:            input.VpcId,
 		SecurityGroupID:  input.SecurityGroupId,
 		SubnetID:         input.SubnetId,
-		AvailableZones:   azs,
+		AvailableZones:   azCodes,
 		ProductID:        productId,
 	}
 	if input.PrivateIp != "" {
@@ -379,7 +384,7 @@ func createDcs(input DcsCreateInput) (output DcsCreateOutput, err error) {
 	}
 
 	resp, err := instances.Create(sc, opts).Extract()
-	fmt.Printf("resp=%++v,err=%v\n",resp,err)
+	fmt.Printf("resp=%++v,err=%v\n", resp, err)
 	if err != nil {
 		return
 	}
