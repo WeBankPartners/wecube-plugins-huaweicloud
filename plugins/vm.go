@@ -414,9 +414,10 @@ func getFlavorByHostType(input VmCreateInput) (string, int64, int64, error) {
 
 func waitVmJobOk(sc *gophercloud.ServiceClient, jobId string) (string, error) {
 	var jobRst v1_1.JobResult
+	count:=0
 
 	for {
-		time.Sleep(time.Duration(5) * time.Second)
+		time.Sleep(time.Duration(6) * time.Second)
 		job, getJobErr := v1_1.GetJobResult(sc, jobId)
 		if getJobErr != nil {
 			logrus.Errorf("getJobResult failed err =%v", getJobErr)
@@ -429,6 +430,11 @@ func waitVmJobOk(sc *gophercloud.ServiceClient, jobId string) (string, error) {
 		} else if strings.Compare("FAIL", job.Status) == 0 {
 			jobRst = job
 			break
+		}
+		count++
+		//5 minutes
+		if count > 50 {  
+			return "",fmt.Errorf("vm job still in %v statue",job.Status)
 		}
 	}
 	subJobs := jobRst.Entities.SubJobs
