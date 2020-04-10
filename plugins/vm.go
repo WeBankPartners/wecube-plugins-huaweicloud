@@ -414,7 +414,7 @@ func getFlavorByHostType(input VmCreateInput) (string, int64, int64, error) {
 
 func waitVmJobOk(sc *gophercloud.ServiceClient, jobId string) (string, error) {
 	var jobRst v1_1.JobResult
-	count:=0
+	count := 0
 
 	for {
 		time.Sleep(time.Duration(6) * time.Second)
@@ -433,8 +433,8 @@ func waitVmJobOk(sc *gophercloud.ServiceClient, jobId string) (string, error) {
 		}
 		count++
 		//5 minutes
-		if count > 50 {  
-			return "",fmt.Errorf("vm job still in %v statue",job.Status)
+		if count > 50 {
+			return "", fmt.Errorf("vm job still in %v statue", job.Status)
 		}
 	}
 	subJobs := jobRst.Entities.SubJobs

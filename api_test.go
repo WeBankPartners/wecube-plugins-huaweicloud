@@ -159,7 +159,7 @@ type CreatedResources struct {
 	InternalLbId string
 	ExternalLbId string
 
-	ListenerId   string
+	ListenerId string
 
 	NatGatewayId string
 	SnatRuleId   string
