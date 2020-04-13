@@ -19,6 +19,20 @@ type Product struct {
 	ChargingType string  `json:"charging_type"`
 	SpecDetails2 string  `json:"spec_details2"`
 	ProdType     string  `json:"prod_type"`
+
+	CacheMode    string   `json:"cache_mode"`
+	CpuType      string   `json:"cpu_type"`
+	StorageType  string   `json:"storage_type"`
+	Detail       string   `json:"detail"`
+	Engine       string   `json:"engine"`
+	EngineVersions string  `json:"engine_versions"`
+	Flavors    []Flavor    `json:"flavors"`
+}
+
+type Flavor struct {
+	Capacity string `json:"capacity"`
+	Unit     string `json:"unit"`
+	Azs    []string `json:"available_zones"`
 }
 
 // GetResult contains the body of getting detailed
