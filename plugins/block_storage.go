@@ -449,7 +449,6 @@ func checkUmountAndTerminateDiskParam(input UmountAndTerminateDiskInput) error {
 	if err := isCloudProviderParamValid(input.CloudProviderParam); err != nil {
 		return err
 	}
-
 	if input.InstanceId == "" {
 		return fmt.Errorf("empty instanceId")
 	}
@@ -462,15 +461,12 @@ func checkUmountAndTerminateDiskParam(input UmountAndTerminateDiskInput) error {
 	if input.InstancePassword == "" {
 		return fmt.Errorf("empty instancePassword")
 	}
-
 	if input.Id == "" {
 		return fmt.Errorf("id is empty")
 	}
-
 	if input.MountDir == "" {
 		return fmt.Errorf(" mountDir is empty")
 	}
-
 	if input.VolumeName == "" {
 		return fmt.Errorf("volumeName is empty")
 	}

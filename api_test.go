@@ -159,6 +159,8 @@ type CreatedResources struct {
 	InternalLbId string
 	ExternalLbId string
 
+	ListenerId string
+
 	NatGatewayId string
 	SnatRuleId   string
 
@@ -870,7 +872,7 @@ func addTargetToLb(path string, createdResources *CreatedResources) error {
 	if err := doHttpRequest(path, inputs, &outputs); err != nil {
 		return err
 	}
-
+	createdResources.ListenerId = outputs.Outputs[0].ListenerId
 	return nil
 }
 
@@ -885,6 +887,7 @@ func deleteTargetFromLb(path string, createdResources *CreatedResources) error {
 				Protocol:           "tcp",
 				HostIds:            createdResources.VmIdPostPaid,
 				HostPorts:          "8090",
+				ListenerId:         createdResources.ListenerId,
 			},
 		},
 	}

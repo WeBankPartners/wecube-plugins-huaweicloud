@@ -121,10 +121,10 @@ func createGopherCloudProviderClient(param CloudProviderParam) (*gophercloud.Pro
 		IdentityEndpoint: identityURL,
 		AccessKey:        identifyMap[IDENTITY_ACCESS_KEY],
 		SecretKey:        identifyMap[IDENTITY_SECRET_KEY],
-		DomainID:         identifyMap[IDENTITY_DOMAIN_ID],
-		ProjectID:        cloudMap[CLOUD_PARAM_PROJECT_ID],
-		Cloud:            cloudMap[CLOUD_PARAM_CLOUD_DOAMIN_NAME],
-		Region:           cloudMap[CLOUD_PARAM_REGION],
+		//DomainID:         identifyMap[IDENTITY_DOMAIN_ID],
+		ProjectID: cloudMap[CLOUD_PARAM_PROJECT_ID],
+		Cloud:     cloudMap[CLOUD_PARAM_CLOUD_DOAMIN_NAME],
+		Region:    cloudMap[CLOUD_PARAM_REGION],
 	}
 
 	provider, err := openstack.AuthenticatedClient(opts)

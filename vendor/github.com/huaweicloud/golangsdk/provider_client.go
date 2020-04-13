@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+  //"fmt"
 )
 
 // DefaultUserAgent is the default User-Agent string set in the request header.
@@ -240,16 +241,22 @@ func (client *ProviderClient) Request(method, url string, options *RequestOpts) 
 		if client.AKSKAuthOptions.ProjectId != "" {
 			req.Header.Set("X-Project-Id", client.AKSKAuthOptions.ProjectId)
 		}
-		if client.AKSKAuthOptions.DomainID != "" {
+	/*if client.AKSKAuthOptions.DomainID != "" {
 			req.Header.Set("X-Domain-Id", client.AKSKAuthOptions.DomainID)
-		}
+		}*/
 	}
-
+	//fmt.Printf("request=%++v\n",req)
 	// Issue the request.
+	//fmt.Printf("req=%++v\n",req)
 	resp, err := client.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
+	
+	/*if resp != nil {
+	     body, _ := ioutil.ReadAll(resp.Body)
+	     fmt.Printf("body=%++v\n",string(body))
+        }*/
 
 	// Allow default OkCodes if none explicitly set
 	if options.OkCodes == nil {
