@@ -244,7 +244,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">guid</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">identity_params</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">cloud_params</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">lb_id</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">lb_id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">lb_port</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">listener_name</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">listener_id</parameter>
@@ -435,7 +435,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">cloud_params</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">vpc_id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">subnet_id</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">Name</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">name</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">id</parameter>
                 </inputParameters>
                 <outputParameters>
@@ -557,7 +557,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">private_ip</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">private_port</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">port</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">user_name</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">password</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">cpu</parameter>

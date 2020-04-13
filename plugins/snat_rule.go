@@ -126,10 +126,15 @@ func addSnatRule(input AddSnatRuleInput) (output AddSnatRuleOutput, err error) {
 		}
 	}
 
+	ipIds, err := GetArrayFromString(input.PublicIpId, ARRAY_SIZE_REAL, 0)
+	if err != nil {
+		logrus.Errorf("get array string meet error=%v", err)
+		return
+	}
 	opts := snatrules.CreateOpts{
 		NatGatewayID: input.GatewayId,
 		NetworkID:    input.SubnetId,
-		FloatingIPID: input.PublicIpId,
+		FloatingIPID: strings.Join(ipIds, ","),
 		SourceType:   0,
 	}
 	resp, err := snatrules.Create(sc, opts).Extract()
