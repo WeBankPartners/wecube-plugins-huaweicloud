@@ -610,5 +610,53 @@
                 </outputParameters>
             </interface>
         </plugin>
+
+        <plugin name="redis" targetPackage="" targetEntity="">
+            <interface action="create" path="/huaweicloud/v1/dcs/create">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">identity_params</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">cloud_params</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">seed</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">id</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">name</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance_type</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">engine_version</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">capacity</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">password</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">vpc_id</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">subnet_id</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">security_group_id</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">az</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">private_ip</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">charge_type</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">period_type</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">period_num</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">is_auto_renew</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">id</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">password</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">private_ip</parameter>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="delete" path="/huaweicloud/v1/dcs/delete">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">identity_params</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">cloud_params</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">id</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
+
     </plugins>
 </package>
