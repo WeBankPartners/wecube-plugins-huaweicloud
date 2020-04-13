@@ -48,6 +48,7 @@ func createBbsIntlServiceClientV1(params CloudProviderParam) (*gophercloud.Servi
 	return sc, nil
 }
 
+// return orderId
 func unsubscribeByResourceId(client *gophercloud.ServiceClient, resourceIds []string) (string, error) {
 	unSubType := UNSUBSCRIBE_RESOURCE_UNSUBTYPE
 	reasonType := UNSUBSCRIBE_RESOURCE_REASON_TYPE
