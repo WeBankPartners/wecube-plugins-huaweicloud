@@ -148,7 +148,7 @@ type RdsCreateOutput struct {
 	PrivateIp string `json:"private_ip,omitempty"`
 
 	//用户名和密码
-	Port     string `json:"private_port,omitempty"`
+	Port     string `json:"port,omitempty"`
 	UserName string `json:"user_name,omitempty"`
 	Password string `json:"password,omitempty"`
 	Cpu      string `json:"cpu,omitempty"`
@@ -950,9 +950,10 @@ func (action *RdsCreateBackupAction) createRdsBackup(input *RdsCreateBackupInput
 	}
 
 	// create backup
+	timeUnix := time.Now().Unix()
 	request := backups.CreateBackupsOpts{
 		InstanceId: input.InstanceId,
-		Name:       input.Name,
+		Name:       input.Name + strconv.Itoa(int(timeUnix)),
 	}
 	response, err := backups.Create(sc, request).Extract()
 	if err != nil {
