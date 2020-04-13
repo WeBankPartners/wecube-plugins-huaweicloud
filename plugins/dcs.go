@@ -2,16 +2,16 @@ package plugins
 
 import (
 	"fmt"
+	"github.com/WeBankPartners/wecube-plugins-huaweicloud/plugins/utils"
 	"github.com/huaweicloud/golangsdk"
 	"github.com/huaweicloud/golangsdk/openstack"
+	"github.com/huaweicloud/golangsdk/openstack/dcs/v1/availablezones"
 	"github.com/huaweicloud/golangsdk/openstack/dcs/v1/instances"
 	"github.com/huaweicloud/golangsdk/openstack/dcs/v1/products"
-	"github.com/huaweicloud/golangsdk/openstack/dcs/v1/availablezones"
 	"github.com/sirupsen/logrus"
 	"strconv"
 	"strings"
 	"time"
-	"github.com/WeBankPartners/wecube-plugins-huaweicloud/plugins/utils"
 )
 
 const (
@@ -64,21 +64,22 @@ type DcsCreateInput struct {
 	CallBackParameter
 	CloudProviderParam
 	Guid          string `json:"guid,omitempty"`
+	Seed          string `json:"seed,omitempty"`
 	Id            string `json:"id,omitempty"`
 	Name          string `json:"name,omitempty"`
-	InstanceType  string `json:"instanceType,omitempty"`
+	InstanceType  string `json:"instance_type,omitempty"`
 	EngineVersion string `json:"engine_version,omitempty"`
 	Capacity      string `json:"capacity,omitempty"`
 	Password      string `json:"password,omitempty"`
 
-	VpcId               string `json:"vpc_id,omitempty"`
-	SubnetId            string `json:"subnet_id,omitempty"`
-	SecurityGroupId     string `json:"security_group_id,omitempty"`
-	AvailableZones      string `json:"az,omitempty"`
-	PrivateIp           string `json:"private_ip,omitempty"`
-	Labels              string `json:"labels,omitempty"`
-	EnterpriseProjectId string `json:"enterprise_project_id,omitempty"`
-	ChargeType          string `json:"charge_type,omitempty"`
+	VpcId           string `json:"vpc_id,omitempty"`
+	SubnetId        string `json:"subnet_id,omitempty"`
+	SecurityGroupId string `json:"security_group_id,omitempty"`
+	AvailableZones  string `json:"az,omitempty"`
+	PrivateIp       string `json:"private_ip,omitempty"`
+	//	Labels              string `json:"labels,omitempty"`
+	//	EnterpriseProjectId string `json:"enterprise_project_id,omitempty"`
+	ChargeType string `json:"charge_type,omitempty"`
 
 	//包年包月
 	PeriodType  string `json:"period_type,omitempty"`   //年或月
@@ -184,31 +185,31 @@ func getDcsInfoById(cloudProviderParam CloudProviderParam, id string) (*instance
 	return dcsInfo, err
 }
 
-func waitDcsCreateOk(sc *golangsdk.ServiceClient,id string)(*instances.Instance,error){
+func waitDcsCreateOk(sc *golangsdk.ServiceClient, id string) (*instances.Instance, error) {
 	var finalErr error
-	
-	for{
-		time.Sleep(time.Duration(5) * time.Second)
+
+	for {
+		time.Sleep(time.Duration(15) * time.Second)
 		dcsInfo, err := instances.Get(sc, id).Extract()
-	    if err != nil {
-			finalErr=err
+		if err != nil {
+			finalErr = err
 			break
 		}
-		if dcsInfo.Status == "CREATEFAILED" ||dcsInfo.Status=="ERROR"{
-			finalErr=fmt.Errorf("create dcs status=%v",dcsInfo.Status)
+		if dcsInfo.Status == "CREATEFAILED" || dcsInfo.Status == "ERROR" {
+			finalErr = fmt.Errorf("create dcs status=%v", dcsInfo.Status)
 			break
 		}
 		if dcsInfo.Status == "RUNNING" {
-			return dcsInfo,nil 
+			return dcsInfo, nil
 		}
 	}
-	return nil,finalErr
+	return nil, finalErr
 }
 
 func isDcsExist(cloudProviderParam CloudProviderParam, id string) (*instances.Instance, bool, error) {
 	dcsInfo, err := getDcsInfoById(cloudProviderParam, id)
 	if err != nil {
-		if strings.Contains(err.Error(), "No Nat Gateway exist") {
+		if strings.Contains(err.Error(), "instance does not exist") {
 			return nil, false, nil
 		}
 		return nil, false, err
@@ -217,104 +218,108 @@ func isDcsExist(cloudProviderParam CloudProviderParam, id string) (*instances.In
 	return dcsInfo, true, nil
 }
 
-func getPayMode(chargeType string,periodType string)(string,error){
-    if chargeType == POST_PAID{
-		return "Hourly",nil 
+func getPayMode(chargeType string, periodType string) (string, error) {
+	if chargeType == POST_PAID {
+		return "Hourly", nil
 	}
 
-	if chargetType ==PRE_PAID{
-		if periodType == PRE_PAID_MONTH{
-			return "Monthly",nil
+	if chargeType == PRE_PAID {
+		if periodType == PRE_PAID_MONTH {
+			return "Monthly", nil
 		}
-		if periodType == PRE_PAID_YEAR{
-			return "Yearly",nil
+		if periodType == PRE_PAID_YEAR {
+			return "Yearly", nil
 		}
 	}
-	return "",fmt.Errorf("unkonwn pay mode")
+	return "", fmt.Errorf("unkonwn pay mode")
 }
 
-func getAvailableAzMap(sc *golangsdk.ServiceClient)(map[string]string,error){
-	azMap:=make(map[string]string)
+func getAvailableAzMap(sc *golangsdk.ServiceClient) (map[string]string, error) {
+	azMap := make(map[string]string)
 
-	response, err:=availablezones.Get(sc).Extract()
-	if err!= nil {
-		return azMap,err
+	response, err := availablezones.Get(sc).Extract()
+	if err != nil {
+		return azMap, err
 	}
 
-	for _,az:=range response.AvailableZones {
-		if az.ResourceAvailability =="true"{
-			azMap[az.Code] = az.ID 
+	for _, az := range response.AvailableZones {
+		if az.ResourceAvailability == "true" {
+			azMap[az.Code] = az.ID
 		}
 	}
-	
-	return azMap,nil
+
+	return azMap, nil
 }
 
-func isAzsAllInAzMaps(azs []string,azMap map[string]string)error{
-	for _,az:=range azs {
-		if _,ok:=azMap[az];!ok{
-			return fmt.Errorf("az %v can't be found in map(%++v)",az,azMap)		
+func isAzsAllInAzMaps(azs []string, azMap map[string]string) error {
+	for _, az := range azs {
+		if _, ok := azMap[az]; !ok {
+			return fmt.Errorf("az %v can't be found in map(%++v)", az, azMap)
 		}
 	}
 	return nil
 }
 
-
-func getRedisProductId(input DcsCreateInput,azs []string) (string, error) {
+func getRedisProductId(input DcsCreateInput, azs []string) (string, []string, error) {
 	sc, err := createDcsServiceClient(input.CloudProviderParam)
 	if err != nil {
-		return "", err
+		return "", azs, err
 	}
 
-	payMode,err:=getPayMode(input.ChargeType,input.PeriodType)
+	payMode, err := getPayMode(input.ChargeType, input.PeriodType)
 	if err != nil {
-		return "",err
+		return "", azs, err
 	}
 
-	azMap,err:=getAvailableAzMap(sc)
+	azMap, err := getAvailableAzMap(sc)
 	if err != nil {
-		return err 
+		return "", azs, err
 	}
 
-	//check az have resource 
-	for _,az:=range azs {
-		if _, ok := azMap[az];!ok {
-			return fmt.Errorf("az(%v) is unavailable",az)
+	//check az have resource
+	for _, az := range azs {
+		if _, ok := azMap[az]; !ok {
+			return "", azs, fmt.Errorf("az(%v) is unavailable,please use %++v", az, azMap)
 		}
 	}
-	
+
 	response, err := products.Get(sc).Extract()
 	if err != nil {
-		return "", err
+		return "", azs, err
 	}
 	for _, product := range response.Products {
-		if product.Engine != "redis" || product.CpuType != "x86_64" || product.CacheMode !=input.InstanceType {
+		if product.Engine != "redis" || product.CpuType != "x86_64" || product.CacheMode != input.InstanceType {
 			continue
 		}
 
 		//检查付费方式是否匹配
-		if false == strings.EqualFold(payMode ,product.ChargingType){
+		if false == strings.EqualFold(payMode, product.ChargingType) {
 			continue
 		}
 
 		//检查版本是否匹配："engine_versions": "4.0;5.0",
-		versions:=strings.Split(product.EngineVersions,";")
-		if err:=isValidStringValue("engineVersion", input.EngineVersion, versions);err!=nil {
+		versions := strings.Split(product.EngineVersions, ";")
+		if err := isValidStringValue("engineVersion", input.EngineVersion, versions); err != nil {
 			continue
 		}
 
-		for _,flavor:=range product.Flavors {
+		for _, flavor := range product.Flavors {
 			//检查容量是否匹配
-			if flavor.Capacity != input.Capacity  {
+			if flavor.Capacity != input.Capacity {
 				continue
 			}
-			if isAzsAllInAzMaps(azs,azMap) {
-				return product.ProductID,nil 
+			if err := isAzsAllInAzMaps(azs, azMap); err == nil {
+				azCodes := []string{}
+				for _, az := range azs {
+					azCodes = append(azCodes, azMap[az])
+				}
+
+				return product.ProductID, azCodes, nil
 			}
 		}
 	}
 
-	return "", fmt.Errorf("can't find the desire redis productId")
+	return "", azs, fmt.Errorf("can't find the desire redis productId")
 }
 
 func createDcs(input DcsCreateInput) (output DcsCreateOutput, err error) {
@@ -348,9 +353,9 @@ func createDcs(input DcsCreateInput) (output DcsCreateOutput, err error) {
 		return
 	}
 
-	productId, err := getRedisProductId(input,azs)
+	productId, azCodes, err := getRedisProductId(input, azs)
 	if err != nil {
-		return 
+		return
 	}
 
 	opts := instances.CreateOps{
@@ -362,11 +367,11 @@ func createDcs(input DcsCreateInput) (output DcsCreateOutput, err error) {
 		VPCID:            input.VpcId,
 		SecurityGroupID:  input.SecurityGroupId,
 		SubnetID:         input.SubnetId,
-		AvailableZones:   azs,
+		AvailableZones:   azCodes,
 		ProductID:        productId,
 	}
 	if input.PrivateIp != "" {
-		opts.PrivateIp=input.PrivateIp
+		opts.PrivateIp = input.PrivateIp
 	}
 	if input.Password == "" {
 		input.Password = utils.CreateRandomPassword()
@@ -375,26 +380,26 @@ func createDcs(input DcsCreateInput) (output DcsCreateOutput, err error) {
 
 	sc, err := createDcsServiceClient(input.CloudProviderParam)
 	if err != nil {
-		return "", err
+		return
 	}
 
-	resp,err:=instances.Create(sc,opts).Extract() 
+	resp, err := instances.Create(sc, opts).Extract()
 	if err != nil {
-		return 
+		return
 	}
 
 	output.Id = resp.InstanceID
-	newDcsInstance,err := waitDcsCreateOk(sc,resp.InstanceID)
-	if err !=nil {
-		return 
+	newDcsInstance, err := waitDcsCreateOk(sc, resp.InstanceID)
+	if err != nil {
+		return
 	}
 	output.PrivateIp = newDcsInstance.IP
-	
+
 	output.Password, err = utils.AesEnPassword(input.Guid, input.Seed, input.Password, utils.DEFALT_CIPHER)
 	if err != nil {
 		return
 	}
-	logrus.Infof("newDcsInstance =%++v",newDcsInstance)
+	logrus.Infof("newDcsInstance =%++v", newDcsInstance)
 
 	return
 }
@@ -449,7 +454,6 @@ func (action *DcsDeleteAction) ReadParam(param interface{}) (interface{}, error)
 	return inputs, nil
 }
 
-
 func deleteDcs(input DcsDeleteInput) (output DcsDeleteOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
@@ -476,13 +480,16 @@ func deleteDcs(input DcsDeleteInput) (output DcsDeleteOutput, err error) {
 		return
 	}
 
-	sc, err := createDcsServiceClient(cloudProviderParam)
+	sc, err := createDcsServiceClient(input.CloudProviderParam)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	err=instances.Delete(sc,input.Id).ExtractErr()
-	return 
+	err = instances.Delete(sc, input.Id).ExtractErr()
+	if err != nil && strings.Contains(err.Error(), "instance does not exist") {
+		err = nil
+	}
+	return
 }
 
 func (action *DcsDeleteAction) Do(inputs interface{}) (interface{}, error) {
@@ -490,7 +497,7 @@ func (action *DcsDeleteAction) Do(inputs interface{}) (interface{}, error) {
 	outputs := DcsDeleteOutputs{}
 	var finalErr error
 
-	for _, input := range vms.Inputs {
+	for _, input := range dcs.Inputs {
 		output, err := deleteDcs(input)
 		if err != nil {
 			finalErr = err
@@ -498,6 +505,6 @@ func (action *DcsDeleteAction) Do(inputs interface{}) (interface{}, error) {
 		outputs.Outputs = append(outputs.Outputs, output)
 	}
 
-	logrus.Infof("all dcs= %v are delete", vms)
+	logrus.Infof("all dcs= %v are delete", dcs)
 	return &outputs, finalErr
 }
