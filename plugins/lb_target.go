@@ -222,6 +222,12 @@ func ensureHostAddToLbPool(params CloudProviderParam, hostIds []string, hostPort
 		return err
 	}
 
+	allMembers, err := getAllPoolMembers(sc, poolId)
+	if err != nil {
+		return err
+	}
+
+	addedHost := make(map[string]bool)
 	for i, hostId := range hostIds {
 		vm, err := getVmInfoById(params, hostId)
 		if err != nil {
@@ -235,6 +241,15 @@ func ensureHostAddToLbPool(params CloudProviderParam, hostIds []string, hostPort
 		}
 
 		address, _ := getIpFromVmInfo(vm)
+		key := fmt.Sprintf("%v%v", address, hostPorts[i])
+		//check if already exist
+		if _, err = getMemberIdByIpAndPort(allMembers, address, hostPorts[i]); err == nil {
+			continue
+		}
+		if _, ok := addedHost[key]; ok {
+			continue
+		}
+
 		subnetId, err := getSubnetIdByIpAddress(subnets, address)
 		if err != nil {
 			return err
@@ -251,6 +266,7 @@ func ensureHostAddToLbPool(params CloudProviderParam, hostIds []string, hostPort
 		if _, err = pools.CreateMember(sc, poolId, opts).Extract(); err != nil {
 			return err
 		}
+		addedHost[key] = true
 	}
 
 	return nil
@@ -357,6 +373,8 @@ func ensureDeleteHostFromPool(params CloudProviderParam, hostIds []string, hostP
 		return err
 	}
 
+	alreadyDeletedHost := make(map[string]bool)
+
 	for i, hostId := range hostIds {
 		vm, err := getVmInfoById(params, hostId)
 		if err != nil {
@@ -367,11 +385,15 @@ func ensureDeleteHostFromPool(params CloudProviderParam, hostIds []string, hostP
 		if err != nil {
 			continue
 		}
+		if _, ok := alreadyDeletedHost[memberId]; ok {
+			continue
+		}
 
 		if err = pools.DeleteMember(sc, poolId, memberId).ExtractErr(); err != nil {
 			logrus.Errorf("lb pools deleteMember meet err=%v", err)
 			return err
 		}
+		alreadyDeletedHost[memberId] = true
 	}
 
 	return nil
