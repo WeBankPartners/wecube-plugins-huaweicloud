@@ -189,7 +189,7 @@ func waitDcsCreateOk(sc *golangsdk.ServiceClient, id string) (*instances.Instanc
 	var finalErr error
 
 	for {
-		time.Sleep(time.Duration(5) * time.Second)
+		time.Sleep(time.Duration(15) * time.Second)
 		dcsInfo, err := instances.Get(sc, id).Extract()
 		if err != nil {
 			finalErr = err
@@ -209,7 +209,7 @@ func waitDcsCreateOk(sc *golangsdk.ServiceClient, id string) (*instances.Instanc
 func isDcsExist(cloudProviderParam CloudProviderParam, id string) (*instances.Instance, bool, error) {
 	dcsInfo, err := getDcsInfoById(cloudProviderParam, id)
 	if err != nil {
-		if strings.Contains(err.Error(), "No Nat Gateway exist") {
+		if strings.Contains(err.Error(), "instance does not exist") {
 			return nil, false, nil
 		}
 		return nil, false, err
@@ -384,7 +384,6 @@ func createDcs(input DcsCreateInput) (output DcsCreateOutput, err error) {
 	}
 
 	resp, err := instances.Create(sc, opts).Extract()
-	fmt.Printf("resp=%++v,err=%v\n", resp, err)
 	if err != nil {
 		return
 	}
@@ -487,6 +486,9 @@ func deleteDcs(input DcsDeleteInput) (output DcsDeleteOutput, err error) {
 	}
 
 	err = instances.Delete(sc, input.Id).ExtractErr()
+	if err != nil && strings.Contains(err.Error(), "instance does not exist") {
+		err = nil
+	}
 	return
 }
 
