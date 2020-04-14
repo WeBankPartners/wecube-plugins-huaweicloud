@@ -253,18 +253,18 @@ func getAvailableAzMap(sc *golangsdk.ServiceClient) (map[string]string, error) {
 	return azMap, nil
 }
 
-func buildBssParam(input DcsCreateInput)(*instances.BssParam){
-	if input.ChargeType == POST_PAID{
-		return nil 
+func buildBssParam(input DcsCreateInput) *instances.BssParam {
+	if input.ChargeType == POST_PAID {
+		return nil
 	}
 
-	periodNum,_:=strconv.Atoi(input.PeriodNum)
-	bssParam:=instances.BssParam{
-		ChargeMode:PRE_PAID,
-	    IsAutoPay:"true",
-	    PeriodType:input.PeriodType,
-	    PeriodNum:periodNum,
-	    IsAutoRenew:input.IsAutoRenew,
+	periodNum, _ := strconv.Atoi(input.PeriodNum)
+	bssParam := instances.BssParam{
+		ChargeMode:  PRE_PAID,
+		IsAutoPay:   "true",
+		PeriodType:  input.PeriodType,
+		PeriodNum:   periodNum,
+		IsAutoRenew: input.IsAutoRenew,
 	}
 	return &bssParam
 }
@@ -340,14 +340,14 @@ func getRedisProductId(input DcsCreateInput, azs []string) (string, []string, er
 	return "", azs, fmt.Errorf("can't find the desire redis productId")
 }
 
-func getAzSizeByInstanceType(instanceType string) (int,error) {
-	switch instanceType{
+func getAzSizeByInstanceType(instanceType string) (int, error) {
+	switch instanceType {
 	case INSTANCE_TYPE_SINGLE:
-		return 1,nil
-	case INSTANCE_TYPE_HA,INSTANCE_TYPE_CLUSTER,INSTANCE_TYPE_PROXY:
-		return 2,nil
+		return 1, nil
+	case INSTANCE_TYPE_HA, INSTANCE_TYPE_CLUSTER, INSTANCE_TYPE_PROXY:
+		return 2, nil
 	}
-	return 0,fmt.Errorf("unkownInstanceType %v",instanceType)
+	return 0, fmt.Errorf("unkownInstanceType %v", instanceType)
 }
 
 func createDcs(input DcsCreateInput) (output DcsCreateOutput, err error) {
@@ -380,18 +380,18 @@ func createDcs(input DcsCreateInput) (output DcsCreateOutput, err error) {
 		return
 	}
 
-	azSize,err:=getAzSizeByInstanceType(input.InstanceType)
-	if err!= nil {
-		return 
+	azSize, err := getAzSizeByInstanceType(input.InstanceType)
+	if err != nil {
+		return
 	}
-	if azSize >len(azs){
-		err = fmt.Errorf("instanceType(%v) need %d azs,but get only %d azs",input.InstanceType,azSize,len(azs))
-		return 
+	if azSize > len(azs) {
+		err = fmt.Errorf("instanceType(%v) need %d azs,but get only %d azs", input.InstanceType, azSize, len(azs))
+		return
 	}
-	if azSize <len(azs){
-		azs=azs[0:azSize]
+	if azSize < len(azs) {
+		azs = azs[0:azSize]
 	}
-	
+
 	productId, azCodes, err := getRedisProductId(input, azs)
 	if err != nil {
 		return
@@ -410,11 +410,11 @@ func createDcs(input DcsCreateInput) (output DcsCreateOutput, err error) {
 		ProductID:        productId,
 		BssParam:         buildBssParam(input),
 	}
-	if input.PrivateIp != "" && input.EngineVersion=="3.0" {
+	if input.PrivateIp != "" && input.EngineVersion == "3.0" {
 		opts.PrivateIp = input.PrivateIp
 	}
-	if input.Port != "" && input.EngineVersion=="3.0" {
-		opts.Port,_=strconv.Atoi(input.Port)
+	if input.Port != "" && input.EngineVersion != "3.0" {
+		opts.Port, _ = strconv.Atoi(input.Port)
 	}
 	if input.Password == "" {
 		input.Password = utils.CreateRandomPassword()
@@ -437,7 +437,7 @@ func createDcs(input DcsCreateInput) (output DcsCreateOutput, err error) {
 		return
 	}
 	output.PrivateIp = newDcsInstance.IP
-	output.Port =fmt.Sprintf("%v",newDcsInstance.Port)
+	output.Port = fmt.Sprintf("%v", newDcsInstance.Port)
 
 	output.Password, err = utils.AesEnPassword(input.Guid, input.Seed, input.Password, utils.DEFALT_CIPHER)
 	if err != nil {
