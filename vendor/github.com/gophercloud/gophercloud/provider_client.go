@@ -17,7 +17,7 @@ import (
 )
 
 // DefaultUserAgent is the default User-Agent string set in the request header.
-const DefaultUserAgent = "postman"
+const DefaultUserAgent = "huawei-cloud-sdk-go/1.0.20"
 
 // ProviderClient stores details that are required to interact with any
 // services within a specific provider's API.
@@ -237,7 +237,6 @@ func (client *ProviderClient) Request(method, url string, options *RequestOpts) 
 	*/
 
 	//fmt.Println("url:", url)
-	//fmt.Printf("req=%++v\n",req)
 	//Issue the request.  原代码，注释掉
 	resp, err = client.HTTPClient.Do(req)
 	if err != nil {
@@ -253,7 +252,7 @@ func (client *ProviderClient) Request(method, url string, options *RequestOpts) 
 	resp.Body.Close() //  must close
 	resp.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 
-	//fmt.Printf("Response body is %s\n", string(bodyBytes))
+	log.Debug("Response body is %s\n", string(bodyBytes))
 
 	// Allow default OkCodes if none explicitly set
 	if options.OkCodes == nil {
