@@ -629,6 +629,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">security_group_id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">az</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">private_ip</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">port</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">charge_type</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">period_type</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">period_num</parameter>
@@ -638,6 +639,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">password</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="">port</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">private_ip</parameter>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>

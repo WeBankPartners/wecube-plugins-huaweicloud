@@ -88,6 +88,17 @@ type CreateOps struct {
 	MaintainEnd string `json:"maintain_end,omitempty"`
 
 	PrivateIp string `json:"private_ip,omitempty"`
+
+	Port int `json:"port,omitempty"`
+	BssParam *BssParam  `json:"bss_param,omitempty"`
+}
+
+type BssParam struct {
+	ChargeMode  string `json:"charging_mode,omitempty"`
+	IsAutoPay   string `json:"is_auto_pay,omitempty"`
+	PeriodType  string `json:"period_type,omitempty"`
+	PeriodNum   int    `json:"period_num,omitempty"`
+	IsAutoRenew string `json:"is_auto_renew,omitempty"`
 }
 
 // InstanceBackupPolicy for dcs
