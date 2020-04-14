@@ -42,9 +42,9 @@ type SubnetCreateInput struct {
 	VpcId            string `json:"vpc_id,omitempty"`
 	Name             string `json:"name,omitempty"`
 	Cidr             string `json:"cidr,omitempty"`
-	AvailabilityZone string `json:"az,omitempty"`  
-	PrimaryDns       string  `json:"primary_dns,omitempty"`  
-	SecondaryDns     string  `json:"secondary_dns,omitempty"`  
+	AvailabilityZone string `json:"az,omitempty"`
+	PrimaryDns       string `json:"primary_dns,omitempty"`
+	SecondaryDns     string `json:"secondary_dns,omitempty"`
 }
 
 type SubnetCreateOutputs struct {
@@ -185,7 +185,7 @@ func createSubnet(input SubnetCreateInput) (output SubnetCreateOutput, err error
 		opts.AvailabilityZone = input.AvailabilityZone
 	}
 	if input.PrimaryDns != "" {
-		opts.PrimaryDNS=input.PrimaryDns
+		opts.PrimaryDNS = input.PrimaryDns
 	}
 	if input.SecondaryDns != "" {
 		opts.SecondaryDNS = input.SecondaryDns
