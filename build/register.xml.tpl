@@ -102,6 +102,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">vpc_id</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">az</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">primary_dns</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">secondary_dns</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="">guid</parameter>
