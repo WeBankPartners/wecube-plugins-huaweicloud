@@ -415,7 +415,7 @@ func UpdateInstanceConfig(client *golangsdk.ServiceClient, instanceId string, op
 		return
 	}
 	_, r.Err = client.Put(updateInstanceConfigURL(client, instanceId), b, &r.Body, &golangsdk.RequestOpts{
-		OkCodes: []int{202},
+		OkCodes: []int{200},
 	})
 	return
 }

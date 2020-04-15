@@ -2,6 +2,10 @@ package plugins
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/WeBankPartners/wecube-plugins-huaweicloud/plugins/utils"
 	"github.com/huaweicloud/golangsdk"
 	"github.com/huaweicloud/golangsdk/openstack"
@@ -9,9 +13,6 @@ import (
 	"github.com/huaweicloud/golangsdk/openstack/dcs/v1/instances"
 	"github.com/huaweicloud/golangsdk/openstack/dcs/v1/products"
 	"github.com/sirupsen/logrus"
-	"strconv"
-	"strings"
-	"time"
 )
 
 const (
@@ -426,6 +427,7 @@ func createDcs(input DcsCreateInput) (output DcsCreateOutput, err error) {
 		return
 	}
 
+	logrus.Infof("opts=%++v", opts)
 	resp, err := instances.Create(sc, opts).Extract()
 	if err != nil {
 		return

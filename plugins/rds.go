@@ -458,17 +458,17 @@ func buildChargeInfoStruct(input *RdsCreateInput) *instances.ChargeInfo {
 	return &chargeInfo
 }
 
-func updateRdsConfiguration(input *RdsCreateInput, rdsId string) error {
+func updateRdsConfiguration(input *RdsCreateInput, rdsId string) (bool, error) {
 	sc, err := createGolangSdkRdsServiceClientV3(input.CloudProviderParam)
 	if err != nil {
-		return nil
+		return false, err
 	}
 
 	value := map[string]string{}
 	if input.CharacterSet != "" {
 		value["character_set_server"] = strings.ToLower(input.CharacterSet)
 	} else {
-		value["character_set_server"] = "latin1"
+		value["character_set_server"] = "utf8"
 	}
 
 	if input.LowerCaseTableNames == "0" {
@@ -481,7 +481,22 @@ func updateRdsConfiguration(input *RdsCreateInput, rdsId string) error {
 		Values: value,
 	}
 	logrus.Infof("updateOpts:%++v", updateOpts)
-	_, err = goInstances.UpdateInstanceConfig(sc, rdsId, updateOpts).Extract()
+	resp, err := goInstances.UpdateInstanceConfig(sc, rdsId, updateOpts).Extract()
+	logrus.Infof("UpdateInstanceConfig resp=%++v", resp)
+
+	return resp.NeedRestartInstance, err
+}
+
+func restartRds(sc *gophercloud.ServiceClient, id string) error {
+	opts := instances.RestartRdsInstanceOpts{
+		Restart: " ",
+	}
+	_, err := instances.Restart(sc, opts, id).Extract()
+	if err != nil {
+		return err
+	}
+
+	_, err = waitRdsInstanceJobOk(sc, id, "create", 20)
 	return err
 }
 
@@ -535,7 +550,6 @@ func deleteConfiguration(params CloudProviderParam, id string) error {
 }
 
 func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreateOutput, err error) {
-	var configurationId string
 	defer func() {
 		output.Guid = input.Guid
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
@@ -605,10 +619,10 @@ func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreat
 		return
 	}
 
-	configurationId, err = createRdsConfiguration(input)
-	if err != nil {
-		return
-	}
+	// configurationId, err = createRdsConfiguration(input)
+	// if err != nil {
+	// 	return
+	// }
 
 	request := instances.CreateRdsOpts{
 		Name:             input.Name,
@@ -623,7 +637,7 @@ func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreat
 		Volume:           volume,
 		ChargeInfo:       buildChargeInfoStruct(input),
 		Ha:               ha,
-		ConfigurationId:  configurationId,
+		// ConfigurationId:  configurationId,
 	}
 	if input.Port != "" {
 		request.Port = input.Port
@@ -635,13 +649,11 @@ func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreat
 	logrus.Infof("request=%++v", request)
 	response, err := instances.Create(sc, request).Extract()
 	if err != nil {
-		_ = deleteConfiguration(input.CloudProviderParam, configurationId)
 		return
 	}
 	output.Id = response.Instance.Id
 	instance, err := waitRdsInstanceJobOk(sc, response.Instance.Id, "create", 20)
 	if err != nil {
-		_ = deleteConfiguration(input.CloudProviderParam, configurationId)
 		return
 	}
 
@@ -651,19 +663,23 @@ func (action *RdsCreateAction) createRds(input *RdsCreateInput) (output RdsCreat
 	output.Memory = memory
 	output.Cpu = cpu
 
-	// err = updateRdsConfiguration(input, output.Id)
-	// if err != nil {
-	// 	return
-	// }
+	isRestart, err := updateRdsConfiguration(input, output.Id)
+	if err != nil {
+		return
+	}
+	if isRestart == true {
+		err = restartRds(sc, output.Id)
+		if err != nil {
+			return
+		}
+	}
 
 	password, err := utils.AesEnPassword(input.Guid, input.Seed, input.Password, utils.DEFALT_CIPHER)
 	if err != nil {
-		_ = deleteConfiguration(input.CloudProviderParam, configurationId)
 		return
 	}
 	output.Password = password
 
-	err = deleteConfiguration(input.CloudProviderParam, configurationId)
 	return
 
 }
