@@ -8,11 +8,11 @@ import (
 	"net/http"
 	"strings"
 	"sync"
-  //"fmt"
+//         "fmt"
 )
 
 // DefaultUserAgent is the default User-Agent string set in the request header.
-const DefaultUserAgent = "golangsdk/2.0.0"
+const DefaultUserAgent = "postman"
 
 // UserAgent represents a User-Agent header.
 type UserAgent struct {
@@ -253,11 +253,6 @@ func (client *ProviderClient) Request(method, url string, options *RequestOpts) 
 		return nil, err
 	}
 	
-	/*if resp != nil {
-	     body, _ := ioutil.ReadAll(resp.Body)
-	     fmt.Printf("body=%++v\n",string(body))
-        }*/
-
 	// Allow default OkCodes if none explicitly set
 	if options.OkCodes == nil {
 		options.OkCodes = defaultOkCodes(method)
@@ -282,7 +277,7 @@ func (client *ProviderClient) Request(method, url string, options *RequestOpts) 
 			Actual:   resp.StatusCode,
 			Body:     body,
 		}
-
+                //fmt.Printf("body=%++v\n",string(body))
 		errType := options.ErrorContext
 		switch resp.StatusCode {
 		case http.StatusBadRequest:
