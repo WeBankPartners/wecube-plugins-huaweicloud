@@ -468,7 +468,7 @@ func updateRdsConfiguration(input *RdsCreateInput, rdsId string) (bool, error) {
 	if input.CharacterSet != "" {
 		value["character_set_server"] = strings.ToLower(input.CharacterSet)
 	} else {
-		value["character_set_server"] = "utf-8"
+		value["character_set_server"] = "utf8"
 	}
 
 	if input.LowerCaseTableNames == "0" {
