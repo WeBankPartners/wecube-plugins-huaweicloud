@@ -38,6 +38,7 @@ func init() {
 	vmActions["terminate"] = new(VmDeleteAction)
 	vmActions["start"] = new(VmStartAction)
 	vmActions["stop"] = new(VmStopAction)
+	vmActions["bind-security-groups"] = new(VmBindSecurityGroupsAction)
 }
 
 type VmPlugin struct {
@@ -881,4 +882,97 @@ func PrintImages(params CloudProviderParam) {
 		}
 	}
 
+}
+
+type VmBindSecurityGroupsAction struct {
+}
+
+type VmBindSecurityGroupsInputs struct {
+	Inputs []VmBindSecurityGroupsInput `json:"inputs,omitempty"`
+}
+
+type VmBindSecurityGroupsInput struct {
+	CallBackParameter
+	CloudProviderParam
+	Guid           string `json:"guid,omtempty"`
+	Id             string `json:"id,omtempty"`
+	SecurityGroups string `json:"security_groups,omitemoty"`
+}
+
+type VmBindSecurityGroupsOutputs struct {
+	Outputs []VmBindSecurityGroupsOutput `json:"outputs,omitempty"`
+}
+
+type VmBindSecurityGroupsOutput struct {
+	CallBackParameter
+	Result
+	Guid string `json:"guid,omtempty"`
+}
+
+func (action *VmBindSecurityGroupsAction) ReadParam(param interface{}) (interface{}, error) {
+	var inputs VmBindSecurityGroupsInputs
+	err := UnmarshalJson(param, &inputs)
+	if err != nil {
+		return nil, err
+	}
+	return inputs, nil
+}
+
+func checkVmBindSecurityGoupsParam(input VmBindSecurityGroupsInput) error {
+	if err := isCloudProviderParamValid(input.CloudProviderParam); err != nil {
+		return err
+	}
+	if input.Id == "" {
+		return fmt.Errorf("id is empty")
+	}
+	if input.SecurityGroups == "" {
+		return fmt.Errorf("security_groups is empty")
+	}
+	return nil
+}
+
+func vmBindSecurityGoups(input *VmBindSecurityGroupsInput) (output VmBindSecurityGroupsOutput, err error) {
+	defer func() {
+		output.Guid = input.Guid
+		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
+		if err == nil {
+			output.Result.Code = RESULT_CODE_SUCCESS
+		} else {
+			output.Result.Code = RESULT_CODE_ERROR
+			output.Result.Message = err.Error()
+		}
+	}()
+
+	if err = checkVmBindSecurityGoupsParam(*input); err != nil {
+		return
+	}
+
+	// remove all security groups of the vm
+
+	// do input.SecurityGoups to []string
+	_, err = GetArrayFromString(input.SecurityGroups, ARRAY_SIZE_REAL, 0)
+	if err != nil {
+		return
+	}
+
+	// add input.SecurityGoups to vm
+
+	return
+}
+
+func (action *VmBindSecurityGroupsAction) Do(inputs interface{}) (interface{}, error) {
+	vms, _ := inputs.(VmBindSecurityGroupsInputs)
+	outputs := VmBindSecurityGroupsOutputs{}
+	var finalErr error
+
+	for _, input := range vms.Inputs {
+		output, err := vmBindSecurityGoups(&input)
+		if err != nil {
+			finalErr = err
+		}
+		outputs.Outputs = append(outputs.Outputs, output)
+	}
+
+	logrus.Infof("all securityGoups had been bind, input = %++v", vms)
+	return &outputs, finalErr
 }
