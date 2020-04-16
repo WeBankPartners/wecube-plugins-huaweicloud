@@ -911,3 +911,13 @@ func DeleteSecurityGroup(params CloudProviderParam, serverId string, securityGro
 	result := v2.RemoveSecurityGroup(sc, serverId, securityGroupId)
 	return result.Err
 }
+
+func AddSecurityGroup(params CloudProviderParam, serverId string, securityGroupId string) error {
+	sc, err := createVmServiceClient(params, CLOUD_SERVER_V2)
+	if err != nil {
+		return err
+	}
+
+	result := v2.AddSecurityGroup(sc, serverId, securityGroupId)
+	return result.Err
+}

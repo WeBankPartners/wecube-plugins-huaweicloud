@@ -27,6 +27,6 @@ func removeSecurityGroupURL(sc *gophercloud.ServiceClient, serverID string)strin
 	return sc.ServiceURL("servers", serverID,"action")
 }
 
-func AddSecurityGroupURL(sc *gophercloud.ServiceClient, serverID string)string {
+func addSecurityGroupURL(sc *gophercloud.ServiceClient, serverID string)string {
 	return sc.ServiceURL("servers", serverID,"action")
 }

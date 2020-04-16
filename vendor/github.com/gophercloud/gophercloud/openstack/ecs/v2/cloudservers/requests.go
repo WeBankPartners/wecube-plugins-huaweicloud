@@ -183,16 +183,16 @@ func GetSecurityGroups(client *gophercloud.ServiceClient, serverID string)(r Sec
 	return
 }
 
-type RemoveSecurityGroupOpt struct {
+type SecurityGroupOpt struct {
       Name string    `json:"name,omitempty"`
 }
 
-func (opts RemoveSecurityGroupOpt) ToServerChangeMap() (map[string]interface{}, error) {
+func (opts SecurityGroupOpt) ToServerChangeMap(name string) (map[string]interface{}, error) {
 	body, err := gophercloud.BuildRequestBody(opts, "")
 	if err != nil {
 		return nil, err
 	}
-	return map[string]interface{}{"removeSecurityGroup": body}, nil
+	return map[string]interface{}{name: body}, nil
 }
 
 
@@ -204,11 +204,11 @@ func RemoveSecurityGroup(client *gophercloud.ServiceClient,serverID string ,secu
 		return
 	}
 
-	opt:= RemoveSecurityGroupOpt{
+	opt:= SecurityGroupOpt{
 		Name:securityGroupId,
 	}
 
-	body, err := opt.ToServerChangeMap()
+	body, err := opt.ToServerChangeMap("removeSecurityGroup")
 	if err != nil {
 		r.Err = err
 		return
@@ -216,10 +216,39 @@ func RemoveSecurityGroup(client *gophercloud.ServiceClient,serverID string ,secu
 
 	url:=removeSecurityGroupURL(client,serverID)
 	newUrl := strings.Replace(url, "/v2/", "/v2.1/", 1)
-	_, r.Err = client.Post(newUrl , body, &r.Body, &gophercloud.RequestOpts{
+	_, r.Err = client.Post(newUrl , body, nil, &gophercloud.RequestOpts{
 		OkCodes: []int{200,202},
 	})
 
 	return
+}
+
+
+
+func AddSecurityGroup(client *gophercloud.ServiceClient,serverID string ,securityGroupId string)(r AddSecurityGroupResult){
+        if serverID == "" {
+                message := fmt.Sprintf(gophercloud.CE_MissingInputMessage, "serverID")
+                err := gophercloud.NewSystemCommonError(gophercloud.CE_MissingInputCode, message)
+                r.Err = err
+                return
+        }
+
+        opt:= SecurityGroupOpt{
+                Name:securityGroupId,
+        }
+
+        body, err := opt.ToServerChangeMap("addSecurityGroup")
+        if err != nil {
+                r.Err = err
+                return
+        }
+
+        url:=addSecurityGroupURL(client,serverID)
+        newUrl := strings.Replace(url, "/v2/", "/v2.1/", 1)
+        _, r.Err = client.Post(newUrl , body, nil, &gophercloud.RequestOpts{
+                OkCodes: []int{200,202},
+        })
+      
+        return
 }
 

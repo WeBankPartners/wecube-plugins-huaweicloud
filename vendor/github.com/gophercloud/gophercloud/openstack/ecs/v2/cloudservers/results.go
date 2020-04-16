@@ -84,3 +84,8 @@ type RemoveSecurityGroupResult struct {
 	gophercloud.Result
 }
 
+
+type AddSecurityGroupResult struct {
+        gophercloud.Result
+}
+
