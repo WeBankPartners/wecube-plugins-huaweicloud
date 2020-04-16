@@ -164,3 +164,23 @@ func (opts ResizeOpts) ToResizeQuery() (string, error) {
 //	})
 //	return
 //}
+
+//-------------------added by brankbao-------------------//
+
+func GetSecurityGroups(client *gophercloud.ServiceClient, serverID string)(SecurityGroupsResult){
+	if serverID == "" {
+		message := fmt.Sprintf(gophercloud.CE_MissingInputMessage, "serverID")
+		err := gophercloud.NewSystemCommonError(gophercloud.CE_MissingInputCode, message)
+		r.Err = err
+		return r
+	}
+	url:=getSecurityGroupURL(client, serverID)
+	newUrl := strings.Replace(url, "/v2/", "/v2.1/", 1)
+
+	_, r.Err = client.Get(newUrl, &r.Body, &gophercloud.RequestOpts{
+		OkCodes: []int{200, 203,204},
+	})
+
+	return
+}
+

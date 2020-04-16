@@ -58,3 +58,24 @@ func (r FlavorResult) Extract() (*[]Flavor, error) {
 	err := r.ExtractInto(&f)
 	return f, err
 }
+
+//----------added by brankbao---------------//
+type SecurityGroupsResult struct {
+	gophercloud.Result
+}
+
+type SecurityGroup struct {
+	ID   string `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
+}
+
+type SecurityGroups struct {
+	SecurityGroups []SecurityGroup   `json:"security_groups,omitempty"`
+}
+
+func (r SecurityGroupsResult) Extract() (SecurityGroups, error) {
+	var s SecurityGroups
+	err := r.ExtractInto(&s)
+	return s, err
+}
+

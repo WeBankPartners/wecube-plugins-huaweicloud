@@ -18,3 +18,7 @@ func reinstallOSURL(sc *gophercloud.ServiceClient, serverID string) string {
 func resizeFlavorURL(sc *gophercloud.ServiceClient) string {
 	return sc.ServiceURL("resize_flavors")
 }
+
+func getSecurityGroupURL(sc *gophercloud.ServiceClient, serverID string) string {
+	return sc.ServiceURL("servers", serverID,"os-security-groups")
+}

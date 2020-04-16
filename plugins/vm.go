@@ -14,6 +14,7 @@ import (
 	v1 "github.com/gophercloud/gophercloud/openstack/ecs/v1/cloudservers"
 	flavor "github.com/gophercloud/gophercloud/openstack/ecs/v1/flavor"
 	v1_1 "github.com/gophercloud/gophercloud/openstack/ecs/v1_1/cloudservers"
+	v2 "github.com/gophercloud/gophercloud/openstack/ecs/v2/cloudservers"
 	"github.com/sirupsen/logrus"
 )
 
@@ -880,5 +881,23 @@ func PrintImages(params CloudProviderParam) {
 			fmt.Printf("imageName=%v,imageId=%v\n", image.Name, image.ID)
 		}
 	}
+}
 
+func getVmSecurityGroups(params CloudProviderParam,serverId string)([]string,error){
+	securityGroups:=[]string{}
+	sc, err := createVmServiceClient(cloudProviderParam, CLOUD_SERVER_V2)
+	if err != nil {
+		return nil, err
+	}
+
+	securityGroups,err:=v2.GetSecurityGroups(sc,serverId).Extract()
+	if err!= nil {
+		return securityGroups,err
+	}
+
+	for _,securityGroup:=securityGroups.SecurityGroups{
+		securityGroups = append(securityGroups,securityGroup.ID)
+	}
+	
+	return securityGroups,nil
 }
