@@ -167,7 +167,7 @@ func (opts ResizeOpts) ToResizeQuery() (string, error) {
 
 //-------------------added by brankbao-------------------//
 
-func GetSecurityGroups(client *gophercloud.ServiceClient, serverID string)(SecurityGroupsResult){
+func GetSecurityGroups(client *gophercloud.ServiceClient, serverID string)(r SecurityGroupsResult){
 	if serverID == "" {
 		message := fmt.Sprintf(gophercloud.CE_MissingInputMessage, "serverID")
 		err := gophercloud.NewSystemCommonError(gophercloud.CE_MissingInputCode, message)

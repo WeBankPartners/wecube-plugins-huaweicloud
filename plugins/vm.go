@@ -883,21 +883,21 @@ func PrintImages(params CloudProviderParam) {
 	}
 }
 
-func getVmSecurityGroups(params CloudProviderParam,serverId string)([]string,error){
-	securityGroups:=[]string{}
-	sc, err := createVmServiceClient(cloudProviderParam, CLOUD_SERVER_V2)
+func GetVmSecurityGroups(params CloudProviderParam, serverId string) ([]string, error) {
+	securityGroups := []string{}
+	sc, err := createVmServiceClient(params, CLOUD_SERVER_V2)
 	if err != nil {
 		return nil, err
 	}
 
-	securityGroups,err:=v2.GetSecurityGroups(sc,serverId).Extract()
-	if err!= nil {
-		return securityGroups,err
+	result, err := v2.GetSecurityGroups(sc, serverId).Extract()
+	if err != nil {
+		return securityGroups, err
 	}
 
-	for _,securityGroup:=securityGroups.SecurityGroups{
-		securityGroups = append(securityGroups,securityGroup.ID)
+	for _, securityGroup := range result.SecurityGroups {
+		securityGroups = append(securityGroups, securityGroup.ID)
 	}
-	
-	return securityGroups,nil
+
+	return securityGroups, nil
 }
