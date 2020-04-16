@@ -79,3 +79,8 @@ func (r SecurityGroupsResult) Extract() (SecurityGroups, error) {
 	return s, err
 }
 
+
+type RemoveSecurityGroupResult struct {
+	gophercloud.Result
+}
+

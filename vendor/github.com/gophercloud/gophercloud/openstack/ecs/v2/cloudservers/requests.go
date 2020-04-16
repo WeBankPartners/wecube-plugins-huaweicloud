@@ -166,7 +166,6 @@ func (opts ResizeOpts) ToResizeQuery() (string, error) {
 //}
 
 //-------------------added by brankbao-------------------//
-
 func GetSecurityGroups(client *gophercloud.ServiceClient, serverID string)(r SecurityGroupsResult){
 	if serverID == "" {
 		message := fmt.Sprintf(gophercloud.CE_MissingInputMessage, "serverID")
@@ -179,6 +178,46 @@ func GetSecurityGroups(client *gophercloud.ServiceClient, serverID string)(r Sec
 
 	_, r.Err = client.Get(newUrl, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{200, 203,204},
+	})
+
+	return
+}
+
+type RemoveSecurityGroupOpt struct {
+      Name string    `json:"name,omitempty"`
+}
+
+func (opts RemoveSecurityGroupOpt) ToServerChangeMap() (map[string]interface{}, error) {
+	body, err := gophercloud.BuildRequestBody(opts, "")
+	if err != nil {
+		return nil, err
+	}
+	return map[string]interface{}{"removeSecurityGroup": body}, nil
+}
+
+
+func RemoveSecurityGroup(client *gophercloud.ServiceClient,serverID string ,securityGroupId string)(r RemoveSecurityGroupResult){
+	if serverID == "" {
+		message := fmt.Sprintf(gophercloud.CE_MissingInputMessage, "serverID")
+		err := gophercloud.NewSystemCommonError(gophercloud.CE_MissingInputCode, message)
+		r.Err = err
+		return
+	}
+
+	opt:= RemoveSecurityGroupOpt{
+		Name:securityGroupId,
+	}
+
+	body, err := opt.ToServerChangeMap()
+	if err != nil {
+		r.Err = err
+		return
+	}
+
+	url:=removeSecurityGroupURL(client,serverID)
+	newUrl := strings.Replace(url, "/v2/", "/v2.1/", 1)
+	_, r.Err = client.Post(newUrl , body, &r.Body, &gophercloud.RequestOpts{
+		OkCodes: []int{200,202},
 	})
 
 	return

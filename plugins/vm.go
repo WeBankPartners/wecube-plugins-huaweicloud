@@ -901,3 +901,13 @@ func GetVmSecurityGroups(params CloudProviderParam, serverId string) ([]string, 
 
 	return securityGroups, nil
 }
+
+func DeleteSecurityGroup(params CloudProviderParam, serverId string, securityGroupId string) error {
+	sc, err := createVmServiceClient(params, CLOUD_SERVER_V2)
+	if err != nil {
+		return err
+	}
+
+	result := v2.RemoveSecurityGroup(sc, serverId, securityGroupId)
+	return result.Err
+}

@@ -22,3 +22,11 @@ func resizeFlavorURL(sc *gophercloud.ServiceClient) string {
 func getSecurityGroupURL(sc *gophercloud.ServiceClient, serverID string) string {
 	return sc.ServiceURL("servers", serverID,"os-security-groups")
 }
+
+func removeSecurityGroupURL(sc *gophercloud.ServiceClient, serverID string)string {
+	return sc.ServiceURL("servers", serverID,"action")
+}
+
+func AddSecurityGroupURL(sc *gophercloud.ServiceClient, serverID string)string {
+	return sc.ServiceURL("servers", serverID,"action")
+}
