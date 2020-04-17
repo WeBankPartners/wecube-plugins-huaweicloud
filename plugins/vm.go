@@ -40,6 +40,8 @@ func init() {
 	vmActions["start"] = new(VmStartAction)
 	vmActions["stop"] = new(VmStopAction)
 	vmActions["bind-security-groups"] = new(VmBindSecurityGroupsAction)
+	vmActions["add-security-groups"] = new(VmAddSecurityGroupsAction)
+	vmActions["remove-security-groups"] = new(VmRemoveSecurityGroupsAction)
 }
 
 type VmPlugin struct {
@@ -1078,5 +1080,258 @@ func (action *VmBindSecurityGroupsAction) Do(inputs interface{}) (interface{}, e
 	}
 
 	logrus.Infof("all securityGoups had been bind, input = %++v", vms)
+	return &outputs, finalErr
+}
+
+type VmAddSecurityGroupsAction struct {
+}
+
+type VmAddSecurityGroupsInputs struct {
+	Inputs []VmAddSecurityGroupsInput `json:"inputs,omitempty"`
+}
+type VmAddSecurityGroupsInput VmBindSecurityGroupsInput
+
+type VmAddSecurityGroupsOutputs struct {
+	Outputs []VmAddSecurityGroupsOutput `json:"outputs,omitempty"`
+}
+type VmAddSecurityGroupsOutput VmBindSecurityGroupsOutput
+
+func (action *VmAddSecurityGroupsAction) ReadParam(param interface{}) (interface{}, error) {
+	var inputs VmAddSecurityGroupsInputs
+	err := UnmarshalJson(param, &inputs)
+	if err != nil {
+		return nil, err
+	}
+	return inputs, nil
+}
+
+func checkVmAddSecurityGoupsParam(input VmAddSecurityGroupsInput) error {
+	if err := isCloudProviderParamValid(input.CloudProviderParam); err != nil {
+		return err
+	}
+	if input.Id == "" {
+		return fmt.Errorf("id is empty")
+	}
+	if input.SecurityGroups == "" {
+		return fmt.Errorf("security_groups is empty")
+	}
+	return nil
+}
+
+func vmAddSecurityGoups(input *VmAddSecurityGroupsInput) (output VmAddSecurityGroupsOutput, err error) {
+	defer func() {
+		output.Guid = input.Guid
+		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
+		if err == nil {
+			output.Result.Code = RESULT_CODE_SUCCESS
+		} else {
+			output.Result.Code = RESULT_CODE_ERROR
+			output.Result.Message = err.Error()
+		}
+	}()
+
+	if err = checkVmAddSecurityGoupsParam(*input); err != nil {
+		return
+	}
+
+	sc, err := createVmServiceClient(input.CloudProviderParam, CLOUD_SERVER_V2)
+	if err != nil {
+		return
+	}
+
+	// do input.SecurityGoups to []string
+	sgIds, err := GetArrayFromString(input.SecurityGroups, ARRAY_SIZE_REAL, 0)
+	if err != nil {
+		return
+	}
+
+	// check wether input.SecurityGoups exist
+	vpcSc, err := CreateVpcServiceClientV1(input.CloudProviderParam)
+	if err != nil {
+		return
+	}
+	for _, sgId := range sgIds {
+		var exist bool
+		_, exist, err = isSecurityGroupExist(vpcSc, sgId)
+		if err != nil {
+			return
+		}
+
+		if !exist {
+			err = fmt.Errorf("securityGroup[%v] is not exist", sgId)
+			return
+		}
+	}
+
+	// get all security groups of the vm
+	sgs, err := getSecurityGroupsByVm(sc, input.Id)
+	if err != nil {
+		return
+	}
+
+	// check wether the vm has the sgId
+	var addSgIds []string
+	for _, sgId := range sgIds {
+		flag := false
+		for _, sg := range sgs {
+			if sgId == sg.ID {
+				flag = true
+				break
+			}
+		}
+		if !flag {
+			addSgIds = append(addSgIds, sgId)
+		}
+	}
+
+	// add input.SecurityGoups to vm
+	if err = addVmSecurityGoups(sc, input.Id, addSgIds); err != nil {
+		return
+	}
+
+	return
+}
+
+func (action *VmAddSecurityGroupsAction) Do(inputs interface{}) (interface{}, error) {
+	vms, _ := inputs.(VmAddSecurityGroupsInputs)
+	outputs := VmAddSecurityGroupsOutputs{}
+	var finalErr error
+
+	for _, input := range vms.Inputs {
+		output, err := vmAddSecurityGoups(&input)
+		if err != nil {
+			finalErr = err
+		}
+		outputs.Outputs = append(outputs.Outputs, output)
+	}
+
+	logrus.Infof("all securityGoups had been added, input = %++v", vms)
+	return &outputs, finalErr
+}
+
+type VmRemoveSecurityGroupsAction struct {
+}
+
+type VmRemoveSecurityGroupsInputs struct {
+	Inputs []VmRemoveSecurityGroupsInput `json:"inputs,omitempty"`
+}
+type VmRemoveSecurityGroupsInput VmBindSecurityGroupsInput
+
+type VmRemoveSecurityGroupsOutputs struct {
+	Outputs []VmRemoveSecurityGroupsOutput `json:"outputs,omitempty"`
+}
+type VmRemoveSecurityGroupsOutput VmBindSecurityGroupsOutput
+
+func (action *VmRemoveSecurityGroupsAction) ReadParam(param interface{}) (interface{}, error) {
+	var inputs VmRemoveSecurityGroupsInputs
+	err := UnmarshalJson(param, &inputs)
+	if err != nil {
+		return nil, err
+	}
+	return inputs, nil
+}
+
+func checkVmRemoveSecurityGoupsParam(input VmRemoveSecurityGroupsInput) error {
+	if err := isCloudProviderParamValid(input.CloudProviderParam); err != nil {
+		return err
+	}
+	if input.Id == "" {
+		return fmt.Errorf("id is empty")
+	}
+	if input.SecurityGroups == "" {
+		return fmt.Errorf("security_groups is empty")
+	}
+	return nil
+}
+
+func vmRemoveSecurityGoups(input *VmRemoveSecurityGroupsInput) (output VmRemoveSecurityGroupsOutput, err error) {
+	defer func() {
+		output.Guid = input.Guid
+		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
+		if err == nil {
+			output.Result.Code = RESULT_CODE_SUCCESS
+		} else {
+			output.Result.Code = RESULT_CODE_ERROR
+			output.Result.Message = err.Error()
+		}
+	}()
+
+	if err = checkVmRemoveSecurityGoupsParam(*input); err != nil {
+		return
+	}
+
+	sc, err := createVmServiceClient(input.CloudProviderParam, CLOUD_SERVER_V2)
+	if err != nil {
+		return
+	}
+
+	// do input.SecurityGoups to []string
+	sgIds, err := GetArrayFromString(input.SecurityGroups, ARRAY_SIZE_REAL, 0)
+	if err != nil {
+		return
+	}
+
+	// check wether input.SecurityGoups exist
+	vpcSc, err := CreateVpcServiceClientV1(input.CloudProviderParam)
+	if err != nil {
+		return
+	}
+
+	var existSgIds []string
+	for _, sgId := range sgIds {
+		var exist bool
+		_, exist, err = isSecurityGroupExist(vpcSc, sgId)
+		if err != nil {
+			return
+		}
+
+		if exist {
+			existSgIds = append(existSgIds, sgId)
+		}
+	}
+
+	// get all security groups of the vm
+	sgs, err := getSecurityGroupsByVm(sc, input.Id)
+	if err != nil {
+		return
+	}
+
+	// check wether the vm has the sgId
+	var removeSgs []v2.SecurityGroup
+	for _, sg := range sgs {
+		flag := false
+		for _, sgId := range existSgIds {
+			if sgId == sg.ID {
+				flag = true
+				break
+			}
+		}
+		if flag {
+			removeSgs = append(removeSgs, sg)
+		}
+	}
+
+	// add input.SecurityGoups to vm
+	if err = deleteVmSecurityGoups(sc, input.Id, removeSgs); err != nil {
+		return
+	}
+
+	return
+}
+
+func (action *VmRemoveSecurityGroupsAction) Do(inputs interface{}) (interface{}, error) {
+	vms, _ := inputs.(VmRemoveSecurityGroupsInputs)
+	outputs := VmRemoveSecurityGroupsOutputs{}
+	var finalErr error
+
+	for _, input := range vms.Inputs {
+		output, err := vmRemoveSecurityGoups(&input)
+		if err != nil {
+			finalErr = err
+		}
+		outputs.Outputs = append(outputs.Outputs, output)
+	}
+
+	logrus.Infof("all securityGoups had been removed, input = %++v", vms)
 	return &outputs, finalErr
 }
