@@ -213,7 +213,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="bind-security-groups" path="/huaweicloud/v1/vm/add-security-groups" filterRule="">
+            <interface action="add-security-groups" path="/huaweicloud/v1/vm/add-security-groups" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="Y" mappingType="system_variable" mappingSystemVariableName="HWCLOUD_API_SECRET">identity_params</parameter>
@@ -227,7 +227,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="bind-security-groups" path="/huaweicloud/v1/vm/remove-security-groups" filterRule="">
+            <interface action="remove-security-groups" path="/huaweicloud/v1/vm/remove-security-groups" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="Y" mappingType="system_variable" mappingSystemVariableName="HWCLOUD_API_SECRET">identity_params</parameter>
