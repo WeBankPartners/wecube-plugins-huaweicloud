@@ -1028,9 +1028,13 @@ func vmBindSecurityGoups(input *VmBindSecurityGroupsInput) (output VmBindSecurit
 	}
 
 	// check wether input.SecurityGoups exist
+	vpcSc, err := CreateVpcServiceClientV1(input.CloudProviderParam)
+	if err != nil {
+		return
+	}
 	for _, sgId := range sgIds {
 		var exist bool
-		_, exist, err = isSecurityGroupExist(sc, sgId)
+		_, exist, err = isSecurityGroupExist(vpcSc, sgId)
 		if err != nil {
 			return
 		}
