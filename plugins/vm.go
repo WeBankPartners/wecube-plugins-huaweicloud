@@ -970,6 +970,36 @@ func checkVmBindSecurityGoupsParam(input VmBindSecurityGroupsInput) error {
 	return nil
 }
 
+func getSecurityGroupsByVm(sc *gophercloud.ServiceClient, id string) ([]v2.SecurityGroup, error) {
+	sgs, err := v2.GetSecurityGroups(sc, id).Extract()
+	if err != nil {
+		return nil, err
+	}
+
+	return sgs.SecurityGroups, nil
+}
+
+func deleteVmSecurityGoups(sc *gophercloud.ServiceClient, id string, securityGroups []v2.SecurityGroup) error {
+	for _, sg := range securityGroups {
+		err := v2.RemoveSecurityGroup(sc, id, sg.ID).Err
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func addVmSecurityGoups(sc *gophercloud.ServiceClient, id string, securityGroupIds []string) error {
+	for _, sg := range securityGroupIds {
+		err := v2.AddSecurityGroup(sc, id, sg).Err
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func vmBindSecurityGoups(input *VmBindSecurityGroupsInput) (output VmBindSecurityGroupsOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
@@ -986,15 +1016,46 @@ func vmBindSecurityGoups(input *VmBindSecurityGroupsInput) (output VmBindSecurit
 		return
 	}
 
-	// remove all security groups of the vm
-
-	// do input.SecurityGoups to []string
-	_, err = GetArrayFromString(input.SecurityGroups, ARRAY_SIZE_REAL, 0)
+	sc, err := createVmServiceClient(input.CloudProviderParam, CLOUD_SERVER_V2)
 	if err != nil {
 		return
 	}
 
+	// do input.SecurityGoups to []string
+	sgIds, err := GetArrayFromString(input.SecurityGroups, ARRAY_SIZE_REAL, 0)
+	if err != nil {
+		return
+	}
+
+	// check wether input.SecurityGoups exist
+	for _, sgId := range sgIds {
+		var exist bool
+		_, exist, err = isSecurityGroupExist(sc, sgId)
+		if err != nil {
+			return
+		}
+
+		if !exist {
+			err = fmt.Errorf("securityGroup[%v] is not exist", sgId)
+			return
+		}
+	}
+
+	// get all security groups of the vm
+	sgs, err := getSecurityGroupsByVm(sc, input.Id)
+	if err != nil {
+		return
+	}
+
+	// remove all security groups of the vm
+	if err = deleteVmSecurityGoups(sc, input.Id, sgs); err != nil {
+		return
+	}
+
 	// add input.SecurityGoups to vm
+	if err = addVmSecurityGoups(sc, input.Id, sgIds); err != nil {
+		return
+	}
 
 	return
 }
