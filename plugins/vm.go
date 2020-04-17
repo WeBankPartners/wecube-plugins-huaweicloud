@@ -14,6 +14,7 @@ import (
 	v1 "github.com/gophercloud/gophercloud/openstack/ecs/v1/cloudservers"
 	flavor "github.com/gophercloud/gophercloud/openstack/ecs/v1/flavor"
 	v1_1 "github.com/gophercloud/gophercloud/openstack/ecs/v1_1/cloudservers"
+	v2 "github.com/gophercloud/gophercloud/openstack/ecs/v2/cloudservers"
 	"github.com/sirupsen/logrus"
 )
 
@@ -881,7 +882,45 @@ func PrintImages(params CloudProviderParam) {
 			fmt.Printf("imageName=%v,imageId=%v\n", image.Name, image.ID)
 		}
 	}
+}
 
+func GetVmSecurityGroups(params CloudProviderParam, serverId string) ([]string, error) {
+	securityGroups := []string{}
+	sc, err := createVmServiceClient(params, CLOUD_SERVER_V2)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := v2.GetSecurityGroups(sc, serverId).Extract()
+	if err != nil {
+		return securityGroups, err
+	}
+
+	for _, securityGroup := range result.SecurityGroups {
+		securityGroups = append(securityGroups, securityGroup.ID)
+	}
+
+	return securityGroups, nil
+}
+
+func DeleteSecurityGroup(params CloudProviderParam, serverId string, securityGroupId string) error {
+	sc, err := createVmServiceClient(params, CLOUD_SERVER_V2)
+	if err != nil {
+		return err
+	}
+
+	result := v2.RemoveSecurityGroup(sc, serverId, securityGroupId)
+	return result.Err
+}
+
+func AddSecurityGroup(params CloudProviderParam, serverId string, securityGroupId string) error {
+	sc, err := createVmServiceClient(params, CLOUD_SERVER_V2)
+	if err != nil {
+		return err
+	}
+
+	result := v2.AddSecurityGroup(sc, serverId, securityGroupId)
+	return result.Err
 }
 
 type VmBindSecurityGroupsAction struct {
