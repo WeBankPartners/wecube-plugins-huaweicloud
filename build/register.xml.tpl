@@ -213,7 +213,21 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="bind-security-groups" path="/huaweicloud/v1/vm/bind-security-groups" filterRule="">
+            <interface action="bind-security-groups" path="/huaweicloud/v1/vm/add-security-groups" filterRule="">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">guid</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="Y" mappingType="system_variable" mappingSystemVariableName="HWCLOUD_API_SECRET">identity_params</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">cloud_params</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">id</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">security_groups</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="entity" mappingEntityExpression="">guid</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="bind-security-groups" path="/huaweicloud/v1/vm/remove-security-groups" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="Y" mappingType="system_variable" mappingSystemVariableName="HWCLOUD_API_SECRET">identity_params</parameter>
