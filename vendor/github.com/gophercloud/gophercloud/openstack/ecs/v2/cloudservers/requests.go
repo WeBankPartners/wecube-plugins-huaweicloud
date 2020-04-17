@@ -164,3 +164,91 @@ func (opts ResizeOpts) ToResizeQuery() (string, error) {
 //	})
 //	return
 //}
+
+//-------------------added by brankbao-------------------//
+func GetSecurityGroups(client *gophercloud.ServiceClient, serverID string)(r SecurityGroupsResult){
+	if serverID == "" {
+		message := fmt.Sprintf(gophercloud.CE_MissingInputMessage, "serverID")
+		err := gophercloud.NewSystemCommonError(gophercloud.CE_MissingInputCode, message)
+		r.Err = err
+		return r
+	}
+	url:=getSecurityGroupURL(client, serverID)
+	newUrl := strings.Replace(url, "/v2/", "/v2.1/", 1)
+
+	_, r.Err = client.Get(newUrl, &r.Body, &gophercloud.RequestOpts{
+		OkCodes: []int{200, 203,204},
+	})
+
+	return
+}
+
+type SecurityGroupOpt struct {
+      Name string    `json:"name,omitempty"`
+}
+
+func (opts SecurityGroupOpt) ToServerChangeMap(name string) (map[string]interface{}, error) {
+	body, err := gophercloud.BuildRequestBody(opts, "")
+	if err != nil {
+		return nil, err
+	}
+	return map[string]interface{}{name: body}, nil
+}
+
+
+func RemoveSecurityGroup(client *gophercloud.ServiceClient,serverID string ,securityGroupId string)(r RemoveSecurityGroupResult){
+	if serverID == "" {
+		message := fmt.Sprintf(gophercloud.CE_MissingInputMessage, "serverID")
+		err := gophercloud.NewSystemCommonError(gophercloud.CE_MissingInputCode, message)
+		r.Err = err
+		return
+	}
+
+	opt:= SecurityGroupOpt{
+		Name:securityGroupId,
+	}
+
+	body, err := opt.ToServerChangeMap("removeSecurityGroup")
+	if err != nil {
+		r.Err = err
+		return
+	}
+
+	url:=removeSecurityGroupURL(client,serverID)
+	newUrl := strings.Replace(url, "/v2/", "/v2.1/", 1)
+	_, r.Err = client.Post(newUrl , body, nil, &gophercloud.RequestOpts{
+		OkCodes: []int{200,202},
+	})
+
+	return
+}
+
+
+
+func AddSecurityGroup(client *gophercloud.ServiceClient,serverID string ,securityGroupId string)(r AddSecurityGroupResult){
+        if serverID == "" {
+                message := fmt.Sprintf(gophercloud.CE_MissingInputMessage, "serverID")
+                err := gophercloud.NewSystemCommonError(gophercloud.CE_MissingInputCode, message)
+                r.Err = err
+                return
+        }
+
+        opt:= SecurityGroupOpt{
+                Name:securityGroupId,
+        }
+
+        body, err := opt.ToServerChangeMap("addSecurityGroup")
+        if err != nil {
+                r.Err = err
+                return
+        }
+
+        url:=addSecurityGroupURL(client,serverID)
+        newUrl := strings.Replace(url, "/v2/", "/v2.1/", 1)
+        _, r.Err = client.Post(newUrl , body, nil, &gophercloud.RequestOpts{
+                OkCodes: []int{200,202},
+        })
+      
+        return
+}
+

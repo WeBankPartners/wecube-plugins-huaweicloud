@@ -14,6 +14,7 @@ import (
 	v1 "github.com/gophercloud/gophercloud/openstack/ecs/v1/cloudservers"
 	flavor "github.com/gophercloud/gophercloud/openstack/ecs/v1/flavor"
 	v1_1 "github.com/gophercloud/gophercloud/openstack/ecs/v1_1/cloudservers"
+	v2 "github.com/gophercloud/gophercloud/openstack/ecs/v2/cloudservers"
 	"github.com/sirupsen/logrus"
 )
 
@@ -38,6 +39,7 @@ func init() {
 	vmActions["terminate"] = new(VmDeleteAction)
 	vmActions["start"] = new(VmStartAction)
 	vmActions["stop"] = new(VmStopAction)
+	vmActions["bind-security-groups"] = new(VmBindSecurityGroupsAction)
 }
 
 type VmPlugin struct {
@@ -880,5 +882,201 @@ func PrintImages(params CloudProviderParam) {
 			fmt.Printf("imageName=%v,imageId=%v\n", image.Name, image.ID)
 		}
 	}
+}
 
+func GetVmSecurityGroups(params CloudProviderParam, serverId string) ([]string, error) {
+	securityGroups := []string{}
+	sc, err := createVmServiceClient(params, CLOUD_SERVER_V2)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := v2.GetSecurityGroups(sc, serverId).Extract()
+	if err != nil {
+		return securityGroups, err
+	}
+
+	for _, securityGroup := range result.SecurityGroups {
+		securityGroups = append(securityGroups, securityGroup.ID)
+	}
+
+	return securityGroups, nil
+}
+
+func DeleteSecurityGroup(params CloudProviderParam, serverId string, securityGroupId string) error {
+	sc, err := createVmServiceClient(params, CLOUD_SERVER_V2)
+	if err != nil {
+		return err
+	}
+
+	result := v2.RemoveSecurityGroup(sc, serverId, securityGroupId)
+	return result.Err
+}
+
+func AddSecurityGroup(params CloudProviderParam, serverId string, securityGroupId string) error {
+	sc, err := createVmServiceClient(params, CLOUD_SERVER_V2)
+	if err != nil {
+		return err
+	}
+
+	result := v2.AddSecurityGroup(sc, serverId, securityGroupId)
+	return result.Err
+}
+
+type VmBindSecurityGroupsAction struct {
+}
+
+type VmBindSecurityGroupsInputs struct {
+	Inputs []VmBindSecurityGroupsInput `json:"inputs,omitempty"`
+}
+
+type VmBindSecurityGroupsInput struct {
+	CallBackParameter
+	CloudProviderParam
+	Guid           string `json:"guid,omtempty"`
+	Id             string `json:"id,omtempty"`
+	SecurityGroups string `json:"security_groups,omitemoty"`
+}
+
+type VmBindSecurityGroupsOutputs struct {
+	Outputs []VmBindSecurityGroupsOutput `json:"outputs,omitempty"`
+}
+
+type VmBindSecurityGroupsOutput struct {
+	CallBackParameter
+	Result
+	Guid string `json:"guid,omtempty"`
+}
+
+func (action *VmBindSecurityGroupsAction) ReadParam(param interface{}) (interface{}, error) {
+	var inputs VmBindSecurityGroupsInputs
+	err := UnmarshalJson(param, &inputs)
+	if err != nil {
+		return nil, err
+	}
+	return inputs, nil
+}
+
+func checkVmBindSecurityGoupsParam(input VmBindSecurityGroupsInput) error {
+	if err := isCloudProviderParamValid(input.CloudProviderParam); err != nil {
+		return err
+	}
+	if input.Id == "" {
+		return fmt.Errorf("id is empty")
+	}
+	if input.SecurityGroups == "" {
+		return fmt.Errorf("security_groups is empty")
+	}
+	return nil
+}
+
+func getSecurityGroupsByVm(sc *gophercloud.ServiceClient, id string) ([]v2.SecurityGroup, error) {
+	sgs, err := v2.GetSecurityGroups(sc, id).Extract()
+	if err != nil {
+		return nil, err
+	}
+
+	return sgs.SecurityGroups, nil
+}
+
+func deleteVmSecurityGoups(sc *gophercloud.ServiceClient, id string, securityGroups []v2.SecurityGroup) error {
+	for _, sg := range securityGroups {
+		err := v2.RemoveSecurityGroup(sc, id, sg.ID).Err
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func addVmSecurityGoups(sc *gophercloud.ServiceClient, id string, securityGroupIds []string) error {
+	for _, sg := range securityGroupIds {
+		err := v2.AddSecurityGroup(sc, id, sg).Err
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func vmBindSecurityGoups(input *VmBindSecurityGroupsInput) (output VmBindSecurityGroupsOutput, err error) {
+	defer func() {
+		output.Guid = input.Guid
+		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
+		if err == nil {
+			output.Result.Code = RESULT_CODE_SUCCESS
+		} else {
+			output.Result.Code = RESULT_CODE_ERROR
+			output.Result.Message = err.Error()
+		}
+	}()
+
+	if err = checkVmBindSecurityGoupsParam(*input); err != nil {
+		return
+	}
+
+	sc, err := createVmServiceClient(input.CloudProviderParam, CLOUD_SERVER_V2)
+	if err != nil {
+		return
+	}
+
+	// do input.SecurityGoups to []string
+	sgIds, err := GetArrayFromString(input.SecurityGroups, ARRAY_SIZE_REAL, 0)
+	if err != nil {
+		return
+	}
+
+	// check wether input.SecurityGoups exist
+	vpcSc, err := CreateVpcServiceClientV1(input.CloudProviderParam)
+	if err != nil {
+		return
+	}
+	for _, sgId := range sgIds {
+		var exist bool
+		_, exist, err = isSecurityGroupExist(vpcSc, sgId)
+		if err != nil {
+			return
+		}
+
+		if !exist {
+			err = fmt.Errorf("securityGroup[%v] is not exist", sgId)
+			return
+		}
+	}
+
+	// get all security groups of the vm
+	sgs, err := getSecurityGroupsByVm(sc, input.Id)
+	if err != nil {
+		return
+	}
+
+	// remove all security groups of the vm
+	if err = deleteVmSecurityGoups(sc, input.Id, sgs); err != nil {
+		return
+	}
+
+	// add input.SecurityGoups to vm
+	if err = addVmSecurityGoups(sc, input.Id, sgIds); err != nil {
+		return
+	}
+
+	return
+}
+
+func (action *VmBindSecurityGroupsAction) Do(inputs interface{}) (interface{}, error) {
+	vms, _ := inputs.(VmBindSecurityGroupsInputs)
+	outputs := VmBindSecurityGroupsOutputs{}
+	var finalErr error
+
+	for _, input := range vms.Inputs {
+		output, err := vmBindSecurityGoups(&input)
+		if err != nil {
+			finalErr = err
+		}
+		outputs.Outputs = append(outputs.Outputs, output)
+	}
+
+	logrus.Infof("all securityGoups had been bind, input = %++v", vms)
+	return &outputs, finalErr
 }
