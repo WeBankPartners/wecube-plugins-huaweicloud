@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gophercloud/gophercloud"
 	"github.com/huaweicloud/golangsdk"
 	"github.com/huaweicloud/golangsdk/openstack"
 	"github.com/huaweicloud/golangsdk/openstack/networking/v2/extensions/lbaas_v2/whitelists"
@@ -102,10 +101,8 @@ func checkWhitelistCreateParams(input WhitelistCreateInput) error {
 func isWhitelistExist(sc *golangsdk.ServiceClient, id string) (*whitelists.Whitelist, bool, error) {
 	whitelistInfo, err := whitelists.Get(sc, id).Extract()
 	if err != nil {
-		if ue, ok := err.(*gophercloud.UnifiedError); ok {
-			if strings.Contains(ue.Message(), "could not be found") {
-				return nil, false, nil
-			}
+		if strings.Contains(err.Error(), "is not exist") {
+			return nil, false, nil
 		}
 		return nil, false, err
 	}
@@ -189,7 +186,7 @@ type WhitelistAddInput struct {
 	CloudProviderParam
 	Guid      string `json:"guid,omitempty"`
 	Id        string `json:"id,omitempty"`
-	Whitelist string `json:"whitelist_ips,omitempty`
+	Whitelist string `json:"whitelist_ips,omitempty"`
 }
 
 type WhitelistAddOutputs struct {
@@ -242,12 +239,10 @@ func addWhitelist(input *WhitelistAddInput) (output WhitelistAddOutput, err erro
 		return
 	}
 
-	var inputList []string
-	if input.Whitelist != "" {
-		inputList, err = GetArrayFromString(input.Whitelist, ARRAY_SIZE_REAL, 0)
-		if err != nil {
-			return
-		}
+	logrus.Infof("addWhitelist input=%++v", *input)
+	inputList, err := GetArrayFromString(input.Whitelist, ARRAY_SIZE_REAL, 0)
+	if err != nil {
+		return
 	}
 
 	sc, err := createLbGolangSdkServiceClient(input.CloudProviderParam)
@@ -273,11 +268,11 @@ func addWhitelist(input *WhitelistAddInput) (output WhitelistAddOutput, err erro
 	// merge the whitelist origin and input
 	list := MergeTwoArraysString(origin, inputList)
 
-	opts := whitelists.UpdateOpts{}
-	if input.Whitelist != "" {
-		opts.Whitelist = strings.Join(list, ",")
+	opts := whitelists.UpdateOpts{
+		Whitelist: strings.Join(list, ","),
 	}
-	logrus.Infof("lb-witelist update opts=%v", opts)
+
+	logrus.Infof("lb-whitelist update opts=%++v", opts)
 	_, err = whitelists.Update(sc, input.Id, opts).Extract()
 
 	return
@@ -308,7 +303,7 @@ type WhitelistRemoveInput struct {
 	CloudProviderParam
 	Guid      string `json:"guid,omitempty"`
 	Id        string `json:"id,omitempty"`
-	Whitelist string `json:"whitelist_ips,omitempty`
+	Whitelist string `json:"whitelist_ips,omitempty"`
 }
 
 type WhitelistRemoveOutputs struct {
@@ -392,11 +387,11 @@ func removeWhitelist(input *WhitelistRemoveInput) (output WhitelistRemoveOutput,
 	// cull the whitelist input from origin
 	list := CullTwoArraysString(origin, inputList)
 
-	opts := whitelists.UpdateOpts{}
-	if input.Whitelist != "" {
-		opts.Whitelist = strings.Join(list, ",")
+	opts := whitelists.UpdateOpts{
+		Whitelist: strings.Join(list, ","),
 	}
-	logrus.Infof("lb-witelist update opts=%v", opts)
+
+	logrus.Infof("lb-whitelist update opts=%v", opts)
 	_, err = whitelists.Update(sc, input.Id, opts).Extract()
 
 	return
@@ -490,6 +485,7 @@ func deleteWhitelist(input *WhitelistDeleteInput) (output WhitelistDeleteOutput,
 	}
 	if !exist {
 		err = fmt.Errorf("the whitelist[%v] could not be found", input.Id)
+		return
 	}
 
 	err = whitelists.Delete(sc, input.Id).ExtractErr()
