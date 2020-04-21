@@ -156,8 +156,7 @@ func createNatGateway(input NatCreateInput) (output NatCreateOutput, err error) 
 		InternalNetworkID: input.SubnetId,
 	}
 
-	fmt.Printf("opts=%++v\n", opts)
-
+	logrus.Infof("nat create opts=%++v\n", opts)
 	result, err := natgateways.Create(sc, opts).Extract()
 	if err != nil {
 		return
