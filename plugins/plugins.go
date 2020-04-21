@@ -63,6 +63,7 @@ func init() {
 	RegisterPlugin("route", new(RoutePlugin))
 	RegisterPlugin("rds", new(RdsPlugin))
 	RegisterPlugin("dcs", new(DcsPlugin))
+	RegisterPlugin("lb-whitelist", new(LbWhitelistPlugin))
 }
 
 type PluginRequest struct {

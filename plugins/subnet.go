@@ -25,7 +25,7 @@ func (plugin *SubnetPlugin) GetActionByName(actionName string) (Action, error) {
 	action, found := subnetActions[actionName]
 	if !found {
 		logrus.Errorf("subnet plugin,action = %s not found", actionName)
-		return nil, fmt.Errorf("VPC plugin,action = %s not found", actionName)
+		return nil, fmt.Errorf("subnet plugin,action = %s not found", actionName)
 	}
 	return action, nil
 }
@@ -127,11 +127,11 @@ func waitSubnetCreateOk(sc *gophercloud.ServiceClient, subnetId string) error {
 			return fmt.Errorf("create subnet status is ERROR")
 		}
 
-		if count > 20 {
+		if count > 100 {
 			logrus.Errorf("waitSubnetCreateOk is timeout,last status =%v", status)
 			return fmt.Errorf("waitSubnetCreateOk is timeout,last status =%v", status)
 		}
-		time.Sleep(time.Second * 5)
+		time.Sleep(time.Second * 1)
 		count++
 	}
 }
@@ -210,6 +210,7 @@ func (action *SubnetCreateAction) Do(inputs interface{}) (interface{}, error) {
 	outputs := SubnetCreateOutputs{}
 	var finalErr error
 
+	start := time.Now()
 	for _, input := range subnets.Inputs {
 		output, err := createSubnet(input)
 		if err != nil {
@@ -218,7 +219,8 @@ func (action *SubnetCreateAction) Do(inputs interface{}) (interface{}, error) {
 		outputs.Outputs = append(outputs.Outputs, output)
 	}
 
-	logrus.Infof("all subnets = %v are created", subnets)
+	done := time.Since(start)
+	logrus.Infof("all subnets = %v are created, run time=%v", subnets, done)
 	return &outputs, finalErr
 }
 

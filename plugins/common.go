@@ -231,15 +231,16 @@ func GetArrayFromString(rawData string, arraySizeType string, expectedLen int) (
 		return []string{}, nil
 	}
 
-	data := rawData
-	startChar := rawData[0:1]
-	endChar := rawData[len(rawData)-1 : len(rawData)]
+	data := strings.Trim(rawData, " ")
+	startChar := data[0:1]
+	endChar := data[len(data)-1 : len(data)]
 	if startChar == "[" && endChar == "]" {
-		data = rawData[1 : len(rawData)-1]
+		data = data[1 : len(data)-1]
 	}
 
 	entries := strings.Split(data, ",")
 	if arraySizeType == ARRAY_SIZE_REAL {
+		entries = TrimArrayString(entries, " ")
 		return entries, nil
 	} else if arraySizeType == ARRAY_SIZE_AS_EXPECTED {
 		if len(entries) == expectedLen {
@@ -255,4 +256,29 @@ func GetArrayFromString(rawData string, arraySizeType string, expectedLen int) (
 		}
 	}
 	return []string{}, fmt.Errorf("getArrayFromString not in desire state rawData=%v,arraySizeType=%v,expectedLen=%v", rawData, arraySizeType, expectedLen)
+}
+
+func TrimArrayString(params []string, cutset string) []string {
+	var strsTrim []string
+	for _, str := range params {
+		strTrim := strings.Trim(str, cutset)
+		if strTrim != "" {
+			strsTrim = append(strsTrim, strTrim)
+		}
+	}
+	return strsTrim
+}
+
+func MergeTwoArraysString(origin, input []string) []string {
+	listMap := make(map[string]bool)
+	end := origin
+	for _, str := range origin {
+		listMap[str] = true
+	}
+	for _, str := range input {
+		if _, ok := listMap[str]; !ok {
+			end = append(end, str)
+		}
+	}
+	return end
 }
