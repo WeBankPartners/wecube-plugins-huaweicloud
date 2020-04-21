@@ -269,6 +269,7 @@ func TrimArrayString(params []string, cutset string) []string {
 	return strsTrim
 }
 
+// merge two string array origin and input
 func MergeTwoArraysString(origin, input []string) []string {
 	listMap := make(map[string]bool)
 	end := origin
@@ -277,6 +278,21 @@ func MergeTwoArraysString(origin, input []string) []string {
 	}
 	for _, str := range input {
 		if _, ok := listMap[str]; !ok {
+			end = append(end, str)
+		}
+	}
+	return end
+}
+
+// cull the string of input from origin
+func CullTwoArraysString(origin, input []string) []string {
+	listMap := make(map[string]bool)
+	var end []string
+	for _, str := range origin {
+		listMap[str] = true
+	}
+	for _, str := range input {
+		if _, ok := listMap[str]; ok {
 			end = append(end, str)
 		}
 	}

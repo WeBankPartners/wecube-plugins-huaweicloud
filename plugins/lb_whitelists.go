@@ -34,7 +34,8 @@ var whitelistActions = make(map[string]Action)
 func init() {
 	whitelistActions["create"] = new(WhitelistCreateAction)
 	whitelistActions["delete"] = new(WhitelistDeleteAction)
-	whitelistActions["update"] = new(WhitelistUpdateAction)
+	whitelistActions["add"] = new(WhitelistAddAction)
+	whitelistActions["remove"] = new(WhitelistRemoveAction)
 }
 
 type LbWhitelistPlugin struct {
@@ -59,7 +60,7 @@ type WhitelistCreateInput struct {
 	Guid       string `json:"guid,omitempty"`
 	Id         string `json:"id,omitempty"`
 	ListenerId string `json:"listener_id,omitempty"`
-	Whitelist  string `json:"whitelist,omitempty"`
+	Whitelist  string `json:"whitelist_ips,omitempty"`
 }
 
 type WhitelistCreateOutputs struct {
@@ -179,33 +180,33 @@ func (action *WhitelistCreateAction) Do(inputs interface{}) (interface{}, error)
 	return &outputs, finalErr
 }
 
-type WhitelistUpdateInputs struct {
-	Inputs []WhitelistUpdateInput `json:"inputs,omitempty"`
+type WhitelistAddInputs struct {
+	Inputs []WhitelistAddInput `json:"inputs,omitempty"`
 }
 
-type WhitelistUpdateInput struct {
+type WhitelistAddInput struct {
 	CallBackParameter
 	CloudProviderParam
 	Guid      string `json:"guid,omitempty"`
 	Id        string `json:"id,omitempty"`
-	Whitelist string `json:"whitelist,omitempty`
+	Whitelist string `json:"whitelist_ips,omitempty`
 }
 
-type WhitelistUpdateOutputs struct {
-	Outputs []WhitelistUpdateOutput `json:"outputs,omitempty"`
+type WhitelistAddOutputs struct {
+	Outputs []WhitelistAddOutput `json:"outputs,omitempty"`
 }
 
-type WhitelistUpdateOutput struct {
+type WhitelistAddOutput struct {
 	CallBackParameter
 	Result
 	Guid string `json:"omitempty"`
 }
 
-type WhitelistUpdateAction struct {
+type WhitelistAddAction struct {
 }
 
-func (action *WhitelistUpdateAction) ReadParam(param interface{}) (interface{}, error) {
-	var inputs WhitelistUpdateInputs
+func (action *WhitelistAddAction) ReadParam(param interface{}) (interface{}, error) {
+	var inputs WhitelistAddInputs
 	err := UnmarshalJson(param, &inputs)
 	if err != nil {
 		return nil, err
@@ -213,7 +214,7 @@ func (action *WhitelistUpdateAction) ReadParam(param interface{}) (interface{}, 
 	return inputs, nil
 }
 
-func checkWhitelistUpdateParams(input WhitelistUpdateInput) error {
+func checkWhitelistAddParams(input WhitelistAddInput) error {
 	err := isCloudProviderParamValid(input.CloudProviderParam)
 	if err != nil {
 		return err
@@ -225,7 +226,7 @@ func checkWhitelistUpdateParams(input WhitelistUpdateInput) error {
 	return nil
 }
 
-func updateWhitelist(input *WhitelistUpdateInput) (output WhitelistUpdateOutput, err error) {
+func addWhitelist(input *WhitelistAddInput) (output WhitelistAddOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
@@ -237,7 +238,7 @@ func updateWhitelist(input *WhitelistUpdateInput) (output WhitelistUpdateOutput,
 		}
 	}()
 
-	if err = checkWhitelistUpdateParams(*input); err != nil {
+	if err = checkWhitelistAddParams(*input); err != nil {
 		return
 	}
 
@@ -282,13 +283,132 @@ func updateWhitelist(input *WhitelistUpdateInput) (output WhitelistUpdateOutput,
 	return
 }
 
-func (action *WhitelistUpdateAction) Do(inputs interface{}) (interface{}, error) {
-	whitelists, _ := inputs.(WhitelistUpdateInputs)
-	outputs := WhitelistUpdateOutputs{}
+func (action *WhitelistAddAction) Do(inputs interface{}) (interface{}, error) {
+	whitelists, _ := inputs.(WhitelistAddInputs)
+	outputs := WhitelistAddOutputs{}
 	var finalErr error
 
 	for _, input := range whitelists.Inputs {
-		output, err := updateWhitelist(&input)
+		output, err := addWhitelist(&input)
+		if err != nil {
+			finalErr = err
+		}
+		outputs.Outputs = append(outputs.Outputs, output)
+	}
+
+	return &outputs, finalErr
+}
+
+type WhitelistRemoveInputs struct {
+	Inputs []WhitelistRemoveInput `json:"inputs,omitempty"`
+}
+
+type WhitelistRemoveInput struct {
+	CallBackParameter
+	CloudProviderParam
+	Guid      string `json:"guid,omitempty"`
+	Id        string `json:"id,omitempty"`
+	Whitelist string `json:"whitelist_ips,omitempty`
+}
+
+type WhitelistRemoveOutputs struct {
+	Outputs []WhitelistRemoveOutput `json:"outputs,omitempty"`
+}
+
+type WhitelistRemoveOutput struct {
+	CallBackParameter
+	Result
+	Guid string `json:"omitempty"`
+}
+
+type WhitelistRemoveAction struct {
+}
+
+func (action *WhitelistRemoveAction) ReadParam(param interface{}) (interface{}, error) {
+	var inputs WhitelistRemoveInputs
+	err := UnmarshalJson(param, &inputs)
+	if err != nil {
+		return nil, err
+	}
+	return inputs, nil
+}
+
+func checkWhitelistRemoveParams(input WhitelistRemoveInput) error {
+	err := isCloudProviderParamValid(input.CloudProviderParam)
+	if err != nil {
+		return err
+	}
+	if input.Id == "" {
+		return fmt.Errorf("whiltelist id is empty")
+	}
+
+	return nil
+}
+
+func removeWhitelist(input *WhitelistRemoveInput) (output WhitelistRemoveOutput, err error) {
+	defer func() {
+		output.Guid = input.Guid
+		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
+		if err == nil {
+			output.Result.Code = RESULT_CODE_SUCCESS
+		} else {
+			output.Result.Code = RESULT_CODE_ERROR
+			output.Result.Message = err.Error()
+		}
+	}()
+
+	if err = checkWhitelistRemoveParams(*input); err != nil {
+		return
+	}
+
+	var inputList []string
+	if input.Whitelist != "" {
+		inputList, err = GetArrayFromString(input.Whitelist, ARRAY_SIZE_REAL, 0)
+		if err != nil {
+			return
+		}
+	}
+
+	sc, err := createLbGolangSdkServiceClient(input.CloudProviderParam)
+	if err != nil {
+		return
+	}
+
+	// get origin whitelist
+	listInfo, exist, err := isWhitelistExist(sc, input.Id)
+	if err != nil {
+		return
+	}
+	if !exist {
+		err = fmt.Errorf("whitelist[%v] is not exist", input.Id)
+		return
+	}
+
+	origin, err := GetArrayFromString(listInfo.Whitelist, ARRAY_SIZE_REAL, 0)
+	if err != nil {
+		return
+	}
+
+	// cull the whitelist input from origin
+	list := CullTwoArraysString(origin, inputList)
+
+	opts := whitelists.UpdateOpts{}
+	if input.Whitelist != "" {
+		opts.Whitelist = strings.Join(list, ",")
+	}
+	logrus.Infof("lb-witelist update opts=%v", opts)
+	_, err = whitelists.Update(sc, input.Id, opts).Extract()
+
+	return
+}
+
+func (action *WhitelistRemoveAction) Do(inputs interface{}) (interface{}, error) {
+	whitelists, _ := inputs.(WhitelistRemoveInputs)
+	outputs := WhitelistRemoveOutputs{}
+	var finalErr error
+
+	for _, input := range whitelists.Inputs {
+		output, err := removeWhitelist(&input)
 		if err != nil {
 			finalErr = err
 		}
