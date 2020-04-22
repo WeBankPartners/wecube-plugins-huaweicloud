@@ -196,7 +196,7 @@ type WhitelistAddOutputs struct {
 type WhitelistAddOutput struct {
 	CallBackParameter
 	Result
-	Guid string `json:"omitempty"`
+	Guid string `json:"guid,omitempty"`
 }
 
 type WhitelistAddAction struct {
@@ -313,7 +313,7 @@ type WhitelistRemoveOutputs struct {
 type WhitelistRemoveOutput struct {
 	CallBackParameter
 	Result
-	Guid string `json:"omitempty"`
+	Guid string `json:"guid,omitempty"`
 }
 
 type WhitelistRemoveAction struct {
@@ -390,8 +390,12 @@ func removeWhitelist(input *WhitelistRemoveInput) (output WhitelistRemoveOutput,
 	opts := whitelists.UpdateOpts{
 		Whitelist: strings.Join(list, ","),
 	}
+	if len(list) == 0 {
+		enableWhitelist := false
+		opts.EnableWhitelist = &enableWhitelist
+	}
 
-	logrus.Infof("lb-whitelist update opts=%v", opts)
+	logrus.Infof("lb-whitelist update opts=%++v", opts)
 	_, err = whitelists.Update(sc, input.Id, opts).Extract()
 
 	return
