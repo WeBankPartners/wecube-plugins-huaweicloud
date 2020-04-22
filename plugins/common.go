@@ -286,15 +286,23 @@ func MergeTwoArraysString(origin, input []string) []string {
 
 // cull the string of input from origin
 func CullTwoArraysString(origin, input []string) []string {
-	listMap := make(map[string]bool)
-	var end []string
+	originListMap := make(map[string]bool)
+	mixedListMap := make(map[string]bool)
+	var end, mixed []string
 	for _, str := range origin {
-		listMap[str] = true
+		originListMap[str] = true
 	}
 	for _, str := range input {
-		if _, ok := listMap[str]; ok {
+		if _, ok := originListMap[str]; ok {
+			mixed = append(mixed, str)
+			mixedListMap[str] = true
+		}
+	}
+	for _, str := range origin {
+		if _, ok := mixedListMap[str]; !ok {
 			end = append(end, str)
 		}
 	}
+
 	return end
 }
