@@ -2,6 +2,7 @@ package instances
 
 import (
 	"fmt"
+
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/pagination"
 )
@@ -86,7 +87,7 @@ func Create(client *gophercloud.ServiceClient, opts CreateRdsBuilder) (r CreateR
 	}
 
 	_, r.Err = client.Post(createURL(client), b, &r.Body, &gophercloud.RequestOpts{
-		OkCodes: []int{202},
+		OkCodes: []int{202, 200},
 	})
 	return
 }
@@ -313,7 +314,6 @@ func EnlargeVolume(client *gophercloud.ServiceClient, opts EnlargeVolumeBuilder,
 	return
 }
 
-
 type DbErrorlogOpts struct {
 	StartDate string `q:"start_date"`
 	EndDate   string `q:"end_date"`
@@ -359,7 +359,7 @@ type DbSlowLogOpts struct {
 	EndDate   string `q:"end_date"`
 	Offset    string `q:"offset"`
 	Limit     string `q:"limit"`
-	Type     string `q:"type"`
+	Type      string `q:"type"`
 }
 
 type DbSlowLogBuilder interface {

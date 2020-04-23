@@ -60,8 +60,10 @@ type UpdateOptsBuilder interface {
 // UpdateOpts is the common options struct used in this package's Update
 // operation.
 type UpdateOpts struct {
-	EnableWhitelist *bool  `json:"enable_whitelist,omitempty"`
-	Whitelist       string `json:"whitelist,omitempty"`
+	// EnableWhitelist *bool  `json:"enable_whitelist,omitempty"`
+	// Whitelist       string `json:"whitelist,omitempty"`
+	EnableWhitelist *bool  `json:"enable_whitelist"`
+	Whitelist       string `json:"whitelist"`
 }
 
 // ToWhitelistUpdateMap casts a UpdateOpts struct to a map.
