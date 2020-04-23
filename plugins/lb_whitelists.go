@@ -92,9 +92,7 @@ func checkWhitelistCreateParams(input WhitelistCreateInput) error {
 	if input.ListenerId == "" {
 		return fmt.Errorf("listener_id is empty")
 	}
-	if input.Whitelist == "" {
-		return fmt.Errorf("whitelist is empty")
-	}
+
 	return nil
 }
 
@@ -219,6 +217,9 @@ func checkWhitelistAddParams(input WhitelistAddInput) error {
 	if input.Id == "" {
 		return fmt.Errorf("whiltelist id is empty")
 	}
+	if input.Whitelist == "" {
+		return fmt.Errorf("whitelist is empty")
+	}
 
 	return nil
 }
@@ -265,11 +266,17 @@ func addWhitelist(input *WhitelistAddInput) (output WhitelistAddOutput, err erro
 		return
 	}
 
+	// if listInfo.EnableWhitelist == false {
+	// 	origin = []string{}
+	// }
+
 	// merge the whitelist origin and input
 	list := MergeTwoArraysString(origin, inputList)
+	enableWhitelist := true
 
 	opts := whitelists.UpdateOpts{
-		Whitelist: strings.Join(list, ","),
+		EnableWhitelist: &enableWhitelist,
+		Whitelist:       strings.Join(list, ","),
 	}
 
 	logrus.Infof("lb-whitelist update opts=%++v", opts)
@@ -336,6 +343,9 @@ func checkWhitelistRemoveParams(input WhitelistRemoveInput) error {
 	if input.Id == "" {
 		return fmt.Errorf("whiltelist id is empty")
 	}
+	if input.Whitelist == "" {
+		return fmt.Errorf("whitelist is empty")
+	}
 
 	return nil
 }
@@ -387,13 +397,16 @@ func removeWhitelist(input *WhitelistRemoveInput) (output WhitelistRemoveOutput,
 	// cull the whitelist input from origin
 	list := CullTwoArraysString(origin, inputList)
 
+	enableWhitelist := true
 	opts := whitelists.UpdateOpts{
-		Whitelist: strings.Join(list, ","),
+		EnableWhitelist: &enableWhitelist,
+		Whitelist:       strings.Join(list, ","),
 	}
-	if len(list) == 0 {
-		enableWhitelist := false
-		opts.EnableWhitelist = &enableWhitelist
-	}
+	// if len(list) == 0 {
+	// 	enableWhitelist = false
+	// 	opts.Whitelist = ""
+	// }
+	// opts.EnableWhitelist = &enableWhitelist
 
 	logrus.Infof("lb-whitelist update opts=%++v", opts)
 	_, err = whitelists.Update(sc, input.Id, opts).Extract()
