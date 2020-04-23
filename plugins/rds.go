@@ -713,10 +713,9 @@ func waitRdsInstanceJobOk(sc *gophercloud.ServiceClient, id string, action strin
 			if action == "delete" {
 				return nil, nil
 			}
-			return nil, fmt.Errorf("get rds instance[id=%v] meet error=instance not be found", id)
 		}
 
-		if action == "create" {
+		if instance != nil && action == "create" {
 			if instance.Status == RDS_INSTANCE_STATUS_BAD {
 				break
 			}
@@ -731,7 +730,7 @@ func waitRdsInstanceJobOk(sc *gophercloud.ServiceClient, id string, action strin
 		time.Sleep(30 * time.Second)
 		count++
 	}
-	return nil, fmt.Errorf("after %vs, %v the rds instance[id=%v] status is %v", count*30, action, id, instance.Status)
+	return nil, fmt.Errorf("after %vs, %v the rds instance[id=%v] is timeout", count*30, action, id)
 }
 
 func isRdsExist(sc *gophercloud.ServiceClient, rdsId string) (*instances.RdsInstanceResponse, bool, error) {
