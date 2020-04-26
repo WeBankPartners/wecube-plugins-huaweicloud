@@ -240,9 +240,10 @@ func GetArrayFromString(rawData string, arraySizeType string, expectedLen int) (
 
 	entries := strings.Split(data, ",")
 	if arraySizeType == ARRAY_SIZE_REAL {
-		entries = TrimArrayString(entries, " ")
+		entries = TrimArrayString(entries, " ", true)
 		return entries, nil
 	} else if arraySizeType == ARRAY_SIZE_AS_EXPECTED {
+		entries = TrimArrayString(entries, " ", false)
 		if len(entries) == expectedLen {
 			return entries, nil
 		}
@@ -258,13 +259,23 @@ func GetArrayFromString(rawData string, arraySizeType string, expectedLen int) (
 	return []string{}, fmt.Errorf("getArrayFromString not in desire state rawData=%v,arraySizeType=%v,expectedLen=%v", rawData, arraySizeType, expectedLen)
 }
 
-func TrimArrayString(params []string, cutset string) []string {
+// Trim returns a slice of the string of array params with all leading and trailing Unicode code points contained in cutset removed.
+// If the isCull == false and the string of array built up only ' ' character(s), the string would not be trimed and culled.
+func TrimArrayString(params []string, cutset string, isCull bool) []string {
 	var strsTrim []string
 	for _, str := range params {
 		strTrim := strings.Trim(str, cutset)
-		if strTrim != "" {
+		if isCull && strTrim != "" {
 			strsTrim = append(strsTrim, strTrim)
 		}
+		if !isCull {
+			if strTrim == "" {
+				strsTrim = append(strsTrim, str)
+			} else {
+				strsTrim = append(strsTrim, strTrim)
+			}
+		}
+
 	}
 	return strsTrim
 }
