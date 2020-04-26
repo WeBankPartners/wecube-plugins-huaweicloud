@@ -2,11 +2,12 @@ package plugins
 
 import (
 	"fmt"
-	"github.com/gophercloud/gophercloud"
-	"github.com/gophercloud/gophercloud/openstack/vpc/v1/securitygrouprules"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gophercloud/gophercloud"
+	"github.com/gophercloud/gophercloud/openstack/vpc/v1/securitygrouprules"
 
 	"github.com/sirupsen/logrus"
 )
@@ -37,20 +38,18 @@ func (plugin *SecurityGroupRulePlugin) GetActionByName(actionName string) (Actio
 }
 
 type SecurityGroupRuleCreateInputs struct {
-	Inputs []SecurityGroupRuleCreateInput `json:"inputs,omitempty"`
+	Inputs []SecurityGroupRuleInput `json:"inputs,omitempty"`
 }
 
-type SecurityGroupRuleCreateInput struct {
+type SecurityGroupRuleInput struct {
 	CallBackParameter
 	CloudProviderParam
-	Guid                string `json:"guid,omitempty"`
-	Id                  string `json:"id,omitempty"`
-	SecurityGroupId     string `json:"security_group_id,omitempty"`
-	Direction           string `json:"direction,omitempty"`
-	Protocol            string `json:"protocol,omitempty"`
-	Port                string `json:"port,omitempty"`
-	RemoteIpPrefix      string `json:"remote_ip_prefix,omitempty"`
-	EnterpriseProjectId string `json:"enterprise_project_id,omitempty"`
+	Guid            string `json:"guid,omitempty"`
+	SecurityGroupId string `json:"security_group_id,omitempty"`
+	Direction       string `json:"direction,omitempty"`
+	Protocol        string `json:"protocol,omitempty"`
+	Port            string `json:"port,omitempty"`
+	RemoteIpPrefix  string `json:"remote_ip_prefix,omitempty"`
 }
 
 type SecurityGroupRuleCreateOutputs struct {
@@ -61,7 +60,6 @@ type SecurityGroupRuleCreateOutput struct {
 	CallBackParameter
 	Result
 	Guid string `json:"guid,omitempty"`
-	Id   string `json:"id,omitempty"`
 }
 
 type SecurityGroupRuleCreateAction struct {
@@ -76,7 +74,7 @@ func (action *SecurityGroupRuleCreateAction) ReadParam(param interface{}) (inter
 	return inputs, nil
 }
 
-func (action *SecurityGroupRuleCreateAction) checkCreateRuleParams(input SecurityGroupRuleCreateInput) error {
+func checkRuleInputParams(input SecurityGroupRuleInput) error {
 	if err := isCloudProviderParamValid(input.CloudProviderParam); err != nil {
 		return err
 	}
@@ -120,7 +118,7 @@ func getPort(port string) (int, error) {
 
 func getPortMinAndMax(port string) (int, int, error) {
 	port = strings.TrimSpace(port)
-	if strings.EqualFold(port, "ALL") {
+	if strings.EqualFold(strings.ToUpper(port), "ALL") {
 		return 1, 65535, nil
 	}
 
@@ -144,7 +142,7 @@ func getPortMinAndMax(port string) (int, int, error) {
 	return 0, 0, fmt.Errorf("port(%v) is unsupported port format", port)
 }
 
-func (action *SecurityGroupRuleCreateAction) createRule(input *SecurityGroupRuleCreateInput) (output SecurityGroupRuleCreateOutput, err error) {
+func createRule(input *SecurityGroupRuleInput) (output SecurityGroupRuleCreateOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
@@ -156,8 +154,13 @@ func (action *SecurityGroupRuleCreateAction) createRule(input *SecurityGroupRule
 		}
 	}()
 
-	if err = action.checkCreateRuleParams(*input); err != nil {
+	if err = checkRuleInputParams(*input); err != nil {
 		logrus.Errorf("checkCreateRuleParams meet error=%v", err)
+		return
+	}
+
+	newInputs, err := extractSecurityGroupRules(*input)
+	if err != nil {
 		return
 	}
 
@@ -167,41 +170,86 @@ func (action *SecurityGroupRuleCreateAction) createRule(input *SecurityGroupRule
 		return
 	}
 
-	// check whether rule is sc,input.Idexist.
-	if input.Id != "" {
-		var ruleInfo *securitygrouprules.SecurityGroupRule
-		if ruleInfo, _, err = isRuleExist(sc, input.Id); err != nil {
-			logrus.Errorf("check rule meet error=%v", err)
-			return
+	newCreateRules := []SecurityGroupRuleInput{}
+	for _, newInput := range newInputs {
+		var portMin, portMax int
+
+		// create security group rule
+		request := securitygrouprules.CreateOpts{
+			SecurityGroupId: newInput.SecurityGroupId,
+			Direction:       strings.ToLower(newInput.Direction),
 		}
-		if ruleInfo != nil {
-			output.Id = ruleInfo.ID
-			logrus.Infof("the rule[id=%v] is exist", input.Id)
-			return
+
+		portMin, portMax, err = getPortMinAndMax(newInput.Port)
+		if err != nil {
+			break
+		}
+
+		request.PortRangeMin = &portMin
+		request.PortRangeMax = &portMax
+		request.Protocol = strings.ToLower(newInput.Protocol)
+		request.RemoteIpPrefix = newInput.RemoteIpPrefix
+		_, err = securitygrouprules.Create(sc, request).Extract()
+
+		if err != nil {
+			if ue, ok := err.(*gophercloud.UnifiedError); ok {
+				if strings.Contains(ue.ErrorCode(), "Com.409") {
+					err = nil
+				} else {
+					logrus.Errorf("create security group rule meet error=%v", err)
+					break
+				}
+			}
+		} else {
+			newCreateRules = append(newCreateRules, newInput)
 		}
 	}
 
-	// create security group rule
-	request := securitygrouprules.CreateOpts{
-		SecurityGroupId: input.SecurityGroupId,
-		Direction:       strings.ToLower(input.Direction),
+	if err != nil {
+		logrus.Infof("clean up newCreateRules=%++v", newCreateRules)
+		for _, newCreateRule := range newCreateRules {
+			_, deleteErr := deleteRule(&newCreateRule)
+			if deleteErr != nil {
+				err = fmt.Errorf("create rule meet error=%v && clean up created rules meet error=%v", err, deleteErr)
+				return
+			}
+		}
 	}
 
-	portMin, portMax, err := getPortMinAndMax(input.Port)
+	return
+}
+
+func extractSecurityGroupRules(input SecurityGroupRuleInput) (newInputs []SecurityGroupRuleInput, err error) {
+	ruleIps, err := GetArrayFromString(input.RemoteIpPrefix, ARRAY_SIZE_REAL, 0)
 	if err != nil {
 		return
 	}
 
-	request.PortRangeMin = &portMin
-	request.PortRangeMax = &portMax
-	request.Protocol = strings.ToLower(input.Protocol)
-	request.RemoteIpPrefix = input.RemoteIpPrefix
-	response, err := securitygrouprules.Create(sc, request).Extract()
+	ports, err := GetArrayFromString(input.Port, ARRAY_SIZE_AS_EXPECTED, len(ruleIps))
 	if err != nil {
-		logrus.Errorf("create security group rule meet error=%v", err)
 		return
 	}
-	output.Id = response.ID
+
+	protocols, err := GetArrayFromString(input.Protocol, ARRAY_SIZE_AS_EXPECTED, len(ruleIps))
+	if err != nil {
+		return
+	}
+
+	for i, ip := range ruleIps {
+		rule := SecurityGroupRuleInput{
+			Port:               ports[i],
+			Protocol:           protocols[i],
+			Direction:          input.Direction,
+			SecurityGroupId:    input.SecurityGroupId,
+			CloudProviderParam: input.CloudProviderParam,
+		}
+		if !strings.Contains(ip, "/") {
+			rule.RemoteIpPrefix = ip + "/32"
+		} else {
+			rule.RemoteIpPrefix = ip
+		}
+		newInputs = append(newInputs, rule)
+	}
 
 	return
 }
@@ -233,13 +281,16 @@ func checkPortRangeParams(portRangeMin, portRangeMax string) error {
 	return nil
 }
 
-func waitSecurityRuleDeleteOk(sc *gophercloud.ServiceClient, ruleId string) {
+func waitSecurityRuleDeleteOk(sc *gophercloud.ServiceClient, ruleId string) error {
 	count := 0
 	for {
-		time.Sleep(time.Second * 5)
+		time.Sleep(time.Second * 1)
 		_, exist, err := isRuleExist(sc, ruleId)
-		if err != nil || !exist {
-			break
+		if err != nil {
+			return err
+		}
+		if !exist {
+			return nil
 		}
 
 		count++
@@ -248,13 +299,14 @@ func waitSecurityRuleDeleteOk(sc *gophercloud.ServiceClient, ruleId string) {
 		}
 	}
 
+	return fmt.Errorf("after %vs, delete rule[%v] time out", count, ruleId)
 }
 
 func isRuleExist(sc *gophercloud.ServiceClient, ruleId string) (*securitygrouprules.SecurityGroupRule, bool, error) {
 	ruleInfo, err := securitygrouprules.Get(sc, ruleId).Extract()
 	if err != nil {
 		if ue, ok := err.(*gophercloud.UnifiedError); ok {
-			if strings.Contains(ue.Message(), "could not be found") {
+			if strings.Contains(ue.Message(), "does not exist") {
 				return nil, false, nil
 			}
 		}
@@ -268,7 +320,7 @@ func (action *SecurityGroupRuleCreateAction) Do(inputs interface{}) (interface{}
 	outputs := SecurityGroupRuleCreateOutputs{}
 	var finalErr error
 	for _, rule := range rules.Inputs {
-		output, err := action.createRule(&rule)
+		output, err := createRule(&rule)
 		if err != nil {
 			finalErr = err
 		}
@@ -280,14 +332,7 @@ func (action *SecurityGroupRuleCreateAction) Do(inputs interface{}) (interface{}
 }
 
 type SecurityGroupRuleDeleteInputs struct {
-	Inputs []SecurityGroupRuleDeleteInput `json:"inputs,omitempty"`
-}
-
-type SecurityGroupRuleDeleteInput struct {
-	CallBackParameter
-	CloudProviderParam
-	Guid string `json:"guid,omitempty"`
-	Id   string `json:"id,omitempty"`
+	Inputs []SecurityGroupRuleInput `json:"inputs,omitempty"`
 }
 
 type SecurityGroupRuleDeleteOutputs struct {
@@ -298,7 +343,6 @@ type SecurityGroupRuleDeleteOutput struct {
 	CallBackParameter
 	Result
 	Guid string `json:"guid,omitempty"`
-	Id   string `json:"id,omitempty"`
 }
 
 type SecurityGroupRuleDeleteAction struct {
@@ -313,21 +357,51 @@ func (action *SecurityGroupRuleDeleteAction) ReadParam(param interface{}) (inter
 	return inputs, nil
 }
 
-func (action *SecurityGroupRuleDeleteAction) checkDeleteRuleParams(input SecurityGroupRuleDeleteInput) error {
-	if err := isCloudProviderParamValid(input.CloudProviderParam); err != nil {
-		return err
-	}
-	if input.Id == "" {
-		return fmt.Errorf("SecurityGroupRule id is empty")
+func getSecurityGroupRule(input SecurityGroupRuleInput) (string, error) {
+	sc, err := CreateVpcServiceClientV1(input.CloudProviderParam)
+	if err != nil {
+		return "", err
 	}
 
-	return nil
+	opts := securitygrouprules.ListOpts{
+		SecurityGroupId: input.SecurityGroupId,
+	}
+	allPages, err := securitygrouprules.List(sc, opts).AllPages()
+	if err != nil {
+		return "", err
+	}
+	resp, err := securitygrouprules.ExtractSecurityGroupRules(allPages)
+	if err != nil {
+		return "", err
+	}
+
+	minPort, maxPort, err := getPortMinAndMax(input.Port)
+	if err != nil {
+		return "", err
+	}
+	for _, rule := range resp {
+		if rule.Protocol != input.Protocol {
+			continue
+		}
+		if *rule.PortRangeMax != maxPort || *rule.PortRangeMin != minPort {
+			continue
+		}
+		if rule.Direction != input.Direction {
+			continue
+		}
+		if rule.RemoteIpPrefix != input.RemoteIpPrefix {
+			continue
+		}
+
+		logrus.Infof("the security group rule id = %v", rule.ID)
+		return rule.ID, nil
+	}
+	return "", fmt.Errorf("could not find the security group rule[%++v]", input)
 }
 
-func (action *SecurityGroupRuleDeleteAction) deleteRule(input *SecurityGroupRuleDeleteInput) (output SecurityGroupRuleDeleteOutput, err error) {
+func deleteRule(input *SecurityGroupRuleInput) (output SecurityGroupRuleDeleteOutput, err error) {
 	defer func() {
 		output.Guid = input.Guid
-		output.Id = input.Id
 		output.CallBackParameter.Parameter = input.CallBackParameter.Parameter
 		if err == nil {
 			output.Result.Code = RESULT_CODE_SUCCESS
@@ -337,8 +411,13 @@ func (action *SecurityGroupRuleDeleteAction) deleteRule(input *SecurityGroupRule
 		}
 	}()
 
-	if err = action.checkDeleteRuleParams(*input); err != nil {
+	if err = checkRuleInputParams(*input); err != nil {
 		logrus.Errorf("SecurityGroupRuleDeleteAction checkDeleteRuleParams meet error=%v", err)
+		return
+	}
+
+	newInputs, err := extractSecurityGroupRules(*input)
+	if err != nil {
 		return
 	}
 
@@ -348,20 +427,31 @@ func (action *SecurityGroupRuleDeleteAction) deleteRule(input *SecurityGroupRule
 		return
 	}
 
-	// check whether securitygroup rule is exist
-	_, exist, err := isRuleExist(sc, input.Id)
-	if err != nil || !exist {
-		return
-	}
+	for _, newInput := range newInputs {
+		// get the rule Id
+		var ruleId string
+		ruleId, err = getSecurityGroupRule(newInput)
+		if err != nil {
+			if strings.Contains(err.Error(), "could not find the security group rule") {
+				err = nil
+				continue
+			}
+			return
+		}
 
-	// Delete securitygroup
-	response := securitygrouprules.Delete(sc, input.Id)
-	if response.Err != nil {
-		err = response.Err
-		logrus.Errorf("Delete securitygroup rule[securitygrouprule=%v] failed, error=%v", input.Id, err)
-	}
+		// Delete securitygroup
+		response := securitygrouprules.Delete(sc, ruleId)
+		if response.Err != nil {
+			err = response.Err
+			logrus.Errorf("Delete securitygroup rule[securitygrouprule=%v] failed, error=%v", ruleId, err)
+			return
+		}
 
-	waitSecurityRuleDeleteOk(sc, input.Id)
+		// err = waitSecurityRuleDeleteOk(sc, ruleId)
+		// if err != nil {
+		// 	return
+		// }
+	}
 
 	return
 }
@@ -372,7 +462,7 @@ func (action *SecurityGroupRuleDeleteAction) Do(inputs interface{}) (interface{}
 	outputs := SecurityGroupRuleDeleteOutputs{}
 	var finalErr error
 	for _, rule := range rules.Inputs {
-		output, err := action.deleteRule(&rule)
+		output, err := deleteRule(&rule)
 		if err != nil {
 			finalErr = err
 		}
