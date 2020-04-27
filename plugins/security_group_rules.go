@@ -238,8 +238,8 @@ func extractSecurityGroupRules(input SecurityGroupRuleInput) (newInputs []Securi
 	for i, ip := range ruleIps {
 		rule := SecurityGroupRuleInput{
 			Port:               ports[i],
-			Protocol:           protocols[i],
-			Direction:          input.Direction,
+			Protocol:           strings.ToLower(protocols[i]),
+			Direction:          strings.ToLower(input.Direction),
 			SecurityGroupId:    input.SecurityGroupId,
 			CloudProviderParam: input.CloudProviderParam,
 		}
@@ -357,46 +357,52 @@ func (action *SecurityGroupRuleDeleteAction) ReadParam(param interface{}) (inter
 	return inputs, nil
 }
 
-func getSecurityGroupRule(input SecurityGroupRuleInput) (string, error) {
-	sc, err := CreateVpcServiceClientV1(input.CloudProviderParam)
-	if err != nil {
-		return "", err
-	}
-
+func getSecurityGroupRule(sc *gophercloud.ServiceClient, inputs []SecurityGroupRuleInput) ([]string, error) {
 	opts := securitygrouprules.ListOpts{
-		SecurityGroupId: input.SecurityGroupId,
+		SecurityGroupId: inputs[0].SecurityGroupId,
 	}
 	allPages, err := securitygrouprules.List(sc, opts).AllPages()
 	if err != nil {
-		return "", err
+		return []string{}, err
 	}
 	resp, err := securitygrouprules.ExtractSecurityGroupRules(allPages)
 	if err != nil {
-		return "", err
+		return []string{}, err
 	}
 
-	minPort, maxPort, err := getPortMinAndMax(input.Port)
-	if err != nil {
-		return "", err
-	}
-	for _, rule := range resp {
-		if rule.Protocol != input.Protocol {
-			continue
+	ruleIdMap := map[string]int{}
+	for _, input := range inputs {
+		minPort, maxPort, err := getPortMinAndMax(input.Port)
+		if err != nil {
+			return []string{}, err
 		}
-		if *rule.PortRangeMax != maxPort || *rule.PortRangeMin != minPort {
-			continue
-		}
-		if rule.Direction != input.Direction {
-			continue
-		}
-		if rule.RemoteIpPrefix != input.RemoteIpPrefix {
-			continue
-		}
+		for _, rule := range resp {
+			if rule.Protocol != input.Protocol {
+				continue
+			}
+			if *rule.PortRangeMax != maxPort || *rule.PortRangeMin != minPort {
+				continue
+			}
+			if rule.Direction != input.Direction {
+				continue
+			}
+			if rule.RemoteIpPrefix != input.RemoteIpPrefix {
+				continue
+			}
 
-		logrus.Infof("the security group rule id = %v", rule.ID)
-		return rule.ID, nil
+			logrus.Infof("the security group rule id = %v", rule.ID)
+			ruleIdMap[rule.ID] = 1
+			break
+		}
 	}
-	return "", fmt.Errorf("could not find the security group rule[%++v]", input)
+	var ruleIds []string
+	logrus.Infof("getSecurityGroupRule ruleIdMap=%++v", ruleIdMap)
+	for key := range ruleIdMap {
+		ruleIds = append(ruleIds, key)
+	}
+	logrus.Infof("getSecurityGroupRule ruleIds=%++v", ruleIds)
+
+	return ruleIds, nil
 }
 
 func deleteRule(input *SecurityGroupRuleInput) (output SecurityGroupRuleDeleteOutput, err error) {
@@ -427,18 +433,12 @@ func deleteRule(input *SecurityGroupRuleInput) (output SecurityGroupRuleDeleteOu
 		return
 	}
 
-	for _, newInput := range newInputs {
-		// get the rule Id
-		var ruleId string
-		ruleId, err = getSecurityGroupRule(newInput)
-		if err != nil {
-			if strings.Contains(err.Error(), "could not find the security group rule") {
-				err = nil
-				continue
-			}
-			return
-		}
+	ruleIds, err := getSecurityGroupRule(sc, newInputs)
+	if err != nil {
+		return
+	}
 
+	for _, ruleId := range ruleIds {
 		// Delete securitygroup
 		response := securitygrouprules.Delete(sc, ruleId)
 		if response.Err != nil {
