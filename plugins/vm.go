@@ -87,6 +87,7 @@ type VmCreateInput struct {
 	Seed             string `json:"seed,omitempty"`
 	ImageId          string `json:"image_id,omitempty"`
 	HostType         string `json:"machine_spec,omitempty"` //4c8g
+	FlavorType       string `json:"flavor_type,omitempty"`
 	SystemDiskSize   string `json:"system_disk_size,omitempty"`
 	SystemDiskType   string `json:"system_disk_type,omitempty"`
 	VpcId            string `json:"vpc_id,omitempty"`
@@ -373,6 +374,11 @@ func getFlavorByHostType(input VmCreateInput) (string, int64, int64, error) {
 	for _, item := range flavors {
 		if item.FlvDisabled == true || item.AccessIsPublic == false {
 			continue
+		}
+		if input.FlavorType != "" {
+			if strings.Compare(strings.ToLower(input.FlavorType), item.OsExtraSpecs.Generation) != 0 {
+				continue
+			}
 		}
 		// status := item.OsExtraSpecs.CondOperationStatus
 		// if status != "normal" && status != "promotion" {
