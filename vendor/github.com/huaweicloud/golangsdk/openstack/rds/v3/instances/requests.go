@@ -1,8 +1,6 @@
 package instances
 
 import (
-	"fmt"
-
 	"github.com/huaweicloud/golangsdk"
 	"github.com/huaweicloud/golangsdk/pagination"
 )
@@ -165,7 +163,7 @@ func Restart(client *golangsdk.ServiceClient, opts RestartRdsInstanceBuilder, in
 		r.Err = err
 		return
 	}
-	fmt.Println("restart Rds instance body = ", b)
+	// fmt.Println("restart Rds instance body = ", b)
 	_, r.Err = client.Post(restartURL(client, instanceId), b, &r.Body, &golangsdk.RequestOpts{
 		OkCodes: []int{202},
 	})
