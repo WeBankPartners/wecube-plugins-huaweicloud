@@ -1,8 +1,6 @@
 package instances
 
 import (
-	"fmt"
-
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/pagination"
 )
@@ -164,7 +162,7 @@ func Restart(client *gophercloud.ServiceClient, opts RestartRdsInstanceBuilder, 
 		r.Err = err
 		return
 	}
-	fmt.Println("restart Rds instance body = ", b)
+	// fmt.Println("restart Rds instance body = ", b)
 	_, r.Err = client.Post(restartURL(client, instanceId), b, &r.Body, &gophercloud.RequestOpts{
 		OkCodes: []int{202},
 	})

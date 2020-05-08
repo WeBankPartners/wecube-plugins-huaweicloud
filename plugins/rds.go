@@ -113,6 +113,7 @@ type RdsCreateInput struct {
 	Password          string `json:"password,omitempty"`
 	Port              string `json:"port,omitempty"`
 	HostType          string `json:"machine_spec,omitempty"` //4c8g
+	FlavorType        string `json:"flavor_type,omitempty"`
 	EngineVersion     string `json:"engine_version,omitempty"`
 	SecurityGroupId   string `json:"security_group_id,omitempty"`
 	VpcId             string `json:"vpc_id,omitempty"`
@@ -375,6 +376,14 @@ func getRdsFlavorByHostType(input *RdsCreateInput, azs []string) (string, string
 
 		if (strings.ToLower(input.SupportHa) == "false" || input.SupportHa == "") && item.Instancemode != "single" {
 			continue
+		}
+
+		// get flavorRef type
+		flavorType := strings.Split(item.Speccode, ".")[2]
+		if input.FlavorType != "" {
+			if strings.Compare(strings.ToLower(input.FlavorType), flavorType) != 0 {
+				continue
+			}
 		}
 
 		vcpus, err := strconv.ParseInt(item.Vcpus, 10, 64)
